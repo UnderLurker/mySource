@@ -1,0 +1,16 @@
+cmake_minimum_required(VERSION 3.0.0)
+project(JsonSerialize VERSION 0.1.0)
+# set(LIB "F:/Visual Studio practice/vscode/newdemo/build")
+set(CMAKE_INSTALL_PREFIX "F:/Visual-Studio-practice/vscode/mySource/build")
+set(UTIL_PATH "..")
+file(GLOB SOURCE_FILE ./src/*.cpp)
+
+include_directories(header)
+include_directories(${UTIL_PATH}/Util/header)
+add_library(JsonSerialize SHARED ${SOURCE_FILE})
+add_library(JsonSerialize_static STATIC ${SOURCE_FILE})
+install(TARGETS JsonSerialize LIBRARY DESTINATION lib)
+install(TARGETS JsonSerialize_static ARCHIVE DESTINATION lib)
+install(FILES include/*.h DESTINATION lib)
+
+target_link_libraries(JsonSerialize_static Util_static)

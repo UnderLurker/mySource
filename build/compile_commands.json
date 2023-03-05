@@ -1,0 +1,42 @@
+[
+{
+  "directory": "F:/Visual-Studio-practice/vscode/mySource/build",
+  "command": "F:\\mingw64\\bin\\g++.exe  @CMakeFiles/MAIN.dir/includes_CXX.rsp -g -o CMakeFiles\\MAIN.dir\\main.cpp.obj -c F:\\Visual-Studio-practice\\vscode\\mySource\\main.cpp",
+  "file": "F:/Visual-Studio-practice/vscode/mySource/main.cpp"
+},
+{
+  "directory": "F:/Visual-Studio-practice/vscode/mySource/build/utils/Matrix",
+  "command": "F:\\mingw64\\bin\\g++.exe  @CMakeFiles/Matrix_static.dir/includes_CXX.rsp -g -o CMakeFiles\\Matrix_static.dir\\src\\Matrix.cpp.obj -c F:\\Visual-Studio-practice\\vscode\\mySource\\utils\\Matrix\\src\\Matrix.cpp",
+  "file": "F:/Visual-Studio-practice/vscode/mySource/utils/Matrix/src/Matrix.cpp"
+},
+{
+  "directory": "F:/Visual-Studio-practice/vscode/mySource/build/utils/Log",
+  "command": "F:\\mingw64\\bin\\g++.exe  @CMakeFiles/logger_static.dir/includes_CXX.rsp -g -o CMakeFiles\\logger_static.dir\\src\\logger.cpp.obj -c F:\\Visual-Studio-practice\\vscode\\mySource\\utils\\Log\\src\\logger.cpp",
+  "file": "F:/Visual-Studio-practice/vscode/mySource/utils/Log/src/logger.cpp"
+},
+{
+  "directory": "F:/Visual-Studio-practice/vscode/mySource/build/utils/Reflex",
+  "command": "F:\\mingw64\\bin\\g++.exe  @CMakeFiles/Reflex_static.dir/includes_CXX.rsp -g -o CMakeFiles\\Reflex_static.dir\\src\\Reflex.cpp.obj -c F:\\Visual-Studio-practice\\vscode\\mySource\\utils\\Reflex\\src\\Reflex.cpp",
+  "file": "F:/Visual-Studio-practice/vscode/mySource/utils/Reflex/src/Reflex.cpp"
+},
+{
+  "directory": "F:/Visual-Studio-practice/vscode/mySource/build/utils/Util",
+  "command": "F:\\mingw64\\bin\\g++.exe  @CMakeFiles/Util_static.dir/includes_CXX.rsp -g -o CMakeFiles\\Util_static.dir\\src\\Util.cpp.obj -c F:\\Visual-Studio-practice\\vscode\\mySource\\utils\\Util\\src\\Util.cpp",
+  "file": "F:/Visual-Studio-practice/vscode/mySource/utils/Util/src/Util.cpp"
+},
+{
+  "directory": "F:/Visual-Studio-practice/vscode/mySource/build/utils/Util",
+  "command": "F:\\mingw64\\bin\\g++.exe -DUtil_EXPORTS @CMakeFiles/Util.dir/includes_CXX.rsp -g -o CMakeFiles\\Util.dir\\src\\Util.cpp.obj -c F:\\Visual-Studio-practice\\vscode\\mySource\\utils\\Util\\src\\Util.cpp",
+  "file": "F:/Visual-Studio-practice/vscode/mySource/utils/Util/src/Util.cpp"
+},
+{
+  "directory": "F:/Visual-Studio-practice/vscode/mySource/build/utils/Singleton",
+  "command": "F:\\mingw64\\bin\\g++.exe  @CMakeFiles/Singleton_static.dir/includes_CXX.rsp -g -o CMakeFiles\\Singleton_static.dir\\src\\Singleton.cpp.obj -c F:\\Visual-Studio-practice\\vscode\\mySource\\utils\\Singleton\\src\\Singleton.cpp",
+  "file": "F:/Visual-Studio-practice/vscode/mySource/utils/Singleton/src/Singleton.cpp"
+},
+{
+  "directory": "F:/Visual-Studio-practice/vscode/mySource/build/utils/Singleton",
+  "command": "F:\\mingw64\\bin\\g++.exe -DSingleton_EXPORTS @CMakeFiles/Singleton.dir/includes_CXX.rsp -g -o CMakeFiles\\Singleton.dir\\src\\Singleton.cpp.obj -c F:\\Visual-Studio-practice\\vscode\\mySource\\utils\\Singleton\\src\\Singleton.cpp",
+  "file": "F:/Visual-Studio-practice/vscode/mySource/utils/Singleton/src/Singleton.cpp"
+}
+]

@@ -1,0 +1,18 @@
+cmake_minimum_required(VERSION 3.0.0)
+project(logger CXX)
+# set(LIB "F:/Visual Studio practice/vscode/newdemo/build")
+set(CMAKE_INSTALL_PREFIX "F:/Visual-Studio-practice/vscode/mySource/build")
+set(UTIL_PATH "..")
+# set(LIBRARY_OUTPUT_DIRECTORY F:/Visual-Studio-practice/vscode/mySource/build/lib)
+file(GLOB SOURCE_FILE ./src/logger.cpp)
+
+# add_library(Matrix SHARED ${SOURCE_FILE})
+# target_include_directories(Matrix PUBLIC header)
+# install(TARGETS Matrix LIBRARY DESTINATION lib)
+add_library(logger_static STATIC ${SOURCE_FILE})
+
+include_directories(${UTIL_PATH}/Util/header)
+target_include_directories(logger_static PUBLIC header)
+target_link_libraries(logger_static Util_static)
+install(TARGETS logger_static ARCHIVE DESTINATION lib)
+install(FILES include/*.h DESTINATION lib)
