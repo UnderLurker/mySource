@@ -126,12 +126,12 @@
 			"id" : "logger_static::@ddaaa8f2fd33e9afa3a0"
 		},
 		{
-			"backtrace" : 3,
-			"id" : "Singleton_static::@bad2e3ffed92f1d1bd14"
-		},
-		{
 			"backtrace" : 2,
 			"id" : "Util_static::@973ae76ca83a01734235"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "Singleton_static::@bad2e3ffed92f1d1bd14"
 		}
 	],
 	"id" : "MAIN::@6890427a1f51a3e7e1df",

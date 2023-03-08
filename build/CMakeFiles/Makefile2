@@ -172,8 +172,8 @@ utils/Util/clean: utils/Util/CMakeFiles/Util_static.dir/clean
 # All Build rule for target.
 CMakeFiles/MAIN.dir/all: utils/Matrix/CMakeFiles/Matrix_static.dir/all
 CMakeFiles/MAIN.dir/all: utils/Log/CMakeFiles/logger_static.dir/all
-CMakeFiles/MAIN.dir/all: utils/Singleton/CMakeFiles/Singleton_static.dir/all
 CMakeFiles/MAIN.dir/all: utils/Util/CMakeFiles/Util_static.dir/all
+CMakeFiles/MAIN.dir/all: utils/Singleton/CMakeFiles/Singleton_static.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\MAIN.dir\build.make CMakeFiles/MAIN.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\MAIN.dir\build.make CMakeFiles/MAIN.dir/build
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=F:\Visual-Studio-practice\vscode\mySource\build\CMakeFiles --progress-num=1,2 "Built target MAIN"
@@ -251,8 +251,8 @@ utils/Log/CMakeFiles/logger_static.dir/clean:
 # Target rules for target utils/Reflex/CMakeFiles/Reflex_static.dir
 
 # All Build rule for target.
-utils/Reflex/CMakeFiles/Reflex_static.dir/all: utils/Singleton/CMakeFiles/Singleton_static.dir/all
 utils/Reflex/CMakeFiles/Reflex_static.dir/all: utils/Util/CMakeFiles/Util_static.dir/all
+utils/Reflex/CMakeFiles/Reflex_static.dir/all: utils/Singleton/CMakeFiles/Singleton_static.dir/all
 	$(MAKE) $(MAKESILENT) -f utils\Reflex\CMakeFiles\Reflex_static.dir\build.make utils/Reflex/CMakeFiles/Reflex_static.dir/depend
 	$(MAKE) $(MAKESILENT) -f utils\Reflex\CMakeFiles\Reflex_static.dir\build.make utils/Reflex/CMakeFiles/Reflex_static.dir/build
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=F:\Visual-Studio-practice\vscode\mySource\build\CMakeFiles --progress-num=5,6 "Built target Reflex_static"

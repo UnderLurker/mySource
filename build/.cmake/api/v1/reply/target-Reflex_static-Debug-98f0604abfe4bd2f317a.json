@@ -40,13 +40,13 @@
 			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 18,
+				"line" : 17,
 				"parent" : 0
 			},
 			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 17,
+				"line" : 18,
 				"parent" : 0
 			},
 			{
@@ -104,11 +104,11 @@
 	[
 		{
 			"backtrace" : 3,
-			"id" : "Singleton_static::@bad2e3ffed92f1d1bd14"
+			"id" : "Util_static::@973ae76ca83a01734235"
 		},
 		{
 			"backtrace" : 4,
-			"id" : "Util_static::@973ae76ca83a01734235"
+			"id" : "Singleton_static::@bad2e3ffed92f1d1bd14"
 		}
 	],
 	"id" : "Reflex_static::@222a709f6b40b33a4ed6",

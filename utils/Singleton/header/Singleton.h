@@ -30,10 +30,11 @@ private:
 template<typename T>
 T* Singleton<T>::m_instance=nullptr;
 
-#define SINGLETON_DECLARE(className) friend class Singleton<className>;  \
-        className();                        \
-        className(const className&);        \
-        ~className();                       \
+#define SINGLETON_DECLARE(className)                    \
+        friend class Singleton<className>;              \
+        className(){};                                  \
+        className(const className&){};                  \
+        ~className(){};                                 \
         className& operator=(const className&);
 
 NAME_SPACE_END()

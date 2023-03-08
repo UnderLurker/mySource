@@ -31,7 +31,16 @@ int main(){
     A* a=(A*)factory->createClass("A");
     cout<<a->get<int>("m_age")<<endl;
     a->set<int>("m_age", 30);
+    cout << a->get<int>("m_age") << endl;
     a->Call("show");
-    int b = a->Call<int,int,int>("show",1,1);
+    int b = a->Call<int,int,int>("add",1,5);
+    cout << b << endl;
+    A* c=(A*)factory->createClass("A");
+    cout<<c->get<int>("m_age")<<endl;
+    c->set<int>("m_age", 40);
+    cout << c->get<int>("m_age") << endl;
+    c->Call("show");
+    b = c->Call<int,int,int>("add",2,5);
+    cout << b << endl;
     return 0;
 }
