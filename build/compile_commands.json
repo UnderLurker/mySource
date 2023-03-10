@@ -5,6 +5,16 @@
   "file": "F:/Visual-Studio-practice/vscode/mySource/main.cpp"
 },
 {
+  "directory": "F:/Visual-Studio-practice/vscode/mySource/build",
+  "command": "F:\\mingw64\\bin\\g++.exe  @CMakeFiles/ReflexTest.dir/includes_CXX.rsp -g -o CMakeFiles\\ReflexTest.dir\\test\\reflex_test.cpp.obj -c F:\\Visual-Studio-practice\\vscode\\mySource\\test\\reflex_test.cpp",
+  "file": "F:/Visual-Studio-practice/vscode/mySource/test/reflex_test.cpp"
+},
+{
+  "directory": "F:/Visual-Studio-practice/vscode/mySource/build",
+  "command": "F:\\mingw64\\bin\\g++.exe  @CMakeFiles/JsonTest.dir/includes_CXX.rsp -g -o CMakeFiles\\JsonTest.dir\\test\\json_test.cpp.obj -c F:\\Visual-Studio-practice\\vscode\\mySource\\test\\json_test.cpp",
+  "file": "F:/Visual-Studio-practice/vscode/mySource/test/json_test.cpp"
+},
+{
   "directory": "F:/Visual-Studio-practice/vscode/mySource/build/utils/Matrix",
   "command": "F:\\mingw64\\bin\\g++.exe  @CMakeFiles/Matrix_static.dir/includes_CXX.rsp -g -o CMakeFiles\\Matrix_static.dir\\src\\Matrix.cpp.obj -c F:\\Visual-Studio-practice\\vscode\\mySource\\utils\\Matrix\\src\\Matrix.cpp",
   "file": "F:/Visual-Studio-practice/vscode/mySource/utils/Matrix/src/Matrix.cpp"

@@ -1,14 +1,16 @@
 #pragma once
-#include "Util.h"
+#ifndef _JSON_SERIALIZE_
+#define _JSON_SERIALIZE_
+// #include "Util.h"
 #include <fstream>
 #include <string>
 #include <vector>
-#ifndef _JSON_SERIALIZE_
-#define _JSON_SERIALIZE_
+#include <map>
 
-NAME_SPACE_START(Json)
+// NAME_SPACE_START(Json)
 
-enum JsonType{
+enum JsonType {
+    None,
     Number,
     String,
     Array,
@@ -17,77 +19,111 @@ enum JsonType{
     Object
 };
 
-class JBaseObject{
+class JNull {
 public:
-    JBaseObject(){}
-    virtual ~JBaseObject(){}
+    JNull() {}
+    ~JNull() {}
+};
+
+template<typename T>
+class JBaseObject {
+public:
+    JBaseObject() {}
+    virtual ~JBaseObject() {}
     virtual JBaseObject* clone() = 0;
 };
 
 template<typename T>
-class JHolderObject:public JBaseObject{
+class JHolderObject :public JBaseObject<T> {
 private:
-    T value;
 public:
-    JHolderObject(const T& val):value(val){}
-    ~JHolderObject(){}
-    JBaseObject* clone() override;
-    T GetValue();
+    T value;
+    JHolderObject(const T& val) :value(val) {}
+    ~JHolderObject() {}
+    JBaseObject<T>* clone() override;
 };
 
 template<typename ValueType>
-class JObject{
+class JObject {
 private:
-    JBaseObject* _value;
+    JBaseObject<ValueType>* _value = nullptr;
 public:
+    JObject() {}
     JObject(const ValueType& value);
-    JObject(const JObject& obj):_value(obj._value->clone()){}
+    JObject(const JObject& obj) :_value(obj._value->clone()) {}
     ~JObject();
     JObject<ValueType>& operator=(const ValueType& value);
-    ValueType* Cast();
-    ValueType& RefCast();
-};
-
-class JsonItemBase{
-public:
-    JsonItemBase(){}
-    virtual ~JsonItemBase(){}
+    ValueType* Cast() {
+        JHolderObject<ValueType>* temp = dynamic_cast<JHolderObject<ValueType>*>(_value);
+        return temp ? &temp->value : NULL;
+    }
+    ValueType& RefCast() {
+        return (static_cast<JHolderObject<ValueType>*>(_value))->value;
+    }
 };
 
 template<typename T>
-class JsonItem : public JsonItemBase{
-private:
-    using string = std::string;
-    JsonType _type;
-    JObject<T> _value;
-    string _key;
+class JsonItemBase {
 public:
-    JsonItem(){}
-    JsonItem(const JsonItem &);
-    JsonItem(const JsonType,const string,const JObject<T>);
-    ~JsonItem() = default;
-    JsonType GetItemType();
-    string GetItemKey();
-    JObject<T> GetItemValue();
+    JsonItemBase() {}
+    virtual ~JsonItemBase() {}
+    virtual void f() {}
 };
 
-class JsonSerialize{
+template<typename T>
+class JsonItem {
+private:
+    // JObject<T> _value;
+    T _value;
+public:
+    JsonItem() {}
+    JsonItem(const JsonItem&);
+    JsonItem(const JObject<T>& obj);
+    JsonItem(const T& obj);
+    ~JsonItem() {};
+    T& GetItemRefValue() {
+        return this->_value;
+    }
+    T* GetItemLpValue() {
+        return &this->_value;
+    }
+};
+
+class JsonKey {
+public:
+    JsonType _type{ JsonType::None };
+    std::wstring _key{ L"" };
+    JsonKey() {}
+    JsonKey(const JsonType& type, const std::wstring& key) :_type(type), _key(key) {}
+    bool operator<(const JsonKey&) const;
+};
+
+class JsonValue {
+public:
+    void* _value{ nullptr };
+    size_t _size{ 0 };
+    JsonValue() {}
+    JsonValue(void* value, const int& size) :_value(value), _size(size) {}
+};
+
+class JsonSerialize {
     using string = std::string;
 private:
-    std::vector<JsonItemBase> content;
+    std::vector<std::pair<JsonKey, JsonValue>> content;
     string _filePath;
 public:
-    JsonSerialize(){}
+    JsonSerialize() {}
     JsonSerialize(const string filePath);
-    ~JsonSerialize();
+    ~JsonSerialize() {};
     bool Load(const string filePath = "");
-    auto GetValueByKey(string);
-    std::vector<JsonItemBase> GetContent();
-    
+    template<typename T>
+    JsonItem<T>* GetValueByKey(string key);
+    std::vector<std::pair<JsonKey, JsonValue>>& GetContent();
+    void printAll(int tab = 0);
 private:
-    
+
 };
 
 
-NAME_SPACE_END()
+// NAME_SPACE_END()
 #endif //!_JSON_SERIALIZE_

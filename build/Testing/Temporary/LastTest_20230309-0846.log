@@ -1,0 +1,41 @@
+Start testing: Mar 09 17:20 中国标准时间
+----------------------------------------------------------
+1/2 Testing: Reflex_Test
+1/2 Test: Reflex_Test
+Command: "F:/Visual-Studio-practice/vscode/mySource/build/ReflexTest.exe"
+Directory: F:/Visual-Studio-practice/vscode/mySource/build
+"Reflex_Test" start time: Mar 09 17:20 中国标准时间
+Output:
+----------------------------------------------------------
+10
+30
+hello world
+6
+10
+40
+hello world
+7
+<end of output>
+Test time =   0.05 sec
+----------------------------------------------------------
+Test Passed.
+"Reflex_Test" end time: Mar 09 17:20 中国标准时间
+"Reflex_Test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/2 Testing: Json_Test
+2/2 Test: Json_Test
+Command: "F:/Visual-Studio-practice/vscode/mySource/build/JsonTest.exe"
+Directory: F:/Visual-Studio-practice/vscode/mySource/build
+"Json_Test" start time: Mar 09 17:20 中国标准时间
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"Json_Test" end time: Mar 09 17:20 中国标准时间
+"Json_Test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Mar 09 17:20 中国标准时间

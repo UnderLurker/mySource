@@ -1,157 +1,423 @@
 #include "JsonSerialize.h"
-#include "Util.h"
+// #include "Util.h"
+#include <iostream>
+#include <sstream>
 #include <atomic>
 #include <exception>
 #include <fstream>
 #include <ios>
 #include <string>
+#include <utility>
 #include <vector>
+#include <stack>
 
-NAME_SPACE_START(Json)
+// NAME_SPACE_START(Json)
 
 template<typename T>
-JBaseObject* JHolderObject<T>::clone(){
+JBaseObject<T>* JHolderObject<T>::clone() {
     return new JHolderObject<T>(this->value);
 }
 
-template<typename T>
-T JHolderObject<T>::GetValue(){
-    return value;
+// template<typename T>
+// T& JHolderObject<T>::GetValue(){
+//     return value;
+// }
+
+template<typename ValueType>
+JObject<ValueType>::JObject(const ValueType& value) {
+    _value = new JHolderObject<ValueType>(value);
 }
 
 template<typename ValueType>
-JObject<ValueType>::JObject(const ValueType& value){
-    _value=new JHolderObject<ValueType>(value);
+JObject<ValueType>::~JObject() {
+    if (_value) delete _value;
 }
 
 template<typename ValueType>
-JObject<ValueType>::~JObject(){
-    if(_value) delete _value;
-}
-
-template<typename ValueType>
-JObject<ValueType>& JObject<ValueType>::operator=(const ValueType& value){
-    if(_value) delete _value;
-    _value=new JHolderObject<ValueType>(value);
+JObject<ValueType>& JObject<ValueType>::operator=(const ValueType& value) {
+    if (_value) delete _value;
+    _value = new JHolderObject<ValueType>(value);
     return *this;
 }
 
-template<typename ValueType>
-ValueType* JObject<ValueType>::Cast(){
-    JHolderObject<ValueType>* temp=dynamic_cast<JHolderObject<ValueType>*>(_value);
-    return temp?&temp->GetValue():NULL;
+// template<typename ValueType>
+// ValueType* JObject<ValueType>::Cast(){
+//     JHolderObject<ValueType>* temp=dynamic_cast<JHolderObject<ValueType>*>(_value);
+//     return temp?&temp->GetValue():NULL;
+// }
+
+// template<typename ValueType>
+// ValueType& JObject<ValueType>::RefCast(){
+//     return (dynamic_cast<JHolderObject<ValueType>&>(_value)).GetValue();
+// }
+
+// template<typename T>
+// JsonItem<T>::JsonItem(const JObject<T>& value)
+//     :JsonItemBase<T>(){
+//     this->_value=value;
+// }
+template<typename T>
+JsonItem<T>::JsonItem(const T& objList)
+{
+    this->_value = objList;
 }
 
-template<typename ValueType>
-ValueType& JObject<ValueType>::RefCast(){
-    JHolderObject<ValueType>& temp=dynamic_cast<JHolderObject<ValueType>&>(&_value);
-    return temp.GetValue();
-}
+// //获取值
+// template<typename T>
+// T& JsonItem<T>::GetItemRefValue(){
+//     return this->_value.RefCast();
+// }
 
-template<typename T>
-JsonItem<T>::JsonItem(const JsonType type,const string key,const JObject<T> value){
-    this->_type=type;
-    this->_value=value;
-    this->_key=key;
-}
-
-//获取类型
-template<typename T>
-JsonType JsonItem<T>::GetItemType(){
-    return this->_type;
-}
-//获取键值
-template<typename T>
-std::string JsonItem<T>::GetItemKey(){
-    return this->_key;
-}
-//获取值
-template<typename T>
-JObject<T> JsonItem<T>::GetItemValue(){
-    return this->_value;
-}
+// template<typename T>
+// T* JsonItem<T>::GetItemLpValue(){
+//     return this->_value.Cast();
+// }
 
 std::ifstream _file;
-void OpenFile(const std::string filePath){
-    _file.open(filePath,std::ios::in);
-    if(!_file.is_open()){
-        throw std::exception("JsonSerialize读取的文件没有打开!!!");
-    }
+void OpenFile(const std::string filePath) {
+    _file.open(filePath, std::ios::in);
+    if (!_file.is_open()) return;
 }
-void CloseFile(){
+void CloseFile() {
     _file.close();
 }
 
-JsonSerialize::JsonSerialize(const std::string filePath){
-    this->_filePath=filePath;
+bool JsonKey::operator<(const JsonKey& j_key) const {
+    return false;
 }
 
-bool isFirst=true;
-bool isQuote=false;
-bool isKey=true;
-int deep=0;
-std::string key="";
-std::string value="";
-
-bool isBool(const std::string str){
-    return str=="true";
+JsonSerialize::JsonSerialize(const std::string filePath) {
+    this->_filePath = filePath;
 }
 
-bool Analysis(const char* buffer, std::vector<JsonItemBase>& content, const int length){
-    for(int i=0;i<length;i++){
-        char ch=buffer[length];
-        if(ch=='{'&&!isQuote){
-            deep++;
-            if(deep==1&&isFirst==true) isFirst=false;
-            else if(deep==1&&isFirst==false) return false;
-        }
-        else if(ch=='}'&&!isQuote) deep--;
-        else if(ch=='"'&&!isQuote) isQuote=true;
-        else if(ch=='"'&&isQuote) isQuote=false;
-        else if(ch==':'&&!isQuote) isKey=false;
-        else if((ch==',' || ch=='\n')&&!isQuote){
-            if(value=="true"||value=="false"){
-                JObject<bool> obj(isBool(value));
-                JsonItem<bool> temp(JsonType::Bool,key,obj);
+bool isFirst = true;
+bool isQuote = false;
+bool isKey = true;
+bool isObj = false;
+bool isObjEnd = true;
+bool isArrEnd = true;
+JsonType curType = JsonType::Null;
+size_t objListDeep = 0;
+size_t arrDeep = 0;
+std::wstring key = L"";
+std::wstring value = L"";
+std::stack<std::wstring> arrKey;
+std::stack<JsonType> cer;
+std::vector<std::pair<bool,JsonItem<std::vector<JsonValue>>*>> arrValueList; //false直接放到对象中 true 放到objList中
+std::vector<std::pair<bool,JsonItem<JsonSerialize>*>> objList;               //false直接放到对象中 true 放到arrValueList中
+
+void freeAll() {
+    for (std::pair<bool, JsonItem<std::vector<JsonValue>>*> item : arrValueList)
+        if (item.second) delete item.second;
+    for (std::pair<bool, JsonItem<JsonSerialize>*> item : objList)
+        if (item.second) delete item.second;
+}
+
+std::string stows(std::wstring& ws)
+{
+    std::string curLocale = setlocale(LC_ALL, NULL); // curLocale = "C";
+    setlocale(LC_ALL, "chs");
+    const wchar_t* _Source = ws.c_str();
+    size_t _Dsize = 2 * ws.size() + 1;
+    char* _Dest = new char[_Dsize];
+    memset(_Dest, 0, _Dsize);
+    wcstombs(_Dest, _Source, _Dsize);
+    std::string result = _Dest;
+    delete[]_Dest;
+    setlocale(LC_ALL, curLocale.c_str());
+    return result;
+}
+
+
+bool isBool(const std::wstring& str) {
+    return str == L"true";
+}
+
+bool isNumber(const std::wstring& str) {
+    std::wstring wstr = str;
+    std::stringstream ss(stows(wstr));
+    double d;
+    char c;
+    if (!(ss >> d)) return false;
+    if (ss >> c) return false;
+    return true;
+}
+
+bool Analysis(const char* buffer, std::vector<std::pair<JsonKey, JsonValue>>& content, const size_t length) {
+    size_t charLength = strlen(buffer) < length ? strlen(buffer) : length;
+    for (size_t i = 0; i < charLength; i++) {
+        char ch = buffer[i];
+        std::cout << ch;
+        if (ch == '{' && !isQuote) {
+            objListDeep++;
+            curType = JsonType::Object;
+            if (objListDeep >= 2) {
+                bool flag = (cer.empty() || cer.top() == JsonType::Object) ? false : true;
+                objList.push_back(std::pair<bool, JsonItem<JsonSerialize>*>(flag, new JsonItem<JsonSerialize>()));
+                isObj = true;
+                isObjEnd = false;
+                if (!isArrEnd) cer.push(JsonType::Array);
+                cer.push(JsonType::Object);
+                if (isKey) arrKey.push(L"");
             }
-            JsonItem<typename T>
-            key="";
-            value="";
-            isKey=true;
         }
-        else{
-            if(isKey&&isQuote) key+=std::string(1,ch);
-            else if(isKey&&!isQuote) return false;
-            else if(!isKey) value+=std::string(1,ch);
+        else if (ch == '}' && !isQuote) {
+            if (objListDeep == 1 && isFirst == true) isFirst = false;
+            else if (objListDeep == 1 && isFirst == false) return false;
+            objListDeep--;
+            isObjEnd = true;
+            if (objListDeep != 0)
+                goto addArray;
         }
-        if(deep<0) return false;
+        else if (ch == '[' && !isQuote) {
+            bool flag = (cer.empty() || cer.top() == JsonType::Object) ? false : true;
+            curType = JsonType::Array;
+            arrDeep++;
+            arrValueList.push_back(std::pair<bool, JsonItem<std::vector<JsonValue>>*>(flag,new JsonItem<std::vector<JsonValue>>()));
+            isArrEnd = false;
+            if (!isObjEnd) cer.push(JsonType::Object);
+            cer.push(JsonType::Array);
+        }
+        else if (ch == ']' && !isQuote) {
+            arrDeep--;
+            if (arrDeep == 0) isArrEnd = true;
+            goto addArray;
+        }
+        else if (ch == ' ' && !isQuote) continue;
+        else if (ch == '"' && !isQuote) {
+            isQuote = true;
+            if (isKey) key += L"\"";
+            else value += L"\"";
+        }
+        else if (ch == '"' && isQuote) {
+            isQuote = false;
+            if (isKey) key += L"\"";
+            else value += L"\"";
+        }
+        else if (ch == ':' && !isQuote) isKey = false;
+        else if ((ch == ',' || ch == '\n') && !isQuote) {
+
+            if ((key == L"" && value == L"" && objList.size() == 0 && arrValueList.size() == 0)
+                || (key == L"" && value == L"" && !isArrEnd)) continue;
+
+addArray:   std::wstring inputKey = key == L"" ? L"" : key.replace(0, 1, L"");
+            inputKey = inputKey == L"" ? L"" : inputKey.replace(inputKey.find_last_of(L"\""), 1, L"");
+
+            JsonKey j_key;
+            JsonValue j_value;
+            JsonType insertType = JsonType::Null;
+            j_key._key = inputKey;
+
+            if (value == L"true" || value == L"false") {                  //Bool
+                JsonItem<bool> *objList=new JsonItem<bool>(isBool(value));
+                size_t size = sizeof(objList);
+                j_value._value = objList;
+                j_value._size = 1;
+                j_key._type = JsonType::Bool;
+            }
+            else if (value.find(L"\"") == 0 && value.find_last_of(L"\"") == value.size() - 1) { //String
+                size_t n = value.size();
+                std::wstring* temp = new std::wstring(value.begin(), value.end());
+                JsonItem<std::wstring*> *objList=new JsonItem<std::wstring*>(temp);
+                j_value._value = objList;
+                j_value._size = n;
+                j_key._type = JsonType::String;
+            }
+            else if (isNumber(value)) {                                          //Number
+                double result = 0;
+                std::stringstream ss(stows(value));
+                ss >> result;
+                JsonItem<double> *objList=new JsonItem<double>(result);
+                size_t size = sizeof(objList);
+                j_value._value = objList;
+                //memcpy_s(j_value._value, size, &objList, size);
+                j_value._size = 1;
+                j_key._type = JsonType::Number;
+            }
+            else if (arrValueList.size() != 0 && objList.size() != 0) {//Array Add or Object Add
+                if (!isObjEnd) {
+                    arrKey.push(inputKey);
+                    key = L"";
+                    isKey = true;
+                    continue;
+                }
+                cer.pop();
+                void* _val = curType == JsonType::Object ? (void*)objList.back().second : (void*)arrValueList.back().second;
+                size_t _si = curType == JsonType::Object ?
+                    objList.back().second->GetItemRefValue().GetContent().size() :
+                    arrValueList.back().second->GetItemLpValue()->size();
+                j_key._key = arrKey.top();
+                j_value._value = _val;
+                j_value._size = _si;
+                j_key._type = JsonType::Object;
+                if (curType == JsonType::Object) objList.pop_back();
+                else arrValueList.pop_back();
+                //接下来确认是放到obj 还是 arrvalue 通过cer栈顶元素判断
+                JsonType upType = cer.top();
+                arrKey.pop();
+                if (upType == JsonType::Object)
+                    objList.back().second->GetItemLpValue()->GetContent().push_back(std::pair<JsonKey, JsonValue>(j_key, j_value));
+                else 
+                    arrValueList.back().second->GetItemLpValue()->push_back(j_value);
+                continue;
+            }
+            else if (objList.size() != 0) {//Object
+                if (!isObjEnd && isKey) {
+                    arrKey.push(inputKey);
+                    key = L"";
+                    continue;
+                }
+                cer.pop();
+                j_key._key = arrKey.top();
+                arrKey.pop();
+                j_value._value = objList.back().second;
+                j_value._size = objList.back().second->GetItemRefValue().GetContent().size();
+                j_key._type = JsonType::Object;
+                objList.pop_back();
+                if (objList.size() != 0) {
+                    objList.back().second->GetItemLpValue()->GetContent().push_back(std::pair<JsonKey, JsonValue>(j_key, j_value));
+                    continue;
+                }
+            }
+            else if (arrValueList.size() != 0 && objList.size() == 0) {//Array
+                if (!isArrEnd) {
+                    arrKey.push(inputKey);
+                    key = L"";
+                    isKey = true;
+                    continue;
+                }
+                cer.pop();
+                j_key._key = arrKey.empty()?inputKey:arrKey.top();
+                if (!arrKey.empty()) arrKey.pop();
+                j_value._value = arrValueList.back().second;
+                j_value._size = arrValueList.back().second->GetItemLpValue()->size();
+                j_key._type = JsonType::Array;
+                arrValueList.pop_back();
+                if (arrValueList.size() != 0) {
+                    arrValueList.back().second->GetItemLpValue()->push_back(j_value);
+                    continue;
+                }
+            }
+            else if (value == L"") {                               //Null
+                JsonItem<JNull>* objList = new JsonItem<JNull>();
+                size_t size = sizeof(objList);
+                j_value._value = objList;
+                j_value._size = 0;
+                j_key._type = JsonType::Null;
+            }
+            std::pair<JsonKey, JsonValue> pair(j_key, j_value);
+            if (!isObjEnd) {
+                objList.back().second->GetItemRefValue().GetContent().push_back(pair);
+            }
+            else content.push_back(pair);
+            key = L"";
+            value = L"";
+            isKey = true;
+            if (objListDeep == 1 && isObj) isObj = false;
+        }
+        else {
+            if (isKey && isQuote) key += std::wstring(1, ch);
+            else if (isKey && !isQuote) return false;
+            else if (!isKey) value += std::wstring(1, ch);
+        }
+        if (objListDeep < 0 || arrDeep < 0) return false;
 
     }
     return true;
 }
 
-bool JsonSerialize::Load(const string filePath){
-    try{
-        if(filePath!=""){
-            this->_filePath=filePath;
+bool JsonSerialize::Load(const string filePath) {
+    try {
+        if (filePath != "") {
+            this->_filePath = filePath;
         }
         OpenFile(this->_filePath);
-        while(!_file.eof()){
-            char buffer[0x4000]="";
-            int length=sizeof(buffer)/sizeof(char);
+        while (!_file.eof()) {
+            char buffer[0x4000] = "";
+            size_t length = sizeof(buffer) / sizeof(char);
             _file.read(buffer, length);
-            if(!Analysis(buffer, content, length)){
+            if (!Analysis(buffer, content, length)) {
                 CloseFile();
                 return false;
             }
         }
         CloseFile();
-        return true;
+        freeAll();
+        return objListDeep == 0 && arrDeep == 0;
     }
-    catch(std::exception ex){
+    catch (std::exception ex) {
         throw ex;
     }
 }
 
+std::vector<std::pair<JsonKey, JsonValue>>& JsonSerialize::GetContent() {
+    return this->content;
+}
+template<typename T>
+JsonItem<T>* JsonSerialize::GetValueByKey(string key)
+{
+    JsonItem<T>* temp_value = nullptr;
+    for (auto item : this->content) {
+        if (item.first._key == key) {
+            temp_value = (JsonItem<T>*)(item.second._value);
+            break;
+        }
+    }
+    return temp_value;
+}
 
-NAME_SPACE_END()
+void coutTab(int count) {
+    while (count--) {
+        std::cout << '\t';
+    }
+}
+
+void JsonSerialize::printAll(int tab) {
+    auto res = this->content;
+    coutTab(tab);
+    std::cout << "{" << std::endl;
+    for (auto it = res.begin(); it != res.end(); it++) {
+        JsonKey temp_key = it->first;
+        if (temp_key._type == JsonType::Number) {
+            JsonItem<double>* temp_value = (JsonItem<double>*)(it->second._value);
+            coutTab(tab + 1);
+            std::wcout << temp_key._key << " : " << temp_value->GetItemRefValue() << std::endl;
+        }
+        else if (temp_key._type == JsonType::String) {
+            JsonItem<std::wstring*>* temp_value = (JsonItem<std::wstring*>*)(it->second._value);
+            coutTab(tab + 1);
+            std::wcout << temp_key._key << " : " << *temp_value->GetItemRefValue() << "" << std::endl;
+        }
+        else if (temp_key._type == JsonType::Null) {
+            JsonItem<JNull>* temp_value = (JsonItem<JNull>*)(it->second._value);
+            coutTab(tab + 1);
+            std::wcout << temp_key._key << " : " << "NULL" << std::endl;
+        }
+        else if (temp_key._type == JsonType::Bool) {
+            JsonItem<bool>* temp_value = (JsonItem<bool>*)(it->second._value);
+            coutTab(tab + 1);
+            std::wcout << temp_key._key << " : " << (temp_value->GetItemRefValue() ? "true" : "false") << std::endl;
+        }
+        else if (temp_key._type == JsonType::Object) {
+            JsonItem<JsonSerialize>* temp_value = (JsonItem<JsonSerialize>*)(it->second._value);
+            temp_value->GetItemRefValue().printAll(tab + 1);
+        }
+        else if (temp_key._type == JsonType::Array) {
+            JsonItem<std::vector<JsonValue>>* temp_value =
+                (JsonItem<std::vector<JsonValue>>*)(it->second._value);
+            coutTab(tab + 1);
+            std::wcout << temp_key._key << ":[" << std::endl;
+            for (auto item : temp_value->GetItemRefValue()) {
+                JsonItem<JsonSerialize>* tt_value = (JsonItem<JsonSerialize>*)(item._value);
+                tt_value->GetItemLpValue()->printAll(tab + 2);
+            }
+            coutTab(tab + 1);
+            std::cout << "]" << std::endl;
+        }
+    }
+    coutTab(tab);
+    std::cout << "}" << std::endl;
+}
+
+
+// NAME_SPACE_END()

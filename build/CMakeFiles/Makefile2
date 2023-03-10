@@ -63,6 +63,8 @@ CMAKE_BINARY_DIR = F:\Visual-Studio-practice\vscode\mySource\build
 
 # The main recursive "all" target.
 all: CMakeFiles/MAIN.dir/all
+all: CMakeFiles/ReflexTest.dir/all
+all: CMakeFiles/JsonTest.dir/all
 all: utils/Matrix/all
 all: utils/Log/all
 all: utils/Reflex/all
@@ -80,6 +82,8 @@ preinstall: utils/Singleton/preinstall
 
 # The main recursive "clean" target.
 clean: CMakeFiles/MAIN.dir/clean
+clean: CMakeFiles/ReflexTest.dir/clean
+clean: CMakeFiles/JsonTest.dir/clean
 clean: utils/Matrix/clean
 clean: utils/Log/clean
 clean: utils/Reflex/clean
@@ -172,16 +176,17 @@ utils/Util/clean: utils/Util/CMakeFiles/Util_static.dir/clean
 # All Build rule for target.
 CMakeFiles/MAIN.dir/all: utils/Matrix/CMakeFiles/Matrix_static.dir/all
 CMakeFiles/MAIN.dir/all: utils/Log/CMakeFiles/logger_static.dir/all
+CMakeFiles/MAIN.dir/all: utils/Reflex/CMakeFiles/Reflex_static.dir/all
 CMakeFiles/MAIN.dir/all: utils/Util/CMakeFiles/Util_static.dir/all
 CMakeFiles/MAIN.dir/all: utils/Singleton/CMakeFiles/Singleton_static.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\MAIN.dir\build.make CMakeFiles/MAIN.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\MAIN.dir\build.make CMakeFiles/MAIN.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=F:\Visual-Studio-practice\vscode\mySource\build\CMakeFiles --progress-num=1,2 "Built target MAIN"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=F:\Visual-Studio-practice\vscode\mySource\build\CMakeFiles --progress-num=3,4 "Built target MAIN"
 .PHONY : CMakeFiles/MAIN.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/MAIN.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start F:\Visual-Studio-practice\vscode\mySource\build\CMakeFiles 10
+	$(CMAKE_COMMAND) -E cmake_progress_start F:\Visual-Studio-practice\vscode\mySource\build\CMakeFiles 12
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 CMakeFiles/MAIN.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start F:\Visual-Studio-practice\vscode\mySource\build\CMakeFiles 0
 .PHONY : CMakeFiles/MAIN.dir/rule
@@ -196,13 +201,65 @@ CMakeFiles/MAIN.dir/clean:
 .PHONY : CMakeFiles/MAIN.dir/clean
 
 #=============================================================================
+# Target rules for target CMakeFiles/ReflexTest.dir
+
+# All Build rule for target.
+CMakeFiles/ReflexTest.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ReflexTest.dir\build.make CMakeFiles/ReflexTest.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ReflexTest.dir\build.make CMakeFiles/ReflexTest.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=F:\Visual-Studio-practice\vscode\mySource\build\CMakeFiles --progress-num=7,8 "Built target ReflexTest"
+.PHONY : CMakeFiles/ReflexTest.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/ReflexTest.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start F:\Visual-Studio-practice\vscode\mySource\build\CMakeFiles 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 CMakeFiles/ReflexTest.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start F:\Visual-Studio-practice\vscode\mySource\build\CMakeFiles 0
+.PHONY : CMakeFiles/ReflexTest.dir/rule
+
+# Convenience name for target.
+ReflexTest: CMakeFiles/ReflexTest.dir/rule
+.PHONY : ReflexTest
+
+# clean rule for target.
+CMakeFiles/ReflexTest.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ReflexTest.dir\build.make CMakeFiles/ReflexTest.dir/clean
+.PHONY : CMakeFiles/ReflexTest.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/JsonTest.dir
+
+# All Build rule for target.
+CMakeFiles/JsonTest.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\JsonTest.dir\build.make CMakeFiles/JsonTest.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\JsonTest.dir\build.make CMakeFiles/JsonTest.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=F:\Visual-Studio-practice\vscode\mySource\build\CMakeFiles --progress-num=1,2 "Built target JsonTest"
+.PHONY : CMakeFiles/JsonTest.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/JsonTest.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start F:\Visual-Studio-practice\vscode\mySource\build\CMakeFiles 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 CMakeFiles/JsonTest.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start F:\Visual-Studio-practice\vscode\mySource\build\CMakeFiles 0
+.PHONY : CMakeFiles/JsonTest.dir/rule
+
+# Convenience name for target.
+JsonTest: CMakeFiles/JsonTest.dir/rule
+.PHONY : JsonTest
+
+# clean rule for target.
+CMakeFiles/JsonTest.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\JsonTest.dir\build.make CMakeFiles/JsonTest.dir/clean
+.PHONY : CMakeFiles/JsonTest.dir/clean
+
+#=============================================================================
 # Target rules for target utils/Matrix/CMakeFiles/Matrix_static.dir
 
 # All Build rule for target.
 utils/Matrix/CMakeFiles/Matrix_static.dir/all:
 	$(MAKE) $(MAKESILENT) -f utils\Matrix\CMakeFiles\Matrix_static.dir\build.make utils/Matrix/CMakeFiles/Matrix_static.dir/depend
 	$(MAKE) $(MAKESILENT) -f utils\Matrix\CMakeFiles\Matrix_static.dir\build.make utils/Matrix/CMakeFiles/Matrix_static.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=F:\Visual-Studio-practice\vscode\mySource\build\CMakeFiles --progress-num=3,4 "Built target Matrix_static"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=F:\Visual-Studio-practice\vscode\mySource\build\CMakeFiles --progress-num=5,6 "Built target Matrix_static"
 .PHONY : utils/Matrix/CMakeFiles/Matrix_static.dir/all
 
 # Build rule for subdir invocation for target.
@@ -228,7 +285,7 @@ utils/Matrix/CMakeFiles/Matrix_static.dir/clean:
 utils/Log/CMakeFiles/logger_static.dir/all: utils/Util/CMakeFiles/Util_static.dir/all
 	$(MAKE) $(MAKESILENT) -f utils\Log\CMakeFiles\logger_static.dir\build.make utils/Log/CMakeFiles/logger_static.dir/depend
 	$(MAKE) $(MAKESILENT) -f utils\Log\CMakeFiles\logger_static.dir\build.make utils/Log/CMakeFiles/logger_static.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=F:\Visual-Studio-practice\vscode\mySource\build\CMakeFiles --progress-num=15,16 "Built target logger_static"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=F:\Visual-Studio-practice\vscode\mySource\build\CMakeFiles --progress-num=19,20 "Built target logger_static"
 .PHONY : utils/Log/CMakeFiles/logger_static.dir/all
 
 # Build rule for subdir invocation for target.
@@ -255,7 +312,7 @@ utils/Reflex/CMakeFiles/Reflex_static.dir/all: utils/Util/CMakeFiles/Util_static
 utils/Reflex/CMakeFiles/Reflex_static.dir/all: utils/Singleton/CMakeFiles/Singleton_static.dir/all
 	$(MAKE) $(MAKESILENT) -f utils\Reflex\CMakeFiles\Reflex_static.dir\build.make utils/Reflex/CMakeFiles/Reflex_static.dir/depend
 	$(MAKE) $(MAKESILENT) -f utils\Reflex\CMakeFiles\Reflex_static.dir\build.make utils/Reflex/CMakeFiles/Reflex_static.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=F:\Visual-Studio-practice\vscode\mySource\build\CMakeFiles --progress-num=5,6 "Built target Reflex_static"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=F:\Visual-Studio-practice\vscode\mySource\build\CMakeFiles --progress-num=9,10 "Built target Reflex_static"
 .PHONY : utils/Reflex/CMakeFiles/Reflex_static.dir/all
 
 # Build rule for subdir invocation for target.
@@ -281,7 +338,7 @@ utils/Reflex/CMakeFiles/Reflex_static.dir/clean:
 utils/Util/CMakeFiles/Util.dir/all:
 	$(MAKE) $(MAKESILENT) -f utils\Util\CMakeFiles\Util.dir\build.make utils/Util/CMakeFiles/Util.dir/depend
 	$(MAKE) $(MAKESILENT) -f utils\Util\CMakeFiles\Util.dir\build.make utils/Util/CMakeFiles/Util.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=F:\Visual-Studio-practice\vscode\mySource\build\CMakeFiles --progress-num=11,12 "Built target Util"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=F:\Visual-Studio-practice\vscode\mySource\build\CMakeFiles --progress-num=15,16 "Built target Util"
 .PHONY : utils/Util/CMakeFiles/Util.dir/all
 
 # Build rule for subdir invocation for target.
@@ -307,7 +364,7 @@ utils/Util/CMakeFiles/Util.dir/clean:
 utils/Util/CMakeFiles/Util_static.dir/all:
 	$(MAKE) $(MAKESILENT) -f utils\Util\CMakeFiles\Util_static.dir\build.make utils/Util/CMakeFiles/Util_static.dir/depend
 	$(MAKE) $(MAKESILENT) -f utils\Util\CMakeFiles\Util_static.dir\build.make utils/Util/CMakeFiles/Util_static.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=F:\Visual-Studio-practice\vscode\mySource\build\CMakeFiles --progress-num=13,14 "Built target Util_static"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=F:\Visual-Studio-practice\vscode\mySource\build\CMakeFiles --progress-num=17,18 "Built target Util_static"
 .PHONY : utils/Util/CMakeFiles/Util_static.dir/all
 
 # Build rule for subdir invocation for target.
@@ -333,7 +390,7 @@ utils/Util/CMakeFiles/Util_static.dir/clean:
 utils/Singleton/CMakeFiles/Singleton.dir/all:
 	$(MAKE) $(MAKESILENT) -f utils\Singleton\CMakeFiles\Singleton.dir\build.make utils/Singleton/CMakeFiles/Singleton.dir/depend
 	$(MAKE) $(MAKESILENT) -f utils\Singleton\CMakeFiles\Singleton.dir\build.make utils/Singleton/CMakeFiles/Singleton.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=F:\Visual-Studio-practice\vscode\mySource\build\CMakeFiles --progress-num=7,8 "Built target Singleton"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=F:\Visual-Studio-practice\vscode\mySource\build\CMakeFiles --progress-num=11,12 "Built target Singleton"
 .PHONY : utils/Singleton/CMakeFiles/Singleton.dir/all
 
 # Build rule for subdir invocation for target.
@@ -359,7 +416,7 @@ utils/Singleton/CMakeFiles/Singleton.dir/clean:
 utils/Singleton/CMakeFiles/Singleton_static.dir/all: utils/Util/CMakeFiles/Util_static.dir/all
 	$(MAKE) $(MAKESILENT) -f utils\Singleton\CMakeFiles\Singleton_static.dir\build.make utils/Singleton/CMakeFiles/Singleton_static.dir/depend
 	$(MAKE) $(MAKESILENT) -f utils\Singleton\CMakeFiles\Singleton_static.dir\build.make utils/Singleton/CMakeFiles/Singleton_static.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=F:\Visual-Studio-practice\vscode\mySource\build\CMakeFiles --progress-num=9,10 "Built target Singleton_static"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=F:\Visual-Studio-practice\vscode\mySource\build\CMakeFiles --progress-num=13,14 "Built target Singleton_static"
 .PHONY : utils/Singleton/CMakeFiles/Singleton_static.dir/all
 
 # Build rule for subdir invocation for target.

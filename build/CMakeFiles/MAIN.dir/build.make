@@ -96,6 +96,8 @@ MAIN.exe: utils/Matrix/libMatrix_static.a
 MAIN.exe: utils/Log/liblogger_static.a
 MAIN.exe: utils/Util/libUtil_static.a
 MAIN.exe: utils/Singleton/libSingleton_static.a
+MAIN.exe: utils/Reflex/libReflex_static.a
+MAIN.exe: utils/Singleton/libSingleton_static.a
 MAIN.exe: utils/Util/libUtil_static.a
 MAIN.exe: CMakeFiles/MAIN.dir/linkLibs.rsp
 MAIN.exe: CMakeFiles/MAIN.dir/objects1

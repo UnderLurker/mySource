@@ -184,6 +184,32 @@ MAIN/fast:
 .PHONY : MAIN/fast
 
 #=============================================================================
+# Target rules for targets named ReflexTest
+
+# Build rule for target.
+ReflexTest: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 ReflexTest
+.PHONY : ReflexTest
+
+# fast build rule for target.
+ReflexTest/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ReflexTest.dir\build.make CMakeFiles/ReflexTest.dir/build
+.PHONY : ReflexTest/fast
+
+#=============================================================================
+# Target rules for targets named JsonTest
+
+# Build rule for target.
+JsonTest: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 JsonTest
+.PHONY : JsonTest
+
+# fast build rule for target.
+JsonTest/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\JsonTest.dir\build.make CMakeFiles/JsonTest.dir/build
+.PHONY : JsonTest/fast
+
+#=============================================================================
 # Target rules for targets named Matrix_static
 
 # Build rule for target.
@@ -298,6 +324,54 @@ main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\MAIN.dir\build.make CMakeFiles/MAIN.dir/main.cpp.s
 .PHONY : main.cpp.s
 
+test/json_test.obj: test/json_test.cpp.obj
+.PHONY : test/json_test.obj
+
+# target to build an object file
+test/json_test.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\JsonTest.dir\build.make CMakeFiles/JsonTest.dir/test/json_test.cpp.obj
+.PHONY : test/json_test.cpp.obj
+
+test/json_test.i: test/json_test.cpp.i
+.PHONY : test/json_test.i
+
+# target to preprocess a source file
+test/json_test.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\JsonTest.dir\build.make CMakeFiles/JsonTest.dir/test/json_test.cpp.i
+.PHONY : test/json_test.cpp.i
+
+test/json_test.s: test/json_test.cpp.s
+.PHONY : test/json_test.s
+
+# target to generate assembly for a file
+test/json_test.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\JsonTest.dir\build.make CMakeFiles/JsonTest.dir/test/json_test.cpp.s
+.PHONY : test/json_test.cpp.s
+
+test/reflex_test.obj: test/reflex_test.cpp.obj
+.PHONY : test/reflex_test.obj
+
+# target to build an object file
+test/reflex_test.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ReflexTest.dir\build.make CMakeFiles/ReflexTest.dir/test/reflex_test.cpp.obj
+.PHONY : test/reflex_test.cpp.obj
+
+test/reflex_test.i: test/reflex_test.cpp.i
+.PHONY : test/reflex_test.i
+
+# target to preprocess a source file
+test/reflex_test.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ReflexTest.dir\build.make CMakeFiles/ReflexTest.dir/test/reflex_test.cpp.i
+.PHONY : test/reflex_test.cpp.i
+
+test/reflex_test.s: test/reflex_test.cpp.s
+.PHONY : test/reflex_test.s
+
+# target to generate assembly for a file
+test/reflex_test.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ReflexTest.dir\build.make CMakeFiles/ReflexTest.dir/test/reflex_test.cpp.s
+.PHONY : test/reflex_test.cpp.s
+
 # Help Target
 help:
 	@echo The following are some of the valid targets for this Makefile:
@@ -311,8 +385,10 @@ help:
 	@echo ... list_install_components
 	@echo ... rebuild_cache
 	@echo ... test
+	@echo ... JsonTest
 	@echo ... MAIN
 	@echo ... Matrix_static
+	@echo ... ReflexTest
 	@echo ... Reflex_static
 	@echo ... Singleton
 	@echo ... Singleton_static
@@ -322,6 +398,12 @@ help:
 	@echo ... main.obj
 	@echo ... main.i
 	@echo ... main.s
+	@echo ... test/json_test.obj
+	@echo ... test/json_test.i
+	@echo ... test/json_test.s
+	@echo ... test/reflex_test.obj
+	@echo ... test/reflex_test.i
+	@echo ... test/reflex_test.s
 .PHONY : help
 
 

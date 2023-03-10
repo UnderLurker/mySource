@@ -1,0 +1,2 @@
+F:\mingw64\bin\ar.exe qc libJsonSerialize_static.a CMakeFiles/JsonSerialize_static.dir/src/JsonSerialize.cpp.obj
+F:\mingw64\bin\ranlib.exe libJsonSerialize_static.a
