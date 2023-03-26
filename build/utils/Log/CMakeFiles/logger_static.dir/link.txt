@@ -1,2 +1,0 @@
-F:\mingw64\bin\ar.exe qc liblogger_static.a CMakeFiles/logger_static.dir/src/logger.cpp.obj
-F:\mingw64\bin\ranlib.exe liblogger_static.a

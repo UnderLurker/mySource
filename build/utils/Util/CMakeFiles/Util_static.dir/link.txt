@@ -1,2 +1,0 @@
-F:\mingw64\bin\ar.exe qc libUtil_static.a CMakeFiles/Util_static.dir/src/Util.cpp.obj
-F:\mingw64\bin\ranlib.exe libUtil_static.a

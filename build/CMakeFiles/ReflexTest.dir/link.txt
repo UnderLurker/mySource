@@ -1,3 +1,0 @@
-D:\bin\cmake.exe -E rm -f CMakeFiles\ReflexTest.dir/objects.a
-F:\mingw64\bin\ar.exe qc CMakeFiles\ReflexTest.dir/objects.a @CMakeFiles\ReflexTest.dir\objects1
-F:\mingw64\bin\g++.exe -g -Wl,--whole-archive CMakeFiles\ReflexTest.dir/objects.a -Wl,--no-whole-archive -o ReflexTest.exe -Wl,--out-implib,libReflexTest.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\ReflexTest.dir\linkLibs.rsp

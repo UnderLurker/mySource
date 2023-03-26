@@ -1,3 +1,0 @@
-D:\bin\cmake.exe -E rm -f CMakeFiles\Reflex.dir/objects.a
-F:\mingw64\bin\ar.exe qc CMakeFiles\Reflex.dir/objects.a @CMakeFiles\Reflex.dir\objects1
-F:\mingw64\bin\g++.exe -g -shared -o libReflex.dll -Wl,--out-implib,libReflex.dll.a -Wl,--major-image-version,0,--minor-image-version,0 -Wl,--whole-archive CMakeFiles\Reflex.dir/objects.a -Wl,--no-whole-archive @CMakeFiles\Reflex.dir\linkLibs.rsp
