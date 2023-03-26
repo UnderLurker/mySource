@@ -179,4 +179,19 @@ void IniHelper::trim(std::string& str){
     std::reverse(str.begin(), str.end());
 }
 
+std::string getFile(const std::string& filePath)
+{
+    std::string content = "";
+    std::fstream file(filePath, std::ios::in | std::ios::binary);
+    if (!file.fail()) {
+        while (!file.eof()) {
+            char ch;
+            file.get(ch);
+            content.push_back(ch);
+        }
+    }
+    file.close();
+    return content;
+}
+
 NAME_SPACE_END()

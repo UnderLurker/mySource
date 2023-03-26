@@ -74,6 +74,7 @@ private:
     Method func;
 };
 
+std::string getFile(const std::string& filePath);
 
 NAME_SPACE_END()
 

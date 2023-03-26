@@ -1,13 +1,13 @@
 #pragma once
 #ifndef _JSON_SERIALIZE_
 #define _JSON_SERIALIZE_
-// #include "Util.h"
+#include "Util.h"
 #include <fstream>
 #include <string>
 #include <vector>
 #include <map>
 
-// NAME_SPACE_START(Json)
+NAME_SPACE_START(Json)
 
 enum JsonType {
     None,
@@ -117,7 +117,7 @@ public:
     ~JsonSerialize() {};
     bool Load(const string filePath = "");
     template<typename T>
-    JsonItem<T>* GetValueByKey(string key);
+    JsonItem<T>* GetValueByKey(const std::wstring& key);
     std::vector<std::pair<JsonKey, JsonValue>>& GetContent();
     void printAll(int tab = 0);
 private:
@@ -125,5 +125,46 @@ private:
 };
 
 
-// NAME_SPACE_END()
+template<typename T>
+JBaseObject<T>* JHolderObject<T>::clone() {
+    return new JHolderObject<T>(this->value);
+}
+
+template<typename ValueType>
+JObject<ValueType>::JObject(const ValueType& value) {
+    _value = new JHolderObject<ValueType>(value);
+}
+
+template<typename ValueType>
+JObject<ValueType>::~JObject() {
+    if (_value) delete _value;
+}
+
+template<typename ValueType>
+JObject<ValueType>& JObject<ValueType>::operator=(const ValueType& value) {
+    if (_value) delete _value;
+    _value = new JHolderObject<ValueType>(value);
+    return *this;
+}
+
+template<typename T>
+JsonItem<T>::JsonItem(const T& objList)
+{
+    this->_value = objList;
+}
+
+template<typename T>
+JsonItem<T>* JsonSerialize::GetValueByKey(const std::wstring& key)
+{
+    JsonItem<T>* temp_value = nullptr;
+    for (auto item : this->content) {
+        if (item.first._key == key) {
+            temp_value = (JsonItem<T>*)(item.second._value);
+            break;
+        }
+    }
+    return temp_value;
+}
+
+NAME_SPACE_END()
 #endif //!_JSON_SERIALIZE_

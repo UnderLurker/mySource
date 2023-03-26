@@ -1,5 +1,4 @@
-#include "JsonSerialize.h"
-// #include "Util.h"
+#include "Util.h"
 #include <iostream>
 #include <sstream>
 #include <atomic>
@@ -10,35 +9,17 @@
 #include <utility>
 #include <vector>
 #include <stack>
+#include <locale>
+#include "JsonSerialize.h"
 
-// NAME_SPACE_START(Json)
+NAME_SPACE_START(Json)
 
-template<typename T>
-JBaseObject<T>* JHolderObject<T>::clone() {
-    return new JHolderObject<T>(this->value);
-}
 
 // template<typename T>
 // T& JHolderObject<T>::GetValue(){
 //     return value;
 // }
 
-template<typename ValueType>
-JObject<ValueType>::JObject(const ValueType& value) {
-    _value = new JHolderObject<ValueType>(value);
-}
-
-template<typename ValueType>
-JObject<ValueType>::~JObject() {
-    if (_value) delete _value;
-}
-
-template<typename ValueType>
-JObject<ValueType>& JObject<ValueType>::operator=(const ValueType& value) {
-    if (_value) delete _value;
-    _value = new JHolderObject<ValueType>(value);
-    return *this;
-}
 
 // template<typename ValueType>
 // ValueType* JObject<ValueType>::Cast(){
@@ -56,11 +37,6 @@ JObject<ValueType>& JObject<ValueType>::operator=(const ValueType& value) {
 //     :JsonItemBase<T>(){
 //     this->_value=value;
 // }
-template<typename T>
-JsonItem<T>::JsonItem(const T& objList)
-{
-    this->_value = objList;
-}
 
 // //获取值
 // template<typename T>
@@ -73,10 +49,12 @@ JsonItem<T>::JsonItem(const T& objList)
 //     return this->_value.Cast();
 // }
 
-std::ifstream _file;
+std::wifstream _file;
 void OpenFile(const std::string filePath) {
     _file.open(filePath, std::ios::in);
     if (!_file.is_open()) return;
+    //std::locale china("zh_CN.UTF-8");
+    //_file.imbue(china);
 }
 void CloseFile() {
     _file.close();
@@ -113,41 +91,23 @@ void freeAll() {
         if (item.second) delete item.second;
 }
 
-std::string stows(std::wstring& ws)
-{
-    std::string curLocale = setlocale(LC_ALL, NULL); // curLocale = "C";
-    setlocale(LC_ALL, "chs");
-    const wchar_t* _Source = ws.c_str();
-    size_t _Dsize = 2 * ws.size() + 1;
-    char* _Dest = new char[_Dsize];
-    memset(_Dest, 0, _Dsize);
-    wcstombs(_Dest, _Source, _Dsize);
-    std::string result = _Dest;
-    delete[]_Dest;
-    setlocale(LC_ALL, curLocale.c_str());
-    return result;
-}
-
-
 bool isBool(const std::wstring& str) {
     return str == L"true";
 }
 
 bool isNumber(const std::wstring& str) {
-    std::wstring wstr = str;
-    std::stringstream ss(stows(wstr));
+    std::wstringstream ss(str);
     double d;
-    char c;
+    wchar_t c;
     if (!(ss >> d)) return false;
     if (ss >> c) return false;
     return true;
 }
 
-bool Analysis(const char* buffer, std::vector<std::pair<JsonKey, JsonValue>>& content, const size_t length) {
-    size_t charLength = strlen(buffer) < length ? strlen(buffer) : length;
+bool Analysis(const wchar_t* buffer, std::vector<std::pair<JsonKey, JsonValue>>& content, const size_t length) {
+    size_t charLength = wcslen(buffer) < length ? wcslen(buffer) : length;
     for (size_t i = 0; i < charLength; i++) {
-        char ch = buffer[i];
-        std::cout << ch;
+        wchar_t ch = buffer[i];
         if (ch == '{' && !isQuote) {
             objListDeep++;
             curType = JsonType::Object;
@@ -156,7 +116,7 @@ bool Analysis(const char* buffer, std::vector<std::pair<JsonKey, JsonValue>>& co
                 objList.push_back(std::pair<bool, JsonItem<JsonSerialize>*>(flag, new JsonItem<JsonSerialize>()));
                 isObj = true;
                 isObjEnd = false;
-                if (!isArrEnd) cer.push(JsonType::Array);
+                //if (!isArrEnd) cer.push(JsonType::Array);
                 cer.push(JsonType::Object);
                 if (isKey) arrKey.push(L"");
             }
@@ -166,6 +126,7 @@ bool Analysis(const char* buffer, std::vector<std::pair<JsonKey, JsonValue>>& co
             else if (objListDeep == 1 && isFirst == false) return false;
             objListDeep--;
             isObjEnd = true;
+            curType = JsonType::Object;
             if (objListDeep != 0)
                 goto addArray;
         }
@@ -175,11 +136,12 @@ bool Analysis(const char* buffer, std::vector<std::pair<JsonKey, JsonValue>>& co
             arrDeep++;
             arrValueList.push_back(std::pair<bool, JsonItem<std::vector<JsonValue>>*>(flag,new JsonItem<std::vector<JsonValue>>()));
             isArrEnd = false;
-            if (!isObjEnd) cer.push(JsonType::Object);
+            //if (!isObjEnd) cer.push(JsonType::Object);
             cer.push(JsonType::Array);
         }
         else if (ch == ']' && !isQuote) {
             arrDeep--;
+            curType = JsonType::Array;
             if (arrDeep == 0) isArrEnd = true;
             goto addArray;
         }
@@ -225,12 +187,11 @@ addArray:   std::wstring inputKey = key == L"" ? L"" : key.replace(0, 1, L"");
             }
             else if (isNumber(value)) {                                          //Number
                 double result = 0;
-                std::stringstream ss(stows(value));
+                std::wstringstream ss(value);
                 ss >> result;
                 JsonItem<double> *objList=new JsonItem<double>(result);
                 size_t size = sizeof(objList);
                 j_value._value = objList;
-                //memcpy_s(j_value._value, size, &objList, size);
                 j_value._size = 1;
                 j_key._type = JsonType::Number;
             }
@@ -241,7 +202,6 @@ addArray:   std::wstring inputKey = key == L"" ? L"" : key.replace(0, 1, L"");
                     isKey = true;
                     continue;
                 }
-                cer.pop();
                 void* _val = curType == JsonType::Object ? (void*)objList.back().second : (void*)arrValueList.back().second;
                 size_t _si = curType == JsonType::Object ?
                     objList.back().second->GetItemRefValue().GetContent().size() :
@@ -249,10 +209,11 @@ addArray:   std::wstring inputKey = key == L"" ? L"" : key.replace(0, 1, L"");
                 j_key._key = arrKey.top();
                 j_value._value = _val;
                 j_value._size = _si;
-                j_key._type = JsonType::Object;
+                j_key._type = curType;
                 if (curType == JsonType::Object) objList.pop_back();
                 else arrValueList.pop_back();
                 //接下来确认是放到obj 还是 arrvalue 通过cer栈顶元素判断
+                cer.pop();
                 JsonType upType = cer.top();
                 arrKey.pop();
                 if (upType == JsonType::Object)
@@ -333,7 +294,7 @@ bool JsonSerialize::Load(const string filePath) {
         }
         OpenFile(this->_filePath);
         while (!_file.eof()) {
-            char buffer[0x4000] = "";
+            wchar_t buffer[0x4000] = L"";
             size_t length = sizeof(buffer) / sizeof(char);
             _file.read(buffer, length);
             if (!Analysis(buffer, content, length)) {
@@ -353,18 +314,6 @@ bool JsonSerialize::Load(const string filePath) {
 std::vector<std::pair<JsonKey, JsonValue>>& JsonSerialize::GetContent() {
     return this->content;
 }
-template<typename T>
-JsonItem<T>* JsonSerialize::GetValueByKey(string key)
-{
-    JsonItem<T>* temp_value = nullptr;
-    for (auto item : this->content) {
-        if (item.first._key == key) {
-            temp_value = (JsonItem<T>*)(item.second._value);
-            break;
-        }
-    }
-    return temp_value;
-}
 
 void coutTab(int count) {
     while (count--) {
@@ -375,6 +324,7 @@ void coutTab(int count) {
 void JsonSerialize::printAll(int tab) {
     auto res = this->content;
     coutTab(tab);
+    std::cout.imbue(std::locale("chs"));
     std::cout << "{" << std::endl;
     for (auto it = res.begin(); it != res.end(); it++) {
         JsonKey temp_key = it->first;
@@ -420,4 +370,4 @@ void JsonSerialize::printAll(int tab) {
 }
 
 
-// NAME_SPACE_END()
+NAME_SPACE_END()

@@ -1,0 +1,46 @@
+#pragma once
+
+#include <string>
+#include <iostream>
+#include <unordered_map>
+using namespace std;
+#ifndef _SERVER_
+#define _SERVER_
+
+#include <winsock.h>
+#include "Net.h"
+#include "Util.h"
+#pragma comment(lib,"ws2_32.lib")
+
+NAME_SPACE_START(myUtil)
+
+#define SERVER_ADDR "127.0.0.1"
+#define SERVER_PORT 8080
+
+class Server {
+public:
+    Server();
+    Server(const std::string& addr = SERVER_ADDR, const int& port = SERVER_PORT);
+    ~Server() {}
+public:
+    bool listen(const int& maxConnect = 1);
+    void setRoute(const string& url, const string& className, const string& classFunName);
+    void runRoute(const Request& req, Response* resp);
+    void setInterceptor(const string& url, const string& InterceptorName);
+    void close();
+protected:
+    bool Init();
+    void threadFunc(SOCKET m_server);
+    int sendTelegram(const SOCKET& accept, const string& info, int flags);
+private:
+    SOCKET m_server;
+    SOCKADDR_IN m_add_in;
+    //thread listenThread;
+    int connectCount{ 0 };
+    unordered_map<string, pair<string, string>> routeMap;
+    unordered_map<string, string> interceptorMap;
+    IniHelper iniHelper;
+};
+
+NAME_SPACE_END()
+#endif //!_SERVER_
