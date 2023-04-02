@@ -1,4 +1,7 @@
 #pragma once
+#include <cstddef>
+#include <time.h>
+#include <vadefs.h>
 #define NAME_SPACE_START(name) namespace name {
 #define NAME_SPACE_END() }
 
@@ -75,6 +78,28 @@ private:
 };
 
 std::string getFile(const std::string& filePath);
+
+class Timer{
+private:
+    clock_t startTime;
+    clock_t curTime;
+    void* lpFunc{nullptr};
+    //false运行一次 true一直运行
+    bool runFlag{false};
+    long inter{100};
+public:
+    Timer();
+    Timer(void* lpFunc);
+    //获取运行时间
+    std::string getRunTime(const std::string& format = "millisecond");
+    //设置隔interval就运行lpFunc
+    void setInterval(void* lpFunc,long interval = 100);
+    //开始运行 使用的是function
+    template<typename classType, typename ...Args>
+    void start(Args... args);
+    //结束运行
+    void end();
+};
 
 NAME_SPACE_END()
 

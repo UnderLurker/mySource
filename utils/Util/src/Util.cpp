@@ -5,6 +5,7 @@
 #include <cwchar>
 #include <exception>
 #include <fstream>
+#include <functional>
 #include <ios>
 #include <iostream>
 #include <iterator>
@@ -15,6 +16,9 @@
 #include <stdlib.h>
 #include <streambuf>
 #include <string>
+#include <thread>
+#include <time.h>
+#include <vadefs.h>
 
 
 NAME_SPACE_START(myUtil)
@@ -192,6 +196,46 @@ std::string getFile(const std::string& filePath)
     }
     file.close();
     return content;
+}
+
+Timer::Timer(){
+    startTime=clock();
+}
+
+Timer::Timer(void* lpFunc){
+    startTime=clock();
+    this->lpFunc=lpFunc;
+}
+
+std::string Timer::getRunTime(const std::string &format){
+    curTime=clock();
+    clock_t temp=curTime-startTime;
+    if(format=="millisecond") return std::to_string(temp);
+    else if(format=="second") return std::to_string(temp/CLOCKS_PER_SEC);
+    return std::to_string(temp);
+}
+
+void Timer::setInterval(void *lpFunc,long interval){
+    runFlag=true;
+    this->lpFunc=lpFunc;
+    this->inter=interval;
+}
+
+template<typename classType, typename ...Args>
+void Timer::start(Args... args){
+    typedef std::function<void(classType,Args...)> classFunc;
+    classFunc* func=(classFunc*)lpFunc;
+    while(runFlag){
+        // Sleep(inter);
+        // std::thread th([](Args... args){
+        //     (*func)(args...);
+        // },args...);
+        // th.join();
+    }
+}
+
+void Timer::end(){
+    runFlag=false;
 }
 
 NAME_SPACE_END()

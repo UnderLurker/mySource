@@ -58,6 +58,8 @@ public:
     void setValue(int row,int col,const T& value);
     Matrix<T>& operator+(const Matrix&);
     Matrix<T>& operator-(const Matrix&);
+    Matrix<double> operator*(Matrix<double>& obj);
+    Matrix<T>& operator=(const Matrix<T>& obj);
     friend ostream& operator<<(ostream& out, const Matrix<T>& res){
         for(int i=0;i<res.row;i++){
             for(int j=0;j<res.col;j++){
@@ -67,33 +69,6 @@ public:
             out<<"\n";
         }
         return out;
-    }
-    Matrix<double> operator*(Matrix<double>& obj){
-        Matrix<double> res=Matrix<double>::Zeros(row,obj.col);
-        if(this->col!=obj.row) return res;
-        for(int i=0;i<row;i++){
-            for(int j=0;j<obj.col;j++){
-                double sum=0;
-                for(int k=0;k<col;k++){
-                    sum+=getValue(i, k)*obj.getValue(k, j);
-                }
-                res.setValue(i, j, sum);
-            }
-        }
-        return res;
-    }
-    Matrix<T>& operator=(const Matrix<T>& obj){
-        this->row=obj.row;
-        this->col=obj.col;
-        matrix=new T*[row];
-        for(int i=0;i<row;i++){
-            matrix[i]=new T[col];
-        }
-        for(int i=0;i<row;i++){
-            for(int j=0;j<col;j++){
-                matrix[i][j]=obj.matrix[i][j];
-            }
-        }
     }
     Matrix<double> Pow(int n);
     //魔方矩阵
@@ -179,11 +154,44 @@ Matrix<T>& Matrix<T>::operator+(const Matrix &Addend){
     }
     return *this;
 }
+
 template<typename T>
 Matrix<T>& Matrix<T>::operator-(const Matrix &Addend){
     for(int r=0;r<this->row;r++){
         for(int c=0;c<this->col;c++){
             this->matrix[r][c]-=Addend.matrix[r][c];
+        }
+    }
+    return *this;
+}
+
+template<typename T>
+Matrix<double> Matrix<T>::operator*(Matrix<double>& obj){
+    Matrix<double> res=Matrix<double>::Zeros(row,obj.col);
+    if(this->col!=obj.row) return res;
+    for(int i=0;i<row;i++){
+        for(int j=0;j<obj.col;j++){
+            double sum=0;
+            for(int k=0;k<col;k++){
+                sum+=getValue(i, k)*obj.getValue(k, j);
+            }
+            res.setValue(i, j, sum);
+        }
+    }
+    return res;
+}
+
+template<typename T>
+Matrix<T>& Matrix<T>::operator=(const Matrix<T>& obj){
+    this->row=obj.row;
+    this->col=obj.col;
+    matrix=new T*[row];
+    for(int i=0;i<row;i++){
+        matrix[i]=new T[col];
+    }
+    for(int i=0;i<row;i++){
+        for(int j=0;j<col;j++){
+            matrix[i][j]=obj.matrix[i][j];
         }
     }
     return *this;

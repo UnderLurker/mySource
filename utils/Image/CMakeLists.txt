@@ -1,0 +1,14 @@
+cmake_minimum_required(VERSION 3.0.0)
+project(Image VERSION 0.1.0)
+# set(LIB "F:/Visual Studio practice/vscode/newdemo/build")
+set(CMAKE_INSTALL_PREFIX "F:/Visual-Studio-practice/vscode/mySource/build")
+set(UTIL_PATH "..")
+file(GLOB SOURCE_FILE ./src/*.cpp)
+
+include_directories(header)
+include_directories(${UTIL_PATH}/Util/header)
+
+add_library(Image_static STATIC ${SOURCE_FILE})
+target_link_libraries(Image_static Util_static)
+# install(TARGETS Util_static ARCHIVE DESTINATION lib)
+# install(FILES include/*.h DESTINATION lib)
