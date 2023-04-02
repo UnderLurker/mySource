@@ -1,3 +1,0 @@
-"F:\Program Files(x86)\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E rm -f CMakeFiles\JsonSerialize.dir/objects.a
-F:\MinGW\bin\ar.exe qc CMakeFiles\JsonSerialize.dir/objects.a @CMakeFiles\JsonSerialize.dir\objects1.rsp
-F:\MinGw\bin\g++.exe -g -shared -o libJsonSerialize.dll -Wl,--out-implib,libJsonSerialize.dll.a -Wl,--major-image-version,0,--minor-image-version,0 -Wl,--whole-archive CMakeFiles\JsonSerialize.dir/objects.a -Wl,--no-whole-archive @CMakeFiles\JsonSerialize.dir\linklibs.rsp

@@ -1,2 +1,0 @@
-F:\MinGW\bin\ar.exe qc libImage_static.a CMakeFiles/Image_static.dir/src/Image.cpp.obj
-F:\MinGW\bin\ranlib.exe libImage_static.a

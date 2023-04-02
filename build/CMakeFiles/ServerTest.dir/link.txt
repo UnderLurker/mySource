@@ -1,3 +1,0 @@
-"F:\Program Files(x86)\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E rm -f CMakeFiles\ServerTest.dir/objects.a
-F:\MinGW\bin\ar.exe qc CMakeFiles\ServerTest.dir/objects.a @CMakeFiles\ServerTest.dir\objects1.rsp
-F:\MinGw\bin\g++.exe -g -Wl,--whole-archive CMakeFiles\ServerTest.dir/objects.a -Wl,--no-whole-archive -o ServerTest.exe -Wl,--out-implib,libServerTest.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\ServerTest.dir\linklibs.rsp

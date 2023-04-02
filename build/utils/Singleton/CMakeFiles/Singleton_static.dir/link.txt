@@ -1,2 +1,0 @@
-F:\MinGW\bin\ar.exe qc libSingleton_static.a CMakeFiles/Singleton_static.dir/src/Singleton.cpp.obj
-F:\MinGW\bin\ranlib.exe libSingleton_static.a

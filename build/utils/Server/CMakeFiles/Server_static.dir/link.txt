@@ -1,2 +1,0 @@
-F:\MinGW\bin\ar.exe qc libServer_static.a CMakeFiles/Server_static.dir/src/CController.cpp.obj CMakeFiles/Server_static.dir/src/Cookie.cpp.obj CMakeFiles/Server_static.dir/src/Net.cpp.obj CMakeFiles/Server_static.dir/src/Server.cpp.obj CMakeFiles/Server_static.dir/src/indexController.cpp.obj
-F:\MinGW\bin\ranlib.exe libServer_static.a

@@ -1,2 +1,0 @@
-F:\MinGW\bin\ar.exe qc libReflex_static.a CMakeFiles/Reflex_static.dir/src/Reflex.cpp.obj
-F:\MinGW\bin\ranlib.exe libReflex_static.a

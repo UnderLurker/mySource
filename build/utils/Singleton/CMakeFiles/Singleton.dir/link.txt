@@ -1,3 +1,0 @@
-"F:\Program Files(x86)\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E rm -f CMakeFiles\Singleton.dir/objects.a
-F:\MinGW\bin\ar.exe qc CMakeFiles\Singleton.dir/objects.a @CMakeFiles\Singleton.dir\objects1.rsp
-F:\MinGw\bin\g++.exe -g -shared -o libSingleton.dll -Wl,--out-implib,libSingleton.dll.a -Wl,--major-image-version,0,--minor-image-version,0 -Wl,--whole-archive CMakeFiles\Singleton.dir/objects.a -Wl,--no-whole-archive @CMakeFiles\Singleton.dir\linklibs.rsp
