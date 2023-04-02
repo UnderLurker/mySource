@@ -1,0 +1,433 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Debug-d0094a50bb2071803777.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.0.0"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						4,
+						5,
+						6,
+						8,
+						10
+					]
+				},
+				{
+					"build" : "utils/Matrix",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-utils.Matrix-Debug-50c6375d0dee934efef3.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.0.0"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 1,
+					"source" : "utils/Matrix",
+					"targetIndexes" : 
+					[
+						7
+					]
+				},
+				{
+					"build" : "utils/Log",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-utils.Log-Debug-d4c93b92cb3eb20775e0.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.0.0"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 2,
+					"source" : "utils/Log",
+					"targetIndexes" : 
+					[
+						16
+					]
+				},
+				{
+					"build" : "utils/Reflex",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-utils.Reflex-Debug-8b4f260669d25229f464.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.0.0"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 3,
+					"source" : "utils/Reflex",
+					"targetIndexes" : 
+					[
+						9
+					]
+				},
+				{
+					"build" : "utils/JsonSerialize",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-utils.JsonSerialize-Debug-cf8bdb84fb2fb933b6f4.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.0.0"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 4,
+					"source" : "utils/JsonSerialize",
+					"targetIndexes" : 
+					[
+						2,
+						3
+					]
+				},
+				{
+					"build" : "utils/Util",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-utils.Util-Debug-94e9514a0215bcd2c8fc.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.0.0"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 5,
+					"source" : "utils/Util",
+					"targetIndexes" : 
+					[
+						14,
+						15
+					]
+				},
+				{
+					"build" : "utils/Singleton",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-utils.Singleton-Debug-0cedd9ed97dbcc9f4e77.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.0.0"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 6,
+					"source" : "utils/Singleton",
+					"targetIndexes" : 
+					[
+						12,
+						13
+					]
+				},
+				{
+					"build" : "utils/Server",
+					"jsonFile" : "directory-utils.Server-Debug-838b8780706582080e9c.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.0.0"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 7,
+					"source" : "utils/Server",
+					"targetIndexes" : 
+					[
+						11
+					]
+				},
+				{
+					"build" : "utils/Image",
+					"jsonFile" : "directory-utils.Image-Debug-be2955a58507eeb18846.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.0.0"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 8,
+					"source" : "utils/Image",
+					"targetIndexes" : 
+					[
+						1
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"childIndexes" : 
+					[
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8
+					],
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "MAIN",
+					"targetIndexes" : 
+					[
+						0,
+						4,
+						5,
+						6,
+						8,
+						10
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						1
+					],
+					"name" : "Matrix",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						7
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						2
+					],
+					"name" : "logger",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						16
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						3
+					],
+					"name" : "Reflex",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						9
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						4
+					],
+					"name" : "JsonSerialize",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						2,
+						3
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						5
+					],
+					"name" : "Util",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						14,
+						15
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						6
+					],
+					"name" : "Singleton",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						12,
+						13
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						7
+					],
+					"name" : "Server",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						11
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						8
+					],
+					"name" : "Image",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						1
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "ImageTest::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ImageTest-Debug-a545abd90152a462bfb1.json",
+					"name" : "ImageTest",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 8,
+					"id" : "Image_static::@634ca8d0e59469fc190a",
+					"jsonFile" : "target-Image_static-Debug-fd86be2b0cb565607e02.json",
+					"name" : "Image_static",
+					"projectIndex" : 8
+				},
+				{
+					"directoryIndex" : 4,
+					"id" : "JsonSerialize::@0488b801b5831cb9e2bd",
+					"jsonFile" : "target-JsonSerialize-Debug-b404c43210f661726517.json",
+					"name" : "JsonSerialize",
+					"projectIndex" : 4
+				},
+				{
+					"directoryIndex" : 4,
+					"id" : "JsonSerialize_static::@0488b801b5831cb9e2bd",
+					"jsonFile" : "target-JsonSerialize_static-Debug-99e4638cd6e962931ca4.json",
+					"name" : "JsonSerialize_static",
+					"projectIndex" : 4
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "JsonTest::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-JsonTest-Debug-3d3afa9995d99d9dde4a.json",
+					"name" : "JsonTest",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "MAIN::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-MAIN-Debug-00b9e6fb5ea11d142a31.json",
+					"name" : "MAIN",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "MatrixTest::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-MatrixTest-Debug-bdb166dbdd9bf55f0550.json",
+					"name" : "MatrixTest",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "Matrix_static::@fe9347ca25352450a297",
+					"jsonFile" : "target-Matrix_static-Debug-b4ca7b6fed8d7999bff3.json",
+					"name" : "Matrix_static",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "ReflexTest::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ReflexTest-Debug-358cd1b9f3e4be5d14be.json",
+					"name" : "ReflexTest",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "Reflex_static::@222a709f6b40b33a4ed6",
+					"jsonFile" : "target-Reflex_static-Debug-50556ace3b091154ccd7.json",
+					"name" : "Reflex_static",
+					"projectIndex" : 3
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "ServerTest::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ServerTest-Debug-b603c4e863a0bdc914a1.json",
+					"name" : "ServerTest",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 7,
+					"id" : "Server_static::@670e52d0c57f6bf5acc6",
+					"jsonFile" : "target-Server_static-Debug-e74f32a2922329f75ca2.json",
+					"name" : "Server_static",
+					"projectIndex" : 7
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "Singleton::@bad2e3ffed92f1d1bd14",
+					"jsonFile" : "target-Singleton-Debug-4740e80d8ebd5fab032e.json",
+					"name" : "Singleton",
+					"projectIndex" : 6
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "Singleton_static::@bad2e3ffed92f1d1bd14",
+					"jsonFile" : "target-Singleton_static-Debug-361bba75a7958b10ea18.json",
+					"name" : "Singleton_static",
+					"projectIndex" : 6
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "Util::@973ae76ca83a01734235",
+					"jsonFile" : "target-Util-Debug-8d6f8e0273b711d49a44.json",
+					"name" : "Util",
+					"projectIndex" : 5
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "Util_static::@973ae76ca83a01734235",
+					"jsonFile" : "target-Util_static-Debug-3b55d388b34da6a612cd.json",
+					"name" : "Util_static",
+					"projectIndex" : 5
+				},
+				{
+					"directoryIndex" : 2,
+					"id" : "logger_static::@ddaaa8f2fd33e9afa3a0",
+					"jsonFile" : "target-logger_static-Debug-6e980838d515472f6c03.json",
+					"name" : "logger_static",
+					"projectIndex" : 2
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "F:/C++/mySource/build",
+		"source" : "F:/C++/mySource"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 4
+	}
+}

@@ -1,0 +1,80 @@
+Start testing: Mar 26 13:51 中国标准时间
+----------------------------------------------------------
+Unable to find executable: ServerTest
+3/4 Testing: Server_Test
+3/4 Test: Server_Test
+Command: ""
+Directory: F:/C++/mySource/build
+"Server_Test" start time: 
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"Server_Test" end time: Mar 26 13:51 中国标准时间
+"Server_Test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+1/4 Testing: Reflex_Test
+1/4 Test: Reflex_Test
+Command: "F:/C++/mySource/build/ReflexTest.exe"
+Directory: F:/C++/mySource/build
+"Reflex_Test" start time: Mar 26 13:51 中国标准时间
+Output:
+----------------------------------------------------------
+10
+30
+hello world
+6
+10
+40
+hello world
+7
+<end of output>
+Test time =   0.21 sec
+----------------------------------------------------------
+Test Passed.
+"Reflex_Test" end time: Mar 26 13:51 中国标准时间
+"Reflex_Test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/4 Testing: Json_Test
+2/4 Test: Json_Test
+Command: "F:/C++/mySource/build/JsonTest.exe"
+Directory: F:/C++/mySource/build
+"Json_Test" start time: Mar 26 13:51 中国标准时间
+Output:
+----------------------------------------------------------
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  locale::facet::_S_create_c_locale name not valid
+<end of output>
+Test time =   0.24 sec
+----------------------------------------------------------
+Test Failed.
+"Json_Test" end time: Mar 26 13:51 中国标准时间
+"Json_Test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+4/4 Testing: Matrix_Test
+4/4 Test: Matrix_Test
+Command: "F:/C++/mySource/build/MatrixTest.exe"
+Directory: F:/C++/mySource/build
+"Matrix_Test" start time: Mar 26 13:51 中国标准时间
+Output:
+----------------------------------------------------------
+  251  1050  2850  6225 11875 
+ 1050  4451 12150 26625 50900 
+ 2850 12150 33251 72975 139650 
+ 6225 26625 72975 160301 306950 
+11875 50900 139650 306950 588001 
+
+<end of output>
+Test time =   0.10 sec
+----------------------------------------------------------
+Test Passed.
+"Matrix_Test" end time: Mar 26 13:51 中国标准时间
+"Matrix_Test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Mar 26 13:51 中国标准时间

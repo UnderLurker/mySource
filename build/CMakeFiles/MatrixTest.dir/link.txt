@@ -1,0 +1,3 @@
+"F:\Program Files(x86)\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E rm -f CMakeFiles\MatrixTest.dir/objects.a
+F:\MinGW\bin\ar.exe qc CMakeFiles\MatrixTest.dir/objects.a @CMakeFiles\MatrixTest.dir\objects1.rsp
+F:\MinGw\bin\g++.exe -g -Wl,--whole-archive CMakeFiles\MatrixTest.dir/objects.a -Wl,--no-whole-archive -o MatrixTest.exe -Wl,--out-implib,libMatrixTest.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\MatrixTest.dir\linklibs.rsp

@@ -1,0 +1,107 @@
+[
+{
+  "directory": "F:/C++/mySource/build",
+  "command": "F:\\MinGw\\bin\\g++.exe  @CMakeFiles/MAIN.dir/includes_CXX.rsp -g -o CMakeFiles\\MAIN.dir\\main.cpp.obj -c F:\\C++\\mySource\\main.cpp",
+  "file": "F:/C++/mySource/main.cpp"
+},
+{
+  "directory": "F:/C++/mySource/build",
+  "command": "F:\\MinGw\\bin\\g++.exe  @CMakeFiles/ReflexTest.dir/includes_CXX.rsp -g -o CMakeFiles\\ReflexTest.dir\\test\\reflex_test.cpp.obj -c F:\\C++\\mySource\\test\\reflex_test.cpp",
+  "file": "F:/C++/mySource/test/reflex_test.cpp"
+},
+{
+  "directory": "F:/C++/mySource/build",
+  "command": "F:\\MinGw\\bin\\g++.exe  @CMakeFiles/JsonTest.dir/includes_CXX.rsp -g -o CMakeFiles\\JsonTest.dir\\test\\json_test.cpp.obj -c F:\\C++\\mySource\\test\\json_test.cpp",
+  "file": "F:/C++/mySource/test/json_test.cpp"
+},
+{
+  "directory": "F:/C++/mySource/build",
+  "command": "F:\\MinGw\\bin\\g++.exe  @CMakeFiles/ServerTest.dir/includes_CXX.rsp -g -o CMakeFiles\\ServerTest.dir\\test\\server_test.cpp.obj -c F:\\C++\\mySource\\test\\server_test.cpp",
+  "file": "F:/C++/mySource/test/server_test.cpp"
+},
+{
+  "directory": "F:/C++/mySource/build",
+  "command": "F:\\MinGw\\bin\\g++.exe  @CMakeFiles/MatrixTest.dir/includes_CXX.rsp -g -o CMakeFiles\\MatrixTest.dir\\test\\Matrix_test.cpp.obj -c F:\\C++\\mySource\\test\\Matrix_test.cpp",
+  "file": "F:/C++/mySource/test/Matrix_test.cpp"
+},
+{
+  "directory": "F:/C++/mySource/build",
+  "command": "F:\\MinGw\\bin\\g++.exe  @CMakeFiles/ImageTest.dir/includes_CXX.rsp -g -o CMakeFiles\\ImageTest.dir\\test\\Image_test.cpp.obj -c F:\\C++\\mySource\\test\\Image_test.cpp",
+  "file": "F:/C++/mySource/test/Image_test.cpp"
+},
+{
+  "directory": "F:/C++/mySource/build/utils/Matrix",
+  "command": "F:\\MinGw\\bin\\g++.exe  @CMakeFiles/Matrix_static.dir/includes_CXX.rsp -g -o CMakeFiles\\Matrix_static.dir\\src\\Matrix.cpp.obj -c F:\\C++\\mySource\\utils\\Matrix\\src\\Matrix.cpp",
+  "file": "F:/C++/mySource/utils/Matrix/src/Matrix.cpp"
+},
+{
+  "directory": "F:/C++/mySource/build/utils/Log",
+  "command": "F:\\MinGw\\bin\\g++.exe  @CMakeFiles/logger_static.dir/includes_CXX.rsp -g -o CMakeFiles\\logger_static.dir\\src\\logger.cpp.obj -c F:\\C++\\mySource\\utils\\Log\\src\\logger.cpp",
+  "file": "F:/C++/mySource/utils/Log/src/logger.cpp"
+},
+{
+  "directory": "F:/C++/mySource/build/utils/Reflex",
+  "command": "F:\\MinGw\\bin\\g++.exe  @CMakeFiles/Reflex_static.dir/includes_CXX.rsp -g -o CMakeFiles\\Reflex_static.dir\\src\\Reflex.cpp.obj -c F:\\C++\\mySource\\utils\\Reflex\\src\\Reflex.cpp",
+  "file": "F:/C++/mySource/utils/Reflex/src/Reflex.cpp"
+},
+{
+  "directory": "F:/C++/mySource/build/utils/JsonSerialize",
+  "command": "F:\\MinGw\\bin\\g++.exe  @CMakeFiles/JsonSerialize_static.dir/includes_CXX.rsp -g -o CMakeFiles\\JsonSerialize_static.dir\\src\\JsonSerialize.cpp.obj -c F:\\C++\\mySource\\utils\\JsonSerialize\\src\\JsonSerialize.cpp",
+  "file": "F:/C++/mySource/utils/JsonSerialize/src/JsonSerialize.cpp"
+},
+{
+  "directory": "F:/C++/mySource/build/utils/JsonSerialize",
+  "command": "F:\\MinGw\\bin\\g++.exe -DJsonSerialize_EXPORTS @CMakeFiles/JsonSerialize.dir/includes_CXX.rsp -g -o CMakeFiles\\JsonSerialize.dir\\src\\JsonSerialize.cpp.obj -c F:\\C++\\mySource\\utils\\JsonSerialize\\src\\JsonSerialize.cpp",
+  "file": "F:/C++/mySource/utils/JsonSerialize/src/JsonSerialize.cpp"
+},
+{
+  "directory": "F:/C++/mySource/build/utils/Util",
+  "command": "F:\\MinGw\\bin\\g++.exe  @CMakeFiles/Util_static.dir/includes_CXX.rsp -g -o CMakeFiles\\Util_static.dir\\src\\Util.cpp.obj -c F:\\C++\\mySource\\utils\\Util\\src\\Util.cpp",
+  "file": "F:/C++/mySource/utils/Util/src/Util.cpp"
+},
+{
+  "directory": "F:/C++/mySource/build/utils/Util",
+  "command": "F:\\MinGw\\bin\\g++.exe -DUtil_EXPORTS @CMakeFiles/Util.dir/includes_CXX.rsp -g -o CMakeFiles\\Util.dir\\src\\Util.cpp.obj -c F:\\C++\\mySource\\utils\\Util\\src\\Util.cpp",
+  "file": "F:/C++/mySource/utils/Util/src/Util.cpp"
+},
+{
+  "directory": "F:/C++/mySource/build/utils/Singleton",
+  "command": "F:\\MinGw\\bin\\g++.exe  @CMakeFiles/Singleton_static.dir/includes_CXX.rsp -g -o CMakeFiles\\Singleton_static.dir\\src\\Singleton.cpp.obj -c F:\\C++\\mySource\\utils\\Singleton\\src\\Singleton.cpp",
+  "file": "F:/C++/mySource/utils/Singleton/src/Singleton.cpp"
+},
+{
+  "directory": "F:/C++/mySource/build/utils/Singleton",
+  "command": "F:\\MinGw\\bin\\g++.exe -DSingleton_EXPORTS @CMakeFiles/Singleton.dir/includes_CXX.rsp -g -o CMakeFiles\\Singleton.dir\\src\\Singleton.cpp.obj -c F:\\C++\\mySource\\utils\\Singleton\\src\\Singleton.cpp",
+  "file": "F:/C++/mySource/utils/Singleton/src/Singleton.cpp"
+},
+{
+  "directory": "F:/C++/mySource/build/utils/Server",
+  "command": "F:\\MinGw\\bin\\g++.exe  @CMakeFiles/Server_static.dir/includes_CXX.rsp -g -o CMakeFiles\\Server_static.dir\\src\\CController.cpp.obj -c F:\\C++\\mySource\\utils\\Server\\src\\CController.cpp",
+  "file": "F:/C++/mySource/utils/Server/src/CController.cpp"
+},
+{
+  "directory": "F:/C++/mySource/build/utils/Server",
+  "command": "F:\\MinGw\\bin\\g++.exe  @CMakeFiles/Server_static.dir/includes_CXX.rsp -g -o CMakeFiles\\Server_static.dir\\src\\Cookie.cpp.obj -c F:\\C++\\mySource\\utils\\Server\\src\\Cookie.cpp",
+  "file": "F:/C++/mySource/utils/Server/src/Cookie.cpp"
+},
+{
+  "directory": "F:/C++/mySource/build/utils/Server",
+  "command": "F:\\MinGw\\bin\\g++.exe  @CMakeFiles/Server_static.dir/includes_CXX.rsp -g -o CMakeFiles\\Server_static.dir\\src\\Net.cpp.obj -c F:\\C++\\mySource\\utils\\Server\\src\\Net.cpp",
+  "file": "F:/C++/mySource/utils/Server/src/Net.cpp"
+},
+{
+  "directory": "F:/C++/mySource/build/utils/Server",
+  "command": "F:\\MinGw\\bin\\g++.exe  @CMakeFiles/Server_static.dir/includes_CXX.rsp -g -o CMakeFiles\\Server_static.dir\\src\\Server.cpp.obj -c F:\\C++\\mySource\\utils\\Server\\src\\Server.cpp",
+  "file": "F:/C++/mySource/utils/Server/src/Server.cpp"
+},
+{
+  "directory": "F:/C++/mySource/build/utils/Server",
+  "command": "F:\\MinGw\\bin\\g++.exe  @CMakeFiles/Server_static.dir/includes_CXX.rsp -g -o CMakeFiles\\Server_static.dir\\src\\indexController.cpp.obj -c F:\\C++\\mySource\\utils\\Server\\src\\indexController.cpp",
+  "file": "F:/C++/mySource/utils/Server/src/indexController.cpp"
+},
+{
+  "directory": "F:/C++/mySource/build/utils/Image",
+  "command": "F:\\MinGw\\bin\\g++.exe  @CMakeFiles/Image_static.dir/includes_CXX.rsp -g -o CMakeFiles\\Image_static.dir\\src\\Image.cpp.obj -c F:\\C++\\mySource\\utils\\Image\\src\\Image.cpp",
+  "file": "F:/C++/mySource/utils/Image/src/Image.cpp"
+}
+]

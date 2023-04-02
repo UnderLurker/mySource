@@ -1,0 +1,3 @@
+"F:\Program Files(x86)\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E rm -f CMakeFiles\JTest.dir/objects.a
+F:\MinGW\bin\ar.exe qc CMakeFiles\JTest.dir/objects.a @CMakeFiles\JTest.dir\objects1.rsp
+F:\MinGw\bin\g++.exe -g -Wl,--whole-archive CMakeFiles\JTest.dir/objects.a -Wl,--no-whole-archive -o JTest.exe -Wl,--out-implib,libJTest.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\JTest.dir\linklibs.rsp
