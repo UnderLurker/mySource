@@ -13,6 +13,8 @@ using namespace std;
 
 NAME_SPACE_START(myUtil)
 
+#define HUFFMAN_DECODE_DEQUE_CACHE 32//单位：位
+
 //段类型
 enum JPEGPType{
     SOF0    = 0xC0,     //帧开始
@@ -31,6 +33,7 @@ enum JPEGPType{
 };
 
 uint16_t ReadByte(fstream& file,int len);
+uint16_t findHuffmanCodeByBit(fstream& file,int& length,int& pos,string& deque,int curValue,int& curValLen);
 
 //SOS
 class JPEGScan{
@@ -49,9 +52,13 @@ public:
 //DHT
 class JPEGHuffmanCode{
 public:
-	map<pair<uint16_t, uint8_t>,uint8_t> table;
+	using iterator = map<uint16_t,pair<uint8_t,uint8_t>>::iterator;
+	//<code,<bit,weight>
+	map<uint16_t,pair<uint8_t,uint8_t>> table;
 	//init huffman table
 	bool Init(fstream& file,uint16_t len);
+	//find-true not find-false
+	bool findKey(const uint16_t& code,const uint8_t& bit,iterator& it);
 };
 //DQT
 //quality table
