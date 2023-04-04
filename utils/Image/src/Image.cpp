@@ -63,7 +63,6 @@ bool JPEGHuffmanCode::Init(fstream &file, uint16_t len){
         while(len--){
             int info=file.get();
             temp.push_back(info);
-            cout<<hex<<info<<" ";
         }
         int curPos = 16, curCode = 0;
         for (int i = 0; i < 16; i++) {
@@ -168,7 +167,10 @@ bool JPEGData::readJPEG(const char *filePath){
                 case SOS:{
                     flag=scan.Init(file, pLen-2);
                     int count=3;
-                    while(count--) file.get();
+                    cout<<endl;
+                    while(count--) 
+                        cout<<hex<<file.get();
+                    cout<<endl;
                     //正式读取数据
                     if(!flag) break;
                     flag=readData(file);
@@ -295,48 +297,43 @@ bool JPEGData::huffmanDecode(fstream& file){
                 for(int j=0;j<YUV[i];j++){
                     int *matrix=new int[64];
                     int valCount=0;
+                    cout<<endl;
                     uint8_t dcID = scan.componentHuffmanMap[component[i].colorId].first;
                     uint8_t acID = scan.componentHuffmanMap[component[i].colorId].second;
                     while(valCount<64){
-                        if(valCount==0){//直流分量
-                            //用curBitDeque和curBit去找权重
-                            JPEGHuffmanCode::iterator it;
-                            while(dc_huffman[dcID].findKey(curValue,curValueLength,it)){
-                                curValue=findHuffmanCodeByBit(file,curBitDequeLength,curBitPos,curBitDeque,curValue,curValueLength);
-                            }
-                            uint8_t weight = it->second.second;
-                            curValue=0;//这里变为dc值
-                            curValueLength=0;
-                            while(weight--){
-                                curValue=findHuffmanCodeByBit(file,curBitDequeLength,curBitPos,curBitDeque,curValue,curValueLength);
-                            }
+                        //用curBitDeque和curBit去找权重，curValue作为当前键值
+                        JPEGHuffmanCode::iterator it;
+                        int hufID=valCount==0?dcID:acID;
+                        while(dc_huffman[hufID].findKey(curValue,curValueLength,it)){
+                            curValue=findHuffmanCodeByBit(file,curBitDequeLength,curBitPos,curBitDeque,curValue,curValueLength);
+                        }
+                        //已经找到了权重和位宽
+                        uint8_t weight,zeroCount;
+                        if(valCount==0) weight = it->second.second;
+                        else { weight = it->second.second & 0x0f; zeroCount = it->second.second >> 4;}
+                        curValue=0;//这里变为dc或ac值
+                        curValueLength=0;
+                        bool flag=false;//是否取反
+                        while(weight--){
+                            curValue=findHuffmanCodeByBit(file,curBitDequeLength,curBitPos,curBitDeque,curValue,curValueLength);
+                            if(curValueLength==1&&curValue==0) flag=true;
+                        }
+                        if(flag) curValue=~curValue;
+                        if(valCount==0){
                             preDCValue+=curValue;
+                            matrix[valCount]=preDCValue;
                         }
-                        else{//交流分量
-                            JPEGHuffmanCode::iterator it;
-                            while(dc_huffman[acID].findKey(curValue,curValueLength,it)){
-                                curValue=findHuffmanCodeByBit(file,curBitDequeLength,curBitPos,curBitDeque,curValue,curValueLength);
-                            }
-                            uint8_t weight = it->second.second & 0x0f;
-                            uint8_t zeroCount = it->second.second >> 4;
-                            curValue=0;//这里变为ac值
-                            curValueLength=0;
-                            while(weight--){
-                                curValue=findHuffmanCodeByBit(file,curBitDequeLength,curBitPos,curBitDeque,curValue,curValueLength);
-                            }
-                            while(zeroCount--){
-                                matrix[valCount++]=0;
-                            }
+                        else{
+                            while(zeroCount--) matrix[valCount++]=0;
+                            matrix[valCount]=curValue;
                         }
-                        matrix[valCount++]=curValue;
                         curValue=0;
                         curValueLength=0;
-                    }
-                    cout<<endl;
-                    for(int i=0;i<64;i++){
+                        #ifdef _DEBUG_
                         cout.width(3);
-                        cout.fill('0');
-                        cout<<matrix[i]<<" ";
+                        cout<<dec<<matrix[valCount]<<" ";
+                        #endif
+                        valCount++;
                     }
                     deHuffman.push_back(matrix);
                 }
