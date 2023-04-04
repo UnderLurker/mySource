@@ -14,6 +14,7 @@ using namespace std;
 NAME_SPACE_START(myUtil)
 
 #define HUFFMAN_DECODE_DEQUE_CACHE 32//单位：位
+#define _DEBUG_
 
 //段类型
 enum JPEGPType{
