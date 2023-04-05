@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include <bitset>
 #include <utility>
+#include <cstring>
+#include <vector>
 
 NAME_SPACE_START(myUtil)
 
@@ -17,22 +19,40 @@ uint16_t ReadByte(fstream& file,int len){
     return res;
 }
 
-uint16_t findHuffmanCodeByBit(fstream& file,int& length,int& pos,string& deque,int curValue,int& curValLen){
+uint16_t findHuffmanCodeByBit(fstream& file,int& length,int& pos,string& deque,int curValue,int& curValLen,bool flag){
     if(length==0 || pos==length){
         if(length==0){
             deque="";
             pos=0;
         }
+        #ifdef _DEBUGOUT_
+        string str=bitset<8>(file.get()).to_string();
+        deque.append(str);
+        cout<<str;
+        #endif
+        #ifndef _DEBUGOUT_
         deque.append(bitset<8>(file.get()).to_string());
+        #endif
         length+=8;
     }
     else if(length>=HUFFMAN_DECODE_DEQUE_CACHE){//达到最大缓存
         deque = deque.substr(pos);
+        #ifdef _DEBUGOUT_
+        string str=bitset<8>(file.get()).to_string();
+        deque.append(str);
+        cout<<str;
+        #endif
+        #ifndef _DEBUGOUT_
         deque.append(bitset<8>(file.get()).to_string());
+        #endif
         length = deque.length();
         pos = 0;
     }
-    curValue = (curValue << 1) + (uint8_t)(deque.at(pos++) - '0');
+    uint8_t temp=(uint8_t)(deque.at(pos++) - '0');
+    if(flag){//true 取反
+        temp = (temp&1)^1;
+    }
+    curValue = (curValue << 1) + temp;
     curValLen++;
     return curValue;
 }
@@ -59,10 +79,10 @@ bool JPEGScan::Init(fstream &file, uint16_t len){
 bool JPEGHuffmanCode::Init(fstream &file, uint16_t len){
     try{
         vector<uint8_t> temp;
-        cout<<endl;
         while(len--){
             int info=file.get();
             temp.push_back(info);
+            cout<<dec<<info<<" ";
         }
         int curPos = 16, curCode = 0;
         for (int i = 0; i < 16; i++) {
@@ -157,6 +177,7 @@ bool JPEGData::readJPEG(const char *filePath){
                     JPEGHuffmanCode huf;
                     int info=file.get();
                     int tableId=info&0x0f;
+                    cout<<hex<<info<<" ";
                     flag=huf.Init(file, pLen-3);
                     if((info>>4)&1) ac_huffman[tableId]=huf;
                     else dc_huffman[tableId]=huf;
@@ -292,10 +313,12 @@ bool JPEGData::huffmanDecode(fstream& file){
         //一次循环解析一个MCU
         curBitDeque.append(bitset<8>(file.get()).to_string());
         curBitDequeLength=8;
+        cout<<curBitDeque;
         while(1){
             for(int i=0;i<3;i++){
                 for(int j=0;j<YUV[i];j++){
                     int *matrix=new int[64];
+                    memset(matrix, 0, sizeof(int)*64);
                     int valCount=0;
                     cout<<endl;
                     uint8_t dcID = scan.componentHuffmanMap[component[i].colorId].first;
@@ -303,9 +326,9 @@ bool JPEGData::huffmanDecode(fstream& file){
                     while(valCount<64){
                         //用curBitDeque和curBit去找权重，curValue作为当前键值
                         JPEGHuffmanCode::iterator it;
-                        int hufID=valCount==0?dcID:acID;
-                        while(dc_huffman[hufID].findKey(curValue,curValueLength,it)){
-                            curValue=findHuffmanCodeByBit(file,curBitDequeLength,curBitPos,curBitDeque,curValue,curValueLength);
+                        JPEGHuffmanCode &huffman = valCount==0?dc_huffman[dcID]:ac_huffman[acID];
+                        while(huffman.findKey(curValue,curValueLength,it)){
+                            curValue=findHuffmanCodeByBit(file,curBitDequeLength,curBitPos,curBitDeque,curValue,curValueLength,false);
                         }
                         //已经找到了权重和位宽
                         uint8_t weight,zeroCount;
@@ -314,11 +337,15 @@ bool JPEGData::huffmanDecode(fstream& file){
                         curValue=0;//这里变为dc或ac值
                         curValueLength=0;
                         bool flag=false;//是否取反
+                        if(valCount!=0&&weight==0) break;//后面全是0
                         while(weight--){
-                            curValue=findHuffmanCodeByBit(file,curBitDequeLength,curBitPos,curBitDeque,curValue,curValueLength);
-                            if(curValueLength==1&&curValue==0) flag=true;
+                            curValue=findHuffmanCodeByBit(file,curBitDequeLength,curBitPos,curBitDeque,curValue,curValueLength,flag);
+                            if(curValueLength==1&&curValue==0){
+                                curValue=(curValue&1)^1;
+                                flag=true;
+                            }
                         }
-                        if(flag) curValue=~curValue;
+                        if(flag) curValue=-curValue;
                         if(valCount==0){
                             preDCValue+=curValue;
                             matrix[valCount]=preDCValue;
@@ -329,17 +356,19 @@ bool JPEGData::huffmanDecode(fstream& file){
                         }
                         curValue=0;
                         curValueLength=0;
-                        #ifdef _DEBUG_
-                        cout.width(3);
-                        cout<<dec<<matrix[valCount]<<" ";
-                        #endif
                         valCount++;
                     }
                     deHuffman.push_back(matrix);
+                    #ifdef _DEBUG_
+                    for(int k=0;k<64;k++){
+                        cout.width(3);
+                        cout<<dec<<matrix[k]<<" ";
+                    }
+                    #endif
                 }
             }
             curMCUCount++;
-            cout<<curMCUCount;
+            cout<<"curMCUCount="<<curMCUCount;
             if(curMCUCount==resetInterval) preDCValue=0;
         }
     } catch (...) {

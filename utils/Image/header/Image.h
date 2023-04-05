@@ -13,8 +13,9 @@ using namespace std;
 
 NAME_SPACE_START(myUtil)
 
-#define HUFFMAN_DECODE_DEQUE_CACHE 32//单位：位
+#define HUFFMAN_DECODE_DEQUE_CACHE 64//单位：位
 #define _DEBUG_
+#define _DEBUGOUT_
 
 //段类型
 enum JPEGPType{
@@ -34,7 +35,7 @@ enum JPEGPType{
 };
 
 uint16_t ReadByte(fstream& file,int len);
-uint16_t findHuffmanCodeByBit(fstream& file,int& length,int& pos,string& deque,int curValue,int& curValLen);
+uint16_t findHuffmanCodeByBit(fstream& file,int& length,int& pos,string& deque,int curValue,int& curValLen,bool flag);
 
 //SOS
 class JPEGScan{
