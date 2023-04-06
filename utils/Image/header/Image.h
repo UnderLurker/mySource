@@ -15,7 +15,7 @@ using namespace std;
 NAME_SPACE_START(myUtil)
 
 #define HUFFMAN_DECODE_DEQUE_CACHE 64//单位：位
-#define _DEBUG_
+// #define _DEBUG_
 // #define _DEBUGOUT_
 
 //用于做dct逆变换
@@ -26,7 +26,7 @@ NAME_SPACE_START(myUtil)
 #define _E_ cos(M_PI*5 / 16) / 2
 #define _F_ cos(M_PI*3 / 8) / 2
 #define _G_ cos(M_PI*7 / 16) / 2
-double idct[8][8] = {
+const double IDctArray[8][8] = {
 	{_A_, _A_, _A_, _A_, _A_, _A_, _A_, _A_},
 	{_B_, _D_, _E_, _G_,-_G_,-_E_,-_D_,-_B_},
 	{_C_, _F_,-_F_,-_C_,-_C_,-_F_, _F_, _C_},
@@ -124,7 +124,8 @@ class JPEGData{
 	//component每个颜色分量
 	vector<JPEGComponent> component;
 	JPEGScan scan;
-	vector<int**> deHuffman;
+	//vector<int**> deHuffman;
+	vector<int**> rgb;
 public:
 	JPEGData():
 			max_h_samp_factor(0),

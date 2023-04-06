@@ -76,7 +76,7 @@ int** UnZigZag(int* originArray){
         if (y < 0) y = 0;
         else if (y > 7) { y = 7; x += 2; }
     }
-    #ifdef _DEBUG_
+    #ifdef _DEBUGOUT_
     cout << endl;
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
@@ -87,7 +87,6 @@ int** UnZigZag(int* originArray){
     }
     cout << endl;
     #endif
-    delete[] originArray;
     return table;
 }
 
@@ -97,7 +96,7 @@ void IDCT(int** originMatrix){
         for(int j=0;j<COL;j++){
             double sum=0;
             for(int k=0;k<COL;k++){
-                sum+=idct[k][i]*originMatrix[k][j];
+                sum+=IDctArray[k][i]*originMatrix[k][j];
             }
             temp[i][j]=sum;
         }
@@ -106,11 +105,22 @@ void IDCT(int** originMatrix){
         for(int j=0;j<COL;j++){
             double sum=0;
             for(int k=0;k<COL;k++){
-                sum+=temp[i][k]*idct[k][j];
+                sum+=temp[i][k]*IDctArray[k][j];
             }
             originMatrix[i][j]=sum;
         }
     }
+    #ifdef _DEBUGOUT_
+    cout << endl;
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            cout.width(3);
+            cout << dec << originMatrix[i][j] << " ";
+        }
+        cout << endl;
+    }
+    cout << endl;
+    #endif
 }
 
 bool JPEGScan::Init(fstream &file, uint16_t len){
@@ -376,8 +386,8 @@ bool JPEGData::huffmanDecode(fstream& file){
             int count=0;
             for(int i=0;i<3;i++){
                 for(int j=0;j<YUV[i];j++){
-                    int *matrix=new int[64];
-                    memset(matrix, 0, sizeof(int)*64);
+                    int matrix[64]={0};
+                    //memset(matrix, 0, sizeof(int)*64);
                     int valCount=0;
                 #ifdef _DEBUGOUT_
                     cout<<endl;
@@ -427,18 +437,24 @@ bool JPEGData::huffmanDecode(fstream& file){
                         curValueLength=0;
                         valCount++;
                     }
-                    MCUStruct[(count++)%6]=matrix;
-                    cout<<deHuffman.size()<<" ";
+                    //MCUStruct[(count++)%6]=matrix;
+                    int** tempZ = UnZigZag(matrix);
+                    IDCT(tempZ);
+                    rgb.push_back(tempZ);
+                    //delete [] matrix;
                 #ifdef _DEBUG_
-                    for(int k=0;k<64;k++){
-                        cout.width(3);
-                        cout<<dec<<matrix[k]<<" ";
+                    for(int k=0;k<ROW;k++){
+                        for(int l=0;l<COL;l++){
+                            cout.width(3);
+                            cout<<dec<<tempZ[k][j]<<" ";
+                        }
+                        cout<<endl;
                     }
                     cout<<endl;
                 #endif
                 }
             }
-            deHuffman.push_back(MCUStruct);
+            //deHuffman.push_back(MCUStruct);
             curMCUCount++;
             cout<<"curMCUCount="<<dec<<curMCUCount;
             if(curMCUCount==resetInterval) preDCValue=0;
