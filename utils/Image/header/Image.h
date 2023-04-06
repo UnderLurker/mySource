@@ -8,6 +8,7 @@
 #include "Util.h"
 #include <string>
 #include <vector>
+#include <math.h>
 #include <iostream>
 using namespace std;
 
@@ -15,7 +16,26 @@ NAME_SPACE_START(myUtil)
 
 #define HUFFMAN_DECODE_DEQUE_CACHE 64//单位：位
 #define _DEBUG_
-#define _DEBUGOUT_
+// #define _DEBUGOUT_
+
+//用于做dct逆变换
+#define _A_ cos(M_PI / 4) / 2
+#define _B_ cos(M_PI / 16) / 2
+#define _C_ cos(M_PI / 8)
+#define _D_ cos(M_PI*3 / 16) / 2
+#define _E_ cos(M_PI*5 / 16) / 2
+#define _F_ cos(M_PI*3 / 8) / 2
+#define _G_ cos(M_PI*7 / 16) / 2
+double idct[8][8] = {
+	{_A_, _A_, _A_, _A_, _A_, _A_, _A_, _A_},
+	{_B_, _D_, _E_, _G_,-_G_,-_E_,-_D_,-_B_},
+	{_C_, _F_,-_F_,-_C_,-_C_,-_F_, _F_, _C_},
+	{_D_,-_G_,-_B_,-_E_, _E_, _B_, _G_,-_D_},
+	{_A_,-_A_,-_A_, _A_, _A_,-_A_,-_A_, _A_},
+	{_E_,-_B_, _G_, _D_,-_D_,-_G_, _B_,-_E_},
+	{_F_,-_C_, _C_,-_F_,-_F_, _C_,-_C_, _F_},
+	{_G_,-_E_, _D_,-_B_, _B_,-_D_, _E_,-_G_}
+};
 
 //段类型
 enum JPEGPType{
@@ -36,6 +56,10 @@ enum JPEGPType{
 
 uint16_t ReadByte(fstream& file,int len);
 uint16_t findHuffmanCodeByBit(fstream& file,int& length,int& pos,string& deque,int curValue,int& curValLen,bool flag);
+//将一维数组变为二维数组
+int** UnZigZag(int* originArray);
+//真正的反dct变换
+void IDCT(int** originMatrix);
 
 //SOS
 class JPEGScan{
@@ -100,7 +124,7 @@ class JPEGData{
 	//component每个颜色分量
 	vector<JPEGComponent> component;
 	JPEGScan scan;
-	vector<int*> deHuffman;
+	vector<int**> deHuffman;
 public:
 	JPEGData():
 			max_h_samp_factor(0),
