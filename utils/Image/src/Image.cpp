@@ -11,6 +11,9 @@
 
 NAME_SPACE_START(myUtil)
 
+#define ROW 8
+#define COL 8
+
 uint16_t ReadByte(fstream& file,int len){
     uint16_t res=file.get();
     if(len!=1){
@@ -55,6 +58,59 @@ uint16_t findHuffmanCodeByBit(fstream& file,int& length,int& pos,string& deque,i
     curValue = (curValue << 1) + temp;
     curValLen++;
     return curValue;
+}
+
+int** UnZigZag(int* originArray){
+    int** table=new int*[ROW];
+    for(int i=0;i<ROW;i++) table[i]=new int[COL];
+    int cur=0,x=0,y=0;
+    bool flag = true;//true是右上 false是左下
+    while (cur < 64) {
+        table[y][x] = originArray[cur++];
+        if (flag) { x++; y--; }
+        else { x--; y++; }
+        if (x < 0 || y < 0 || x>7 || y>7) flag = !flag;
+        if (x < 0 && y>7) { x = 1; y = 7; }
+        if (x < 0) x = 0;
+        else if (x > 7) { x = 7; y += 2; }
+        if (y < 0) y = 0;
+        else if (y > 7) { y = 7; x += 2; }
+    }
+    #ifdef _DEBUG_
+    cout << endl;
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            cout.width(3);
+            cout << dec << table[i][j] << " ";
+        }
+        cout << endl;
+    }
+    cout << endl;
+    #endif
+    delete[] originArray;
+    return table;
+}
+
+void IDCT(int** originMatrix){
+    vector<vector<double>> temp(ROW,vector<double>(COL,0));
+    for(int i=0;i<ROW;i++){
+        for(int j=0;j<COL;j++){
+            double sum=0;
+            for(int k=0;k<COL;k++){
+                sum+=idct[k][i]*originMatrix[k][j];
+            }
+            temp[i][j]=sum;
+        }
+    }
+    for(int i=0;i<ROW;i++){
+        for(int j=0;j<COL;j++){
+            double sum=0;
+            for(int k=0;k<COL;k++){
+                sum+=temp[i][k]*idct[k][j];
+            }
+            originMatrix[i][j]=sum;
+        }
+    }
 }
 
 bool JPEGScan::Init(fstream &file, uint16_t len){
@@ -315,14 +371,20 @@ bool JPEGData::huffmanDecode(fstream& file){
         curBitDequeLength=8;
         cout<<curBitDeque;
         while(1){
+            cout<<endl;
+            int** MCUStruct=new int*[6];
+            int count=0;
             for(int i=0;i<3;i++){
                 for(int j=0;j<YUV[i];j++){
                     int *matrix=new int[64];
                     memset(matrix, 0, sizeof(int)*64);
                     int valCount=0;
+                #ifdef _DEBUGOUT_
                     cout<<endl;
+                #endif
                     uint8_t dcID = scan.componentHuffmanMap[component[i].colorId].first;
                     uint8_t acID = scan.componentHuffmanMap[component[i].colorId].second;
+                    int qualityId=component[i].qualityId;
                     while(valCount<64){
                         //用curBitDeque和curBit去找权重，curValue作为当前键值
                         JPEGHuffmanCode::iterator it;
@@ -330,6 +392,10 @@ bool JPEGData::huffmanDecode(fstream& file){
                         while(huffman.findKey(curValue,curValueLength,it)){
                             curValue=findHuffmanCodeByBit(file,curBitDequeLength,curBitPos,curBitDeque,curValue,curValueLength,false);
                         }
+                    #ifdef _DEBUGOUT_
+                        cout<<"code: "<<dec<<curBitDequeLength-curBitPos<<" ";
+                        cout<<dec<<curValue<<" "<<curValueLength<<"\n";
+                    #endif
                         //已经找到了权重和位宽
                         uint8_t weight,zeroCount;
                         if(valCount==0) weight = it->second.second;
@@ -345,33 +411,40 @@ bool JPEGData::huffmanDecode(fstream& file){
                                 flag=true;
                             }
                         }
+                    #ifdef _DEBUGOUT_
+                        cout<<"weight: "<<dec<<curBitDequeLength-curBitPos<<" ";
+                        cout<<dec<<curValue<<" "<<curValueLength<<endl;
+                    #endif
                         if(flag) curValue=-curValue;
-                        if(valCount==0){
-                            preDCValue+=curValue;
-                            matrix[valCount]=preDCValue;
-                        }
+                        int writeValue=valCount==0?(preDCValue+=curValue):curValue;
+                        writeValue*=quality[qualityId].table[valCount];//反量化
+                        if(valCount==0) matrix[valCount]=writeValue;
                         else{
                             while(zeroCount--) matrix[valCount++]=0;
-                            matrix[valCount]=curValue;
+                            matrix[valCount]=writeValue;
                         }
                         curValue=0;
                         curValueLength=0;
                         valCount++;
                     }
-                    deHuffman.push_back(matrix);
-                    #ifdef _DEBUG_
+                    MCUStruct[(count++)%6]=matrix;
+                    cout<<deHuffman.size()<<" ";
+                #ifdef _DEBUG_
                     for(int k=0;k<64;k++){
                         cout.width(3);
                         cout<<dec<<matrix[k]<<" ";
                     }
-                    #endif
+                    cout<<endl;
+                #endif
                 }
             }
+            deHuffman.push_back(MCUStruct);
             curMCUCount++;
-            cout<<"curMCUCount="<<curMCUCount;
+            cout<<"curMCUCount="<<dec<<curMCUCount;
             if(curMCUCount==resetInterval) preDCValue=0;
         }
-    } catch (...) {
+    } catch (exception ex) {
+        cout<<ex.what();
         return false;
     }
     return true;
