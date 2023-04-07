@@ -60,9 +60,9 @@ uint16_t findHuffmanCodeByBit(fstream& file,int& length,int& pos,string& deque,i
     return curValue;
 }
 
-int** UnZigZag(int* originArray){
-    int** table=new int*[ROW];
-    for(int i=0;i<ROW;i++) table[i]=new int[COL];
+double** UnZigZag(int* originArray){
+    double** table=new double*[ROW];
+    for(int i=0;i<ROW;i++) table[i]=new double[COL];
     int cur=0,x=0,y=0;
     bool flag = true;//true是右上 false是左下
     while (cur < 64) {
@@ -90,7 +90,7 @@ int** UnZigZag(int* originArray){
     return table;
 }
 
-void IDCT(int** originMatrix){
+void IDCT(double** originMatrix){
     vector<vector<double>> temp(ROW,vector<double>(COL,0));
     for(int i=0;i<ROW;i++){
         for(int j=0;j<COL;j++){
@@ -122,6 +122,7 @@ void IDCT(int** originMatrix){
     cout << endl;
     #endif
 }
+
 
 bool JPEGScan::Init(fstream &file, uint16_t len){
     try {
@@ -343,17 +344,17 @@ bool JPEGData::readData(fstream& file){
         flag=huffmanDecode(file);
         if(!flag) return false;
         //反量化，即上面的64矩阵×对应位置的量化表
-        flag=deQuantity();
-        if(!flag) return false;
+        //flag=deQuantity();
+        //if(!flag) return false;
         //反zig-zag排序
-        flag=deZSort();
-        if(!flag) return false;
+        //flag=deZSort();
+        //if(!flag) return false;
         //反离散余弦变换
 
-        if(!flag) return false;
+        //if(!flag) return false;
         //YCbCr转RGB
 
-        if(!flag) return false;
+        //if(!flag) return false;
     }
     catch(...){
         return false;
@@ -365,6 +366,7 @@ bool JPEGData::huffmanDecode(fstream& file){
     try {
         //原图像一个MCU有多少8*8矩阵（此时是YCbCr还没有分开）
         //int MCUBlockCount=max_h_samp_factor*max_v_samp_factor;
+        //顺序YCbCr
         int YUV[]={component[0].h_samp_factor*component[0].v_samp_factor,
                     component[1].h_samp_factor*component[1].v_samp_factor,
                     component[2].h_samp_factor*component[2].v_samp_factor};
@@ -436,11 +438,14 @@ bool JPEGData::huffmanDecode(fstream& file){
                         curValue=0;
                         curValueLength=0;
                         valCount++;
+                        if(YUV[0]!=4){
+                            cout<<YUV[0]<<endl;
+                        }
                     }
                     //MCUStruct[(count++)%6]=matrix;
-                    int** tempZ = UnZigZag(matrix);
-                    IDCT(tempZ);
-                    rgb.push_back(tempZ);
+                    double** tempZ = UnZigZag(matrix);//反zig-zag编码
+                    IDCT(tempZ);                    //dct逆变换
+                    ycbcr.push_back(tempZ);
                     //delete [] matrix;
                 #ifdef _DEBUG_
                     for(int k=0;k<ROW;k++){
@@ -452,9 +457,14 @@ bool JPEGData::huffmanDecode(fstream& file){
                     }
                     cout<<endl;
                 #endif
+                    cout<<count++<<" ";
                 }
             }
-            //deHuffman.push_back(MCUStruct);
+            if(count!=6){
+                cout<<" ";
+            }
+            int** lpRGB = YCbCrToRGB(YUV,curMCUCount);
+            rgb.push_back(lpRGB);
             curMCUCount++;
             cout<<"curMCUCount="<<dec<<curMCUCount;
             if(curMCUCount==resetInterval) preDCValue=0;
@@ -482,6 +492,47 @@ bool JPEGData::deZSort(){
         return false;
     }
     return true;
+}
+
+int** JPEGData::YCbCrToRGB(const int* YUV,int curMCUCount){
+    int **res = new int *[ROW * max_v_samp_factor];
+    int matrixCount = YUV[0] + YUV[1] + YUV[2];
+    int crCount = 0, cbCount = 0;
+    //1＝Y, 2＝Cb, 3＝Cr
+    //式子 scale*x,scale*y
+    int cb_h_samp_scale=component[1].h_samp_factor/max_h_samp_factor,
+        cb_v_samp_scale=component[1].v_samp_factor/max_v_samp_factor,
+        cr_h_samp_scale=component[2].h_samp_factor/max_h_samp_factor,
+        cr_v_samp_scale=component[2].v_samp_factor/max_v_samp_factor;
+    for (int i = 0; i < ROW; i++)
+        res[i] = new int[COL * max_h_samp_factor];
+    // for (int i = 0; i < YUV[0]; i++)
+    // {
+    //     double **y = ycbcr[(curMCUCount * matrixCount) + i];
+    //     double **cr = ycbcr[(curMCUCount * matrixCount) + YUV[0] + crCount];
+    //     double **cb = ycbcr[(curMCUCount * matrixCount) + YUV[0] + YUV[1] + cbCount];
+    //     if (i != 0 && i % crCountFactor == 0)
+    //         crCount++;
+    //     if (i != 0 && i % cbCountFactor == 0)
+    //         cbCount++;
+    //     for(int j=0;j<ROW * max_v_samp_factor;j++){
+    //         for(int k=0;k<COL * max_h_samp_factor;k++){
+    //         }
+    //     }
+    // }
+    //此处直接生成rgb值
+    //注意，此处YCrCb的对应关系与采样因子有关
+    for(int j=0;j<ROW * max_v_samp_factor;j++){
+        for(int k=0;k<COL * max_h_samp_factor;k++){
+            int cur_h_pos=k*cb_h_samp_scale,
+                cur_v_pos=j*cb_v_samp_scale;
+            double** y=ycbcr[(j/ROW)*component[0].h_samp_factor+(k/COL)*component[0].v_samp_factor];
+            double** cb=ycbcr[YUV[0]];
+            double** cr=ycbcr[YUV[0]+YUV[1]];
+        }
+    }
+    ycbcr.clear();
+    return res;
 }
 
 NAME_SPACE_END()
