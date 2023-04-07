@@ -22,10 +22,10 @@ NAME_SPACE_START(myUtil)
 #define _A_ cos(M_PI / 4) / 2
 #define _B_ cos(M_PI / 16) / 2
 #define _C_ cos(M_PI / 8)
-#define _D_ cos(M_PI*3 / 16) / 2
-#define _E_ cos(M_PI*5 / 16) / 2
-#define _F_ cos(M_PI*3 / 8) / 2
-#define _G_ cos(M_PI*7 / 16) / 2
+#define _D_ cos(M_PI * 3 / 16) / 2
+#define _E_ cos(M_PI * 5 / 16) / 2
+#define _F_ cos(M_PI * 3 / 8) / 2
+#define _G_ cos(M_PI * 7 / 16) / 2
 const double IDctArray[8][8] = {
 	{_A_, _A_, _A_, _A_, _A_, _A_, _A_, _A_},
 	{_B_, _D_, _E_, _G_,-_G_,-_E_,-_D_,-_B_},
@@ -57,9 +57,9 @@ enum JPEGPType{
 uint16_t ReadByte(fstream& file,int len);
 uint16_t findHuffmanCodeByBit(fstream& file,int& length,int& pos,string& deque,int curValue,int& curValLen,bool flag);
 //将一维数组变为二维数组
-int** UnZigZag(int* originArray);
+double** UnZigZag(int* originArray);
 //真正的反dct变换
-void IDCT(int** originMatrix);
+void IDCT(double** originMatrix);
 
 //SOS
 class JPEGScan{
@@ -99,6 +99,7 @@ public:
 //SOF segment
 class JPEGComponent{
 public:
+	//1＝Y, 2＝Cb, 3＝Cr, 4＝I, 5＝Q
 	uint8_t colorId;
 	uint8_t h_samp_factor;
 	uint8_t v_samp_factor;
@@ -125,6 +126,7 @@ class JPEGData{
 	vector<JPEGComponent> component;
 	JPEGScan scan;
 	//vector<int**> deHuffman;
+	vector<double**> ycbcr;
 	vector<int**> rgb;
 public:
 	JPEGData():
@@ -140,7 +142,7 @@ protected:
 	bool huffmanDecode(fstream& file);
 	bool deQuantity();
 	bool deZSort();
-
+	int** YCbCrToRGB(const int* YUV,int curMCUCount);
 };
 
 NAME_SPACE_END()
