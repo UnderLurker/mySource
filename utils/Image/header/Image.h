@@ -1,4 +1,6 @@
 #pragma once
+#define _USE_MATH_DEFINES
+#include <cmath>
 #include <fstream>
 #include <stdint.h>
 #include <utility>
@@ -8,7 +10,6 @@
 #include "Util.h"
 #include <string>
 #include <vector>
-#include <math.h>
 #include <iostream>
 using namespace std;
 
@@ -17,6 +18,13 @@ NAME_SPACE_START(myUtil)
 #define HUFFMAN_DECODE_DEQUE_CACHE 64//单位：位
 // #define _DEBUG_
 // #define _DEBUGOUT_
+#define FREE_VECTOR_LP(vectorName) \
+    for(double** item : vectorName){	\
+		for(int i=0;i<ROW;i++)\
+			delete [] item[i];\
+        delete [] item;	\
+    }\
+	vectorName.clear();
 
 //用于做dct逆变换
 #define _A_ cos(M_PI / 4) / 2
@@ -26,16 +34,15 @@ NAME_SPACE_START(myUtil)
 #define _E_ cos(M_PI * 5 / 16) / 2
 #define _F_ cos(M_PI * 3 / 8) / 2
 #define _G_ cos(M_PI * 7 / 16) / 2
-const double IDctArray[8][8] = {
+static const double IDctArray[8][8] = {
 	{_A_, _A_, _A_, _A_, _A_, _A_, _A_, _A_},
-	{_B_, _D_, _E_, _G_,-_G_,-_E_,-_D_,-_B_},
-	{_C_, _F_,-_F_,-_C_,-_C_,-_F_, _F_, _C_},
-	{_D_,-_G_,-_B_,-_E_, _E_, _B_, _G_,-_D_},
-	{_A_,-_A_,-_A_, _A_, _A_,-_A_,-_A_, _A_},
-	{_E_,-_B_, _G_, _D_,-_D_,-_G_, _B_,-_E_},
-	{_F_,-_C_, _C_,-_F_,-_F_, _C_,-_C_, _F_},
-	{_G_,-_E_, _D_,-_B_, _B_,-_D_, _E_,-_G_}
-};
+	{_B_, _D_, _E_, _G_, -_G_, -_E_, -_D_, -_B_},
+	{_C_, _F_, -_F_, -_C_, -_C_, -_F_, _F_, _C_},
+	{_D_, -_G_, -_B_, -_E_, _E_, _B_, _G_, -_D_},
+	{_A_, -_A_, -_A_, _A_, _A_, -_A_, -_A_, _A_},
+	{_E_, -_B_, _G_, _D_, -_D_, -_G_, _B_, -_E_},
+	{_F_, -_C_, _C_, -_F_, -_F_, _C_, -_C_, _F_},
+	{_G_, -_E_, _D_, -_B_, _B_, -_D_, _E_, -_G_}};
 
 //段类型
 enum JPEGPType{
@@ -60,6 +67,12 @@ uint16_t findHuffmanCodeByBit(fstream& file,int& length,int& pos,string& deque,i
 double** UnZigZag(int* originArray);
 //真正的反dct变换
 void IDCT(double** originMatrix);
+
+struct RGB{
+	uint8_t red;
+	uint8_t green;
+	uint8_t blue;
+};
 
 //SOS
 class JPEGScan{
@@ -127,7 +140,7 @@ class JPEGData{
 	JPEGScan scan;
 	//vector<int**> deHuffman;
 	vector<double**> ycbcr;
-	vector<int**> rgb;
+	vector<RGB**> rgb;
 public:
 	JPEGData():
 			max_h_samp_factor(0),
@@ -142,7 +155,7 @@ protected:
 	bool huffmanDecode(fstream& file);
 	bool deQuantity();
 	bool deZSort();
-	int** YCbCrToRGB(const int* YUV,int curMCUCount);
+	RGB** YCbCrToRGB(const int* YUV,int curMCUCount);
 };
 
 NAME_SPACE_END()

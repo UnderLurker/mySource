@@ -10,7 +10,6 @@
 #include <vector>
 
 NAME_SPACE_START(myUtil)
-
 #define ROW 8
 #define COL 8
 
@@ -384,7 +383,6 @@ bool JPEGData::huffmanDecode(fstream& file){
         cout<<curBitDeque;
         while(1){
             cout<<endl;
-            int** MCUStruct=new int*[6];
             int count=0;
             for(int i=0;i<3;i++){
                 for(int j=0;j<YUV[i];j++){
@@ -438,15 +436,10 @@ bool JPEGData::huffmanDecode(fstream& file){
                         curValue=0;
                         curValueLength=0;
                         valCount++;
-                        if(YUV[0]!=4){
-                            cout<<YUV[0]<<endl;
-                        }
                     }
-                    //MCUStruct[(count++)%6]=matrix;
                     double** tempZ = UnZigZag(matrix);//反zig-zag编码
                     IDCT(tempZ);                    //dct逆变换
                     ycbcr.push_back(tempZ);
-                    //delete [] matrix;
                 #ifdef _DEBUG_
                     for(int k=0;k<ROW;k++){
                         for(int l=0;l<COL;l++){
@@ -463,7 +456,8 @@ bool JPEGData::huffmanDecode(fstream& file){
             if(count!=6){
                 cout<<" ";
             }
-            int** lpRGB = YCbCrToRGB(YUV,curMCUCount);
+            RGB** lpRGB = YCbCrToRGB(YUV,curMCUCount);
+            FREE_VECTOR_LP(ycbcr)
             rgb.push_back(lpRGB);
             curMCUCount++;
             cout<<"curMCUCount="<<dec<<curMCUCount;
@@ -494,44 +488,42 @@ bool JPEGData::deZSort(){
     return true;
 }
 
-int** JPEGData::YCbCrToRGB(const int* YUV,int curMCUCount){
-    int **res = new int *[ROW * max_v_samp_factor];
+RGB** JPEGData::YCbCrToRGB(const int* YUV,int curMCUCount){
+    RGB **res = new RGB *[ROW * max_v_samp_factor];
     int matrixCount = YUV[0] + YUV[1] + YUV[2];
     int crCount = 0, cbCount = 0;
     //1＝Y, 2＝Cb, 3＝Cr
     //式子 scale*x,scale*y
-    int cb_h_samp_scale=component[1].h_samp_factor/max_h_samp_factor,
-        cb_v_samp_scale=component[1].v_samp_factor/max_v_samp_factor,
-        cr_h_samp_scale=component[2].h_samp_factor/max_h_samp_factor,
-        cr_v_samp_scale=component[2].v_samp_factor/max_v_samp_factor;
-    for (int i = 0; i < ROW; i++)
-        res[i] = new int[COL * max_h_samp_factor];
-    // for (int i = 0; i < YUV[0]; i++)
-    // {
-    //     double **y = ycbcr[(curMCUCount * matrixCount) + i];
-    //     double **cr = ycbcr[(curMCUCount * matrixCount) + YUV[0] + crCount];
-    //     double **cb = ycbcr[(curMCUCount * matrixCount) + YUV[0] + YUV[1] + cbCount];
-    //     if (i != 0 && i % crCountFactor == 0)
-    //         crCount++;
-    //     if (i != 0 && i % cbCountFactor == 0)
-    //         cbCount++;
-    //     for(int j=0;j<ROW * max_v_samp_factor;j++){
-    //         for(int k=0;k<COL * max_h_samp_factor;k++){
-    //         }
-    //     }
-    // }
+    double cb_h_samp_scale=component[1].h_samp_factor*1.0/max_h_samp_factor,
+           cb_v_samp_scale=component[1].v_samp_factor*1.0/max_v_samp_factor,
+           cr_h_samp_scale=component[2].h_samp_factor*1.0/max_h_samp_factor,
+           cr_v_samp_scale=component[2].v_samp_factor*1.0/max_v_samp_factor;
+    for (int i = 0; i < ROW * max_v_samp_factor; i++)
+        res[i] = new RGB[COL * max_h_samp_factor];
     //此处直接生成rgb值
-    //注意，此处YCrCb的对应关系与采样因子有关
+    //注意，此处YCbCr的对应关系与采样因子有关
+    cout<<endl;
     for(int j=0;j<ROW * max_v_samp_factor;j++){
         for(int k=0;k<COL * max_h_samp_factor;k++){
-            int cur_h_pos=k*cb_h_samp_scale,
-                cur_v_pos=j*cb_v_samp_scale;
-            double** y=ycbcr[(j/ROW)*component[0].h_samp_factor+(k/COL)*component[0].v_samp_factor];
-            double** cb=ycbcr[YUV[0]];
-            double** cr=ycbcr[YUV[0]+YUV[1]];
+            int cur_cb_h_pos=k*cb_h_samp_scale,
+                cur_cb_v_pos=j*cb_v_samp_scale,
+                cur_cr_h_pos=k*cr_h_samp_scale,
+                cur_cr_v_pos=j*cr_v_samp_scale;
+            double **y = ycbcr[(j / ROW) * component[0].h_samp_factor +
+                               (k / COL) * component[0].v_samp_factor];
+            double **cb = ycbcr[YUV[0] + (cur_cb_v_pos / ROW) * (component[1].h_samp_factor) +
+                      (cur_cb_h_pos / COL)];
+            double **cr = ycbcr[YUV[0] + YUV[1] + (cur_cr_v_pos / ROW) * (component[2].h_samp_factor) +
+                      (cur_cr_h_pos / COL)];
+            int row=j%ROW,col=k%COL;
+            res[j][k].red   =128+y[row][col]+1.402  *cb[row][col];
+            res[j][k].green =128+y[row][col]-0.71414*cb[row][col]-0.34414*cr[row][col];
+            res[j][k].blue  =128+y[row][col]+1.772  *cb[row][col];
+            cout<<hex<<(int)res[j][k].red<<(int)res[j][k].green<<(int)res[j][k].blue<<" ";
         }
+        cout<<endl;
     }
-    ycbcr.clear();
+    cout<<endl;
     return res;
 }
 
