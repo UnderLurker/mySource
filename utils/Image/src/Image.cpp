@@ -10,8 +10,6 @@
 #include <vector>
 
 NAME_SPACE_START(myUtil)
-#define ROW 8
-#define COL 8
 
 uint16_t ReadByte(fstream& file,int len){
     uint16_t res=file.get();
@@ -88,40 +86,6 @@ double** UnZigZag(int* originArray){
     #endif
     return table;
 }
-
-void IDCT(double** originMatrix){
-    vector<vector<double>> temp(ROW,vector<double>(COL,0));
-    for(int i=0;i<ROW;i++){
-        for(int j=0;j<COL;j++){
-            double sum=0;
-            for(int k=0;k<COL;k++){
-                sum+=IDctArray[k][i]*originMatrix[k][j];
-            }
-            temp[i][j]=sum;
-        }
-    }
-    for(int i=0;i<ROW;i++){
-        for(int j=0;j<COL;j++){
-            double sum=0;
-            for(int k=0;k<COL;k++){
-                sum+=temp[i][k]*IDctArray[k][j];
-            }
-            originMatrix[i][j]=sum;
-        }
-    }
-    #ifdef _DEBUGOUT_
-    cout << endl;
-    for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 8; j++) {
-            cout.width(3);
-            cout << dec << originMatrix[i][j] << " ";
-        }
-        cout << endl;
-    }
-    cout << endl;
-    #endif
-}
-
 
 bool JPEGScan::Init(fstream &file, uint16_t len){
     try {
@@ -214,6 +178,8 @@ bool JPEGComponent::Init(fstream &file, uint16_t len){
 bool JPEGData::readJPEG(const char *filePath){
     fstream file(filePath,ios::in|ios::binary);
     if(file.fail()) return false;
+    file.seekg(0,ios::end);
+    pos = file.tellg();
     file.seekg(2,ios::beg);
     dc_huffman.resize(2);
     ac_huffman.resize(2);
@@ -399,9 +365,10 @@ bool JPEGData::huffmanDecode(fstream& file){
                         //用curBitDeque和curBit去找权重，curValue作为当前键值
                         JPEGHuffmanCode::iterator it;
                         JPEGHuffmanCode &huffman = valCount==0?dc_huffman[dcID]:ac_huffman[acID];
-                        while(huffman.findKey(curValue,curValueLength,it)){
+                        while(curValueLength<=16&&huffman.findKey(curValue,curValueLength,it)){
                             curValue=findHuffmanCodeByBit(file,curBitDequeLength,curBitPos,curBitDeque,curValue,curValueLength,false);
                         }
+                        if(curValueLength>16) return true;
                     #ifdef _DEBUGOUT_
                         cout<<"code: "<<dec<<curBitDequeLength-curBitPos<<" ";
                         cout<<dec<<curValue<<" "<<curValueLength<<"\n";
@@ -427,7 +394,7 @@ bool JPEGData::huffmanDecode(fstream& file){
                     #endif
                         if(flag) curValue=-curValue;
                         int writeValue=valCount==0?(preDCValue+=curValue):curValue;
-                        writeValue*=quality[qualityId].table[valCount];//反量化
+                        //writeValue*=quality[qualityId].table[valCount];//反量化
                         if(valCount==0) matrix[valCount]=writeValue;
                         else{
                             while(zeroCount--) matrix[valCount++]=0;
@@ -438,6 +405,8 @@ bool JPEGData::huffmanDecode(fstream& file){
                         valCount++;
                     }
                     double** tempZ = UnZigZag(matrix);//反zig-zag编码
+                    deQuality(tempZ,qualityId);
+                    //PAndNCorrect(tempZ);
                     IDCT(tempZ);                    //dct逆变换
                     ycbcr.push_back(tempZ);
                 #ifdef _DEBUG_
@@ -460,29 +429,11 @@ bool JPEGData::huffmanDecode(fstream& file){
             FREE_VECTOR_LP(ycbcr)
             rgb.push_back(lpRGB);
             curMCUCount++;
-            cout<<"curMCUCount="<<dec<<curMCUCount;
+            cout<<"curMCUCount="<<dec<<curMCUCount<<" pos="<<pos<<"/"<<file.tellg();
             if(curMCUCount==resetInterval) preDCValue=0;
         }
     } catch (exception ex) {
         cout<<ex.what();
-        return false;
-    }
-    return true;
-}
-
-bool JPEGData::deQuantity(){
-    try {
-        
-    } catch (...) {
-        return false;
-    }
-    return true;
-}
-
-bool JPEGData::deZSort(){
-    try {
-        
-    } catch (...) {
         return false;
     }
     return true;
@@ -502,13 +453,17 @@ RGB** JPEGData::YCbCrToRGB(const int* YUV,int curMCUCount){
         res[i] = new RGB[COL * max_h_samp_factor];
     //此处直接生成rgb值
     //注意，此处YCbCr的对应关系与采样因子有关
-    cout<<endl;
+    //cout<<endl;
     for(int j=0;j<ROW * max_v_samp_factor;j++){
         for(int k=0;k<COL * max_h_samp_factor;k++){
-            int cur_cb_h_pos=k*cb_h_samp_scale,
-                cur_cb_v_pos=j*cb_v_samp_scale,
-                cur_cr_h_pos=k*cr_h_samp_scale,
-                cur_cr_v_pos=j*cr_v_samp_scale;
+            // int cur_cb_h_pos=k*cb_h_samp_scale,
+            //     cur_cb_v_pos=j*cb_v_samp_scale,
+            //     cur_cr_h_pos=k*cr_h_samp_scale,
+            //     cur_cr_v_pos=j*cr_v_samp_scale;
+            int cur_cb_h_pos=k%COL,
+                cur_cb_v_pos=j%ROW,
+                cur_cr_h_pos=k%COL,
+                cur_cr_v_pos=j%ROW;
             double **y = ycbcr[(j / ROW) * component[0].h_samp_factor +
                                (k / COL) * component[0].v_samp_factor];
             double **cb = ycbcr[YUV[0] + (cur_cb_v_pos / ROW) * (component[1].h_samp_factor) +
@@ -516,15 +471,123 @@ RGB** JPEGData::YCbCrToRGB(const int* YUV,int curMCUCount){
             double **cr = ycbcr[YUV[0] + YUV[1] + (cur_cr_v_pos / ROW) * (component[2].h_samp_factor) +
                       (cur_cr_h_pos / COL)];
             int row=j%ROW,col=k%COL;
+
+            // res[j][k].red  =1.164*(y[row][col]-16)+1.596*(cr[row][col]-128);
+            // res[j][k].green=1.164*(y[row][col]-16)-0.392*(cb[row][col]-128)-0.813*(cr[row][col]-128);
+            // res[j][k].blue =1.164*(y[row][col]-16)+2.017*(cb[row][col]-128);
+
             res[j][k].red   =128+y[row][col]+1.402  *cb[row][col];
             res[j][k].green =128+y[row][col]-0.71414*cb[row][col]-0.34414*cr[row][col];
             res[j][k].blue  =128+y[row][col]+1.772  *cb[row][col];
-            cout<<hex<<(int)res[j][k].red<<(int)res[j][k].green<<(int)res[j][k].blue<<" ";
+
+
+            //cout<<hex<<(int)res[j][k].red<<(int)res[j][k].green<<(int)res[j][k].blue<<" ";
+            //cout<<dec<<cur_cb_h_pos<<" "<<cur_cb_v_pos<<" "<<cur_cr_h_pos<<" "<<cur_cr_v_pos<<endl;
+        }
+        //cout<<endl;
+    }
+    //cout<<endl;
+    return res;
+}
+
+double** JPEGData::createDCTAndIDCTArray(int row){
+    double** res=new double*[row];
+    for(int i=0;i<row;i++) res[i]=new double[row];
+    cout<<endl;
+    for(int i=0;i<row;i++){
+        for(int j=0;j<row;j++){
+            double t=0;
+            if(i==0) t=sqrt(1.0/row);
+            else t=sqrt(2.0/row);
+            res[i][j]=t*cos(M_PI*(j+0.5)*i/row);
+            cout<<res[i][j]<<" ";
         }
         cout<<endl;
     }
-    cout<<endl;
     return res;
+}
+
+void JPEGData::DCT(double** originMatrix){
+    //原理 Y=A*X*A'
+    vector<vector<double>> temp(ROW,vector<double>(COL,0));
+    for(int i=0;i<ROW;i++){
+        for(int j=0;j<COL;j++){
+            double sum=0;
+            for(int k=0;k<COL;k++){
+                sum+=DCTAndIDCTArray[i][k]*originMatrix[k][j];
+            }
+            temp[i][j]=sum;
+        }
+    }
+    for(int i=0;i<ROW;i++){
+        for(int j=0;j<COL;j++){
+            double sum=0;
+            for(int k=0;k<COL;k++){
+                sum+=temp[i][k]*DCTAndIDCTArray[j][k];
+            }
+            originMatrix[i][j]=sum;
+        }
+    }
+    #ifdef _DEBUGOUT_
+    cout << endl;
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            cout.width(3);
+            cout << dec << originMatrix[i][j] << " ";
+        }
+        cout << endl;
+    }
+    cout << endl;
+    #endif
+}
+
+void JPEGData::IDCT(double** originMatrix){
+    //原理X=A'*Y*A
+    vector<vector<double>> temp(ROW,vector<double>(COL,0));
+    for(int i=0;i<ROW;i++){
+        for(int j=0;j<COL;j++){
+            double sum=0;
+            for(int k=0;k<COL;k++){
+                sum+=DCTAndIDCTArray[k][i]*originMatrix[k][j];
+            }
+            temp[i][j]=sum;
+        }
+    }
+    for(int i=0;i<ROW;i++){
+        for(int j=0;j<COL;j++){
+            double sum=0;
+            for(int k=0;k<COL;k++){
+                sum+=temp[i][k]*DCTAndIDCTArray[k][j];
+            }
+            originMatrix[i][j]=sum;
+        }
+    }
+    #ifdef _DEBUGOUT_
+    cout << endl;
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            cout.width(3);
+            cout << dec << originMatrix[i][j] << " ";
+        }
+        cout << endl;
+    }
+    cout << endl;
+    #endif
+}
+
+void JPEGData::deQuality(double** originMatrix,int qualityID){
+    for(int i=0;i<ROW;i++){
+        for(int j=0;j<COL;j++){
+            originMatrix[i][j]*=quality[qualityID].table[i*ROW+j];
+        }
+    }
+}
+
+void JPEGData::PAndNCorrect(double** originMatrix){
+    for(int i=0;i<ROW;i++)
+        if(i%2==1)
+            for(int j=0;j<COL;j++) 
+                originMatrix[i][j]=-originMatrix[i][j];
 }
 
 NAME_SPACE_END()
