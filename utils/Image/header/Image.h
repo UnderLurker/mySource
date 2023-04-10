@@ -15,34 +15,43 @@ using namespace std;
 
 NAME_SPACE_START(myUtil)
 
+#define ROW 8
+#define COL 8
 #define HUFFMAN_DECODE_DEQUE_CACHE 64//单位：位
 // #define _DEBUG_
 // #define _DEBUGOUT_
 #define FREE_VECTOR_LP(vectorName) \
-    for(double** item : vectorName){	\
+    for(auto item : vectorName){	\
 		for(int i=0;i<ROW;i++)\
 			delete [] item[i];\
         delete [] item;	\
     }\
 	vectorName.clear();
 
-//用于做dct逆变换
-#define _A_ cos(M_PI / 4) / 2
-#define _B_ cos(M_PI / 16) / 2
-#define _C_ cos(M_PI / 8)
-#define _D_ cos(M_PI * 3 / 16) / 2
-#define _E_ cos(M_PI * 5 / 16) / 2
-#define _F_ cos(M_PI * 3 / 8) / 2
-#define _G_ cos(M_PI * 7 / 16) / 2
-static const double IDctArray[8][8] = {
-	{_A_, _A_, _A_, _A_, _A_, _A_, _A_, _A_},
-	{_B_, _D_, _E_, _G_, -_G_, -_E_, -_D_, -_B_},
-	{_C_, _F_, -_F_, -_C_, -_C_, -_F_, _F_, _C_},
-	{_D_, -_G_, -_B_, -_E_, _E_, _B_, _G_, -_D_},
-	{_A_, -_A_, -_A_, _A_, _A_, -_A_, -_A_, _A_},
-	{_E_, -_B_, _G_, _D_, -_D_, -_G_, _B_, -_E_},
-	{_F_, -_C_, _C_, -_F_, -_F_, _C_, -_C_, _F_},
-	{_G_, -_E_, _D_, -_B_, _B_, -_D_, _E_, -_G_}};
+//释放二维指针
+#define FREE_LP_2(lpName,row) \
+	for(int i=0;i<row;i++){\
+		delete [] lpName[i];\
+	}\
+	delete [] lpName;
+
+// //用于做dct逆变换
+// #define _A_ cos(M_PI / 4) / 2
+// #define _B_ cos(M_PI / 16) / 2
+// #define _C_ cos(M_PI / 8)
+// #define _D_ cos(M_PI * 3 / 16) / 2
+// #define _E_ cos(M_PI * 5 / 16) / 2
+// #define _F_ cos(M_PI * 3 / 8) / 2
+// #define _G_ cos(M_PI * 7 / 16) / 2
+// static const double IDctArray[8][8] = {
+// 	{_A_, _A_, _A_, _A_, _A_, _A_, _A_, _A_},
+// 	{_B_, _D_, _E_, _G_, -_G_, -_E_, -_D_, -_B_},
+// 	{_C_, _F_, -_F_, -_C_, -_C_, -_F_, _F_, _C_},
+// 	{_D_, -_G_, -_B_, -_E_, _E_, _B_, _G_, -_D_},
+// 	{_A_, -_A_, -_A_, _A_, _A_, -_A_, -_A_, _A_},
+// 	{_E_, -_B_, _G_, _D_, -_D_, -_G_, _B_, -_E_},
+// 	{_F_, -_C_, _C_, -_F_, -_F_, _C_, -_C_, _F_},
+// 	{_G_, -_E_, _D_, -_B_, _B_, -_D_, _E_, -_G_}};
 
 //段类型
 enum JPEGPType{
@@ -65,8 +74,6 @@ uint16_t ReadByte(fstream& file,int len);
 uint16_t findHuffmanCodeByBit(fstream& file,int& length,int& pos,string& deque,int curValue,int& curValLen,bool flag);
 //将一维数组变为二维数组
 double** UnZigZag(int* originArray);
-//真正的反dct变换
-void IDCT(double** originMatrix);
 
 struct RGB{
 	uint8_t red;
@@ -141,21 +148,38 @@ class JPEGData{
 	//vector<int**> deHuffman;
 	vector<double**> ycbcr;
 	vector<RGB**> rgb;
+	double** DCTAndIDCTArray;
+	streampos pos;
 public:
 	JPEGData():
 			max_h_samp_factor(0),
 			max_v_samp_factor(0),
 			width(0),
 			height(0),
-			precision(0){}
+			precision(0){
+				DCTAndIDCTArray=createDCTAndIDCTArray(ROW);
+			}
+	~JPEGData(){
+		FREE_LP_2(DCTAndIDCTArray,ROW-1)
+		// FREE_LP_2(DCTArray,ROW-1)
+		// FREE_LP_2(IDCTArray,ROW-1)
+		FREE_VECTOR_LP(rgb)
+	}
 	bool readJPEG(const char* filePath);
+private:
+	double** createDCTAndIDCTArray(int row);
+	//double** createIDCTArray(int row);
+	void DCT(double** originMatrix);
+	void IDCT(double** originMatrix);
 protected:
 	bool readSOF(fstream& file,uint16_t len);
 	bool readData(fstream& file);
 	bool huffmanDecode(fstream& file);
-	bool deQuantity();
-	bool deZSort();
+	void deQuality(double** originMatrix,int qualityID);
+	//隔行正负纠正
+	void PAndNCorrect(double** originMatrix);
 	RGB** YCbCrToRGB(const int* YUV,int curMCUCount);
+
 };
 
 NAME_SPACE_END()
