@@ -166,7 +166,7 @@ public:
 		FREE_VECTOR_LP(rgb)
 	}
 	bool readJPEG(const char* filePath);
-private:
+
 	double** createDCTAndIDCTArray(int row);
 	//double** createIDCTArray(int row);
 	void DCT(double** originMatrix);
