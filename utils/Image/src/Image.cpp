@@ -6,6 +6,7 @@
 #include <fstream>
 #include <stdint.h>
 #include <bitset>
+#include <stdlib.h>
 #include <utility>
 #include <cstring>
 #include <vector>
@@ -307,17 +308,15 @@ bool JPEGData::huffmanDecode(fstream& file){
         curBitDeque.append(bitset<8>(file.get()).to_string());
         curBitDequeLength=8;
         cout<<curBitDeque;
-        while(!EOI){
+        while(!EOI||(pos-file.tellg())!=2){
             cout<<endl;
-            int count=0;
+            int count=1;
             for(int i=0;i<3;i++){
-                //if(curMCUCount==resetInterval) preDCValue[i]=0;
+                // if(curMCUCount%resetInterval==0) preDCValue[i]=0;
                 for(int j=0;j<YUV[i];j++){
+                    cout<<count++<<" ";
                     int matrix[64]={0};
                     int valCount=0;
-                #ifdef _DEBUGOUT_
-                    cout<<endl;
-                #endif
                     uint8_t dcID = scan.componentHuffmanMap[component[i].colorId].first;
                     uint8_t acID = scan.componentHuffmanMap[component[i].colorId].second;
                     int qualityId=component[i].qualityId;
@@ -341,12 +340,13 @@ bool JPEGData::huffmanDecode(fstream& file){
                         else { weight = it->second.second & 0x0f; zeroCount = it->second.second >> 4;}
                         curValue=0;//这里变为dc或ac值
                         curValueLength=0;
-                        if(weight==0) break;//后面全是0
+                        if(valCount!=0&&weight==0&&zeroCount==0) break;//后面全是0
                         // 读取真正的值
                         for(int k=0;k<weight;k++){
                             curValue=findHuffmanCodeByBit(file,curBitDequeLength,curBitPos,curBitDeque,curValue,curValueLength);
                         }
                         curValue = (curValue >= pow(2, curValueLength - 1) ? curValue : curValue - pow(2, curValueLength) + 1);
+                        // cout<<curValue<<endl;
                         int writeValue=valCount==0?(preDCValue[i]+=curValue):curValue;
                         valCount+=zeroCount;
                         writeValue*=quality[qualityId].table[valCount];//反量化
@@ -355,10 +355,6 @@ bool JPEGData::huffmanDecode(fstream& file){
                         curValueLength=0;
                         valCount++;
                     }
-                    // cout<<endl;
-                    // std::cout<<std::endl;
-                    // for(int k=0;k<64;k++) std::cout<<matrix[k]<<" ";
-                    // std::cout<<std::endl;
                     double** tempZ = UnZigZag(matrix);//反zig-zag编码
                     //反量化，在反zig-zag编码前后差别，前面：RGB数值与编辑器比偏小，反之偏大，这也与最后取整时的方式有关
                     // deQuality(tempZ,qualityId);
@@ -377,7 +373,6 @@ bool JPEGData::huffmanDecode(fstream& file){
                     }
                     cout<<endl;
                 #endif
-                    cout<<count++<<" ";
                 }
             }
             if(count!=6){
@@ -388,7 +383,9 @@ bool JPEGData::huffmanDecode(fstream& file){
             rgb.push_back(lpRGB);
             curMCUCount++;
             cout<<"curMCUCount="<<dec<<curMCUCount<<" pos="<<pos<<"/"<<file.tellg()<<" "<<file.tellg()*100.0/pos<<"%";
+            if(pos-file.tellg()==2) break;
         }
+        cout<<"\nsuccessfully\n";
     } catch (exception ex) {
         cout<<ex.what();
         return false;
@@ -410,7 +407,7 @@ RGB** JPEGData::YCbCrToRGB(const int* YUV,int curMCUCount){
         res[i] = new RGB[COL * max_h_samp_factor];
     //此处直接生成rgb值
     //注意，此处YCbCr的对应关系与采样因子有关
-    cout<<endl;
+    // cout<<endl;
     for(int j=0;j<ROW * max_v_samp_factor;j++){
         for(int k=0;k<COL * max_h_samp_factor;k++){
             int yPos = (j / ROW) * component[0].h_samp_factor + (k / COL);
@@ -434,13 +431,13 @@ RGB** JPEGData::YCbCrToRGB(const int* YUV,int curMCUCount){
             
             // 输出当前选择的矩阵
             //cout<<dec<<yPos<<" "<<cbPos<<" "<<crPos<<" ";
-            cout<<hex<<setw(2)<<setfill('0')<<(int)res[j][k].red
-                     <<setw(2)<<setfill('0')<<(int)res[j][k].green
-                     <<setw(2)<<setfill('0')<<(int)res[j][k].blue<<" ";
+            // cout<<hex<<setw(2)<<setfill('0')<<(int)res[j][k].red
+            //          <<setw(2)<<setfill('0')<<(int)res[j][k].green
+            //          <<setw(2)<<setfill('0')<<(int)res[j][k].blue<<" ";
         }
-        cout<<endl;
+        // cout<<endl;
     }
-    cout<<endl;
+    // cout<<endl;
     return res;
 }
 
@@ -528,10 +525,11 @@ void JPEGData::PAndNCorrect(double** originMatrix){
 string JPEGData::FlagCkeck(fstream& file,int byteInfo){
     if(byteInfo==0xff){
         uint8_t info=file.get();
+        string res=bitset<8>(0xFF).to_string();
         if(info&0xD7) {preDCValue[0]=0,preDCValue[1]=0,preDCValue[1];}
         else if(info==0xD9) EOI=true;
-        else if(info==0x00) return bitset<8>(0xFF).to_string();
-        return "false";
+        else if(info==0x00) return res;
+        return res + bitset<8>(info).to_string();
     }
     return "false";
 }
@@ -549,16 +547,9 @@ uint16_t JPEGData::findHuffmanCodeByBit(fstream& file,int& length,int& pos,strin
         deque = deque.substr(pos);
         int info=file.get();
         string res=FlagCkeck(file,info);
-        if(res=="false"){
-            string str=bitset<8>(info).to_string();
-            deque.append(str);
-        }
-        else{
-            deque.append(res);
-        }
-        #ifdef _DEBUGOUT_
-        cout<<str;
-        #endif
+        string str=bitset<8>(info).to_string();
+        if(res=="false") res=str;
+        deque.append(res);
         length = deque.length();
         pos = 0;
     }
@@ -569,16 +560,9 @@ uint16_t JPEGData::findHuffmanCodeByBit(fstream& file,int& length,int& pos,strin
         }
         int info=file.get();
         string res=FlagCkeck(file,info);
-        if(res=="false"){
-            string str=bitset<8>(info).to_string();
-            deque.append(str);
-        }
-        else{
-            deque.append(res);
-        }
-        #ifdef _DEBUGOUT_
-        cout<<str;
-        #endif
+        string str=bitset<8>(info).to_string();
+        if(res=="false") res=str;
+        deque.append(res);
         length+=8;
     }
     uint8_t temp=(uint8_t)(deque.at(pos++) - '0');
