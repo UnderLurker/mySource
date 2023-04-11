@@ -70,8 +70,6 @@ enum JPEGPType{
     COM     = 0xFE      //注释
 };
 
-uint16_t ReadByte(fstream& file,int len);
-uint16_t findHuffmanCodeByBit(fstream& file,int& length,int& pos,string& deque,int curValue,int& curValLen,bool flag);
 //将一维数组变为二维数组
 double** UnZigZag(int* originArray);
 
@@ -150,6 +148,8 @@ class JPEGData{
 	vector<RGB**> rgb;
 	double** DCTAndIDCTArray;
 	streampos pos;
+	int preDCValue[3]={0};  //用于直流差分矫正
+	bool EOI{false};
 public:
 	JPEGData():
 			max_h_samp_factor(0),
@@ -179,7 +179,10 @@ protected:
 	//隔行正负纠正
 	void PAndNCorrect(double** originMatrix);
 	RGB** YCbCrToRGB(const int* YUV,int curMCUCount);
-
+	//标记位检查 是否结束,是否重置直流矫正数值，返回要添加的数值
+	string FlagCkeck(fstream& file,int byteInfo);
+	uint16_t ReadByte(fstream& file,int len);
+	uint16_t findHuffmanCodeByBit(fstream& file,int& length,int& pos,string& deque,int curValue,int& curValLen);
 };
 
 NAME_SPACE_END()
