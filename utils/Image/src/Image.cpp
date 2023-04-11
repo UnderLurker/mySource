@@ -16,7 +16,7 @@ NAME_SPACE_START(myUtil)
 int RGBValueLimit(double input){
     if(input<0) return 0;
     else if(input>255) return 255;
-    return (int)input;
+    return round(input);//四舍五入
 }
 
 void print(double** originMatrix){
@@ -28,52 +28,6 @@ void print(double** originMatrix){
         cout<<endl;
     }
     cout<<endl;
-}
-
-uint16_t ReadByte(fstream& file,int len){
-    uint16_t res=file.get();
-    if(len!=1){
-        res=(res<<8)+(uint8_t)file.get();
-    }
-    return res;
-}
-
-uint16_t findHuffmanCodeByBit(fstream& file,int& length,int& pos,string& deque,int curValue,int& curValLen,bool flag){
-    if(length==0 || pos==length){
-        if(length==0){
-            deque="";
-            pos=0;
-        }
-        #ifdef _DEBUGOUT_
-        string str=bitset<8>(file.get()).to_string();
-        deque.append(str);
-        cout<<str;
-        #endif
-        #ifndef _DEBUGOUT_
-        deque.append(bitset<8>(file.get()).to_string());
-        #endif
-        length+=8;
-    }
-    else if(length>=HUFFMAN_DECODE_DEQUE_CACHE){//达到最大缓存
-        deque = deque.substr(pos);
-        #ifdef _DEBUGOUT_
-        string str=bitset<8>(file.get()).to_string();
-        deque.append(str);
-        cout<<str;
-        #endif
-        #ifndef _DEBUGOUT_
-        deque.append(bitset<8>(file.get()).to_string());
-        #endif
-        length = deque.length();
-        pos = 0;
-    }
-    uint8_t temp=(uint8_t)(deque.at(pos++) - '0');
-    if(flag){//true 取反
-        temp = (temp&1)^1;
-    }
-    curValue = (curValue << 1) + temp;
-    curValLen++;
-    return curValue;
 }
 
 double** UnZigZag(int* originArray){
@@ -92,17 +46,6 @@ double** UnZigZag(int* originArray){
         if (y < 0) y = 0;
         else if (y > 7) { y = 7; x += 2; }
     }
-    #ifdef _DEBUGOUT_
-    cout << endl;
-    for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 8; j++) {
-            cout.width(3);
-            cout << dec << table[i][j] << " ";
-        }
-        cout << endl;
-    }
-    cout << endl;
-    #endif
     return table;
 }
 
@@ -354,8 +297,7 @@ bool JPEGData::huffmanDecode(fstream& file){
                     component[1].h_samp_factor*component[1].v_samp_factor,
                     component[2].h_samp_factor*component[2].v_samp_factor};
         int curMCUCount=0;      //当前MCU数量，为了重置直流分量
-        int preDCValue=0;       //上一个DC分量
-        int curValueLength=0;           //当前值有多少位
+        int curValueLength=0;   //当前值有多少位
         int curValue=0;         //当前的值
 
         int curBitDequeLength=8;//当前curBitDeque长度
@@ -365,13 +307,13 @@ bool JPEGData::huffmanDecode(fstream& file){
         curBitDeque.append(bitset<8>(file.get()).to_string());
         curBitDequeLength=8;
         cout<<curBitDeque;
-        while(1){
+        while(!EOI){
             cout<<endl;
             int count=0;
             for(int i=0;i<3;i++){
+                //if(curMCUCount==resetInterval) preDCValue[i]=0;
                 for(int j=0;j<YUV[i];j++){
                     int matrix[64]={0};
-                    //memset(matrix, 0, sizeof(int)*64);
                     int valCount=0;
                 #ifdef _DEBUGOUT_
                     cout<<endl;
@@ -379,55 +321,51 @@ bool JPEGData::huffmanDecode(fstream& file){
                     uint8_t dcID = scan.componentHuffmanMap[component[i].colorId].first;
                     uint8_t acID = scan.componentHuffmanMap[component[i].colorId].second;
                     int qualityId=component[i].qualityId;
+                    // cout<<endl;
                     while(valCount<64){
                         //用curBitDeque和curBit去找权重，curValue作为当前键值
                         JPEGHuffmanCode::iterator it;
                         JPEGHuffmanCode &huffman = valCount==0?dc_huffman[dcID]:ac_huffman[acID];
                         while(curValueLength<=16&&huffman.findKey(curValue,curValueLength,it)){
-                            curValue=findHuffmanCodeByBit(file,curBitDequeLength,curBitPos,curBitDeque,curValue,curValueLength,false);
+                            curValue=findHuffmanCodeByBit(file,curBitDequeLength,curBitPos,curBitDeque,curValue,curValueLength);
                         }
-                        if(curValueLength>16) return true;
-                    #ifdef _DEBUGOUT_
-                        cout<<"code: "<<dec<<curBitDequeLength-curBitPos<<" ";
-                        cout<<dec<<curValue<<" "<<curValueLength<<"\n";
-                    #endif
+                        if(curValueLength>16) 
+                            return true;
+                        #ifdef _DEBUGOUT_
+                        cout<<dec<<" "<<curBitPos<<" "<<curBitDequeLength<<" ";
+                        cout<<"key="<<hex<<curValue<<" len="<<curValueLength<<endl;
+                        #endif
                         //已经找到了权重和位宽
-                        uint8_t weight,zeroCount;
+                        uint8_t weight,zeroCount=0;
                         if(valCount==0) weight = it->second.second;
                         else { weight = it->second.second & 0x0f; zeroCount = it->second.second >> 4;}
                         curValue=0;//这里变为dc或ac值
                         curValueLength=0;
-                        bool flag=false;//是否取反
                         if(weight==0) break;//后面全是0
-                        while(weight--){
-                            curValue=findHuffmanCodeByBit(file,curBitDequeLength,curBitPos,curBitDeque,curValue,curValueLength,flag);
-                            if(curValueLength==1&&curValue==0){
-                                curValue=(curValue&1)^1;
-                                flag=true;
-                            }
+                        // 读取真正的值
+                        for(int k=0;k<weight;k++){
+                            curValue=findHuffmanCodeByBit(file,curBitDequeLength,curBitPos,curBitDeque,curValue,curValueLength);
                         }
-                    #ifdef _DEBUGOUT_
-                        cout<<"weight: "<<dec<<curBitDequeLength-curBitPos<<" ";
-                        cout<<dec<<curValue<<" "<<curValueLength<<endl;
-                    #endif
-                        if(flag) curValue=-curValue;
-                        int writeValue=valCount==0?(preDCValue+=curValue):curValue;
-                        //writeValue*=quality[qualityId].table[valCount];//反量化
-                        if(valCount==0) matrix[valCount]=writeValue;
-                        else{
-                            while(zeroCount--) matrix[valCount++]=0;
-                            matrix[valCount]=writeValue;
-                        }
+                        curValue = (curValue >= pow(2, curValueLength - 1) ? curValue : curValue - pow(2, curValueLength) + 1);
+                        int writeValue=valCount==0?(preDCValue[i]+=curValue):curValue;
+                        valCount+=zeroCount;
+                        writeValue*=quality[qualityId].table[valCount];//反量化
+                        matrix[valCount]=writeValue;
                         curValue=0;
                         curValueLength=0;
                         valCount++;
                     }
+                    // cout<<endl;
+                    // std::cout<<std::endl;
+                    // for(int k=0;k<64;k++) std::cout<<matrix[k]<<" ";
+                    // std::cout<<std::endl;
                     double** tempZ = UnZigZag(matrix);//反zig-zag编码
-                    deQuality(tempZ,qualityId);
-                    print(tempZ);
-                    // PAndNCorrect(tempZ);
+                    //反量化，在反zig-zag编码前后差别，前面：RGB数值与编辑器比偏小，反之偏大，这也与最后取整时的方式有关
+                    // deQuality(tempZ,qualityId);
+                    // print(tempZ);
+                    //隔行正负纠正，有的博客说了，但是没感觉有啥帮助
+                    //PAndNCorrect(tempZ);
                     IDCT(tempZ);                    //dct逆变换
-                    print(tempZ);
                     ycbcr.push_back(tempZ);
                 #ifdef _DEBUG_
                     for(int k=0;k<ROW;k++){
@@ -449,8 +387,7 @@ bool JPEGData::huffmanDecode(fstream& file){
             FREE_VECTOR_LP(ycbcr)
             rgb.push_back(lpRGB);
             curMCUCount++;
-            cout<<"curMCUCount="<<dec<<curMCUCount<<" pos="<<pos<<"/"<<file.tellg();
-            if(curMCUCount==resetInterval) preDCValue=0;
+            cout<<"curMCUCount="<<dec<<curMCUCount<<" pos="<<pos<<"/"<<file.tellg()<<" "<<file.tellg()*100.0/pos<<"%";
         }
     } catch (exception ex) {
         cout<<ex.what();
@@ -476,40 +413,30 @@ RGB** JPEGData::YCbCrToRGB(const int* YUV,int curMCUCount){
     cout<<endl;
     for(int j=0;j<ROW * max_v_samp_factor;j++){
         for(int k=0;k<COL * max_h_samp_factor;k++){
-            // int cur_cb_h_pos=k*cb_h_samp_scale,
-            //     cur_cb_v_pos=j*cb_v_samp_scale,
-            //     cur_cr_h_pos=k*cr_h_samp_scale,
-            //     cur_cr_v_pos=j*cr_v_samp_scale;
-            int cur_cb_h_pos=k%COL, cur_cb_v_pos=j%ROW,
-                cur_cr_h_pos=k%COL, cur_cr_v_pos=j%ROW;
-            int row=j%ROW,col=k%COL;
-            int yPos=(j / ROW) * component[0].h_samp_factor + (k / COL);
-            int cbPos=YUV[0] + (cur_cb_v_pos / ROW) * (component[1].h_samp_factor) + (cur_cb_h_pos / COL);
-            int crPos=YUV[0] + YUV[1] + (int)(cur_cr_v_pos / ROW) * cr_v_samp_scale*component[2].h_samp_factor +
-                      (int)(cur_cr_h_pos / COL)*cr_h_samp_scale*component[2].v_samp_factor;
-            double y = ycbcr[yPos][row][col];
-            double cb = ycbcr[cbPos][(int)(j*cb_v_samp_scale)][(int)(k*cb_h_samp_scale)];
-            double cr = ycbcr[crPos][(int)(j*cr_v_samp_scale)][(int)(k*cr_h_samp_scale)];
-            
-            res[j][k].red  =RGBValueLimit(1.164*(y-16)+1.596*(cr-128));
-            res[j][k].green=RGBValueLimit(1.164*(y-16)-0.392*(cb-128)-0.813*(cr-128));
-            res[j][k].blue =RGBValueLimit(1.164*(y-16)+2.017*(cb-128));
+            int yPos = (j / ROW) * component[0].h_samp_factor + (k / COL);
+            int cbPos = YUV[0] + (int)((k / ROW) * cb_v_samp_scale) + (int)((j / COL) * cb_h_samp_scale);
+            int crPos = YUV[0] + YUV[1] + (int)((k / ROW) * cr_v_samp_scale) + (int)((j / COL) * cr_h_samp_scale);
+            double y = ycbcr[yPos][j % ROW][k % COL];
+            double cb = ycbcr[cbPos][(int)(j * cb_v_samp_scale)][(int)(k * cb_h_samp_scale)];
+            double cr = ycbcr[crPos][(int)(j * cr_v_samp_scale)][(int)(k * cr_h_samp_scale)];
 
-            // res[j][k].red   =128+y+1.402  *cb;
-            // res[j][k].green =128+y-0.71414*cb-0.34414*cr;
-            // res[j][k].blue  =128+y+1.772  *cb;
+            // res[j][k].red  =RGBValueLimit(1.164*(y-16)+1.596*(cr-128));
+            // res[j][k].green=RGBValueLimit(1.164*(y-16)-0.392*(cb-128)-0.813*(cr-128));
+            // res[j][k].blue =RGBValueLimit(1.164*(y-16)+2.017*(cb-128));
+            // cout<<dec<<128+y+1.402  *cr<<" "
+            //         <<128+y-0.71414*cr-0.34414*cb<<" "
+            //         <<128+y+1.772  *cb<<" ";
 
-            cout<<dec<<1.164*(y-16)+1.596*(cr-128)<<" "
-                    <<1.164*(y-16)-0.392*(cb-128)-0.813*(cr-128)<<" "
-                    <<1.164*(y-16)+2.017*(cb-128)<<" ";
+            res[j][k].red   =RGBValueLimit(128+y+1.402  *cr);
+            res[j][k].green =RGBValueLimit(128+y-0.71414*cr-0.34414*cb);
+            res[j][k].blue  =RGBValueLimit(128+y+1.772  *cb);
+
             
             // 输出当前选择的矩阵
-            //cout<<dec<<(int)(j*cb_v_samp_scale)<<" "<<(int)(k*cb_h_samp_scale)<<" ";
-            // cout.width(2);
-            // cout.fill('0');
-            // cout<<hex<<setw(2)<<setfill('0')<<(int)res[j][k].red
-            //          <<setw(2)<<setfill('0')<<(int)res[j][k].green
-            //          <<setw(2)<<setfill('0')<<(int)res[j][k].blue<<" ";
+            //cout<<dec<<yPos<<" "<<cbPos<<" "<<crPos<<" ";
+            cout<<hex<<setw(2)<<setfill('0')<<(int)res[j][k].red
+                     <<setw(2)<<setfill('0')<<(int)res[j][k].green
+                     <<setw(2)<<setfill('0')<<(int)res[j][k].blue<<" ";
         }
         cout<<endl;
     }
@@ -555,17 +482,6 @@ void JPEGData::DCT(double** originMatrix){
             originMatrix[i][j]=sum;
         }
     }
-    #ifdef _DEBUGOUT_
-    cout << endl;
-    for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 8; j++) {
-            cout.width(3);
-            cout << dec << originMatrix[i][j] << " ";
-        }
-        cout << endl;
-    }
-    cout << endl;
-    #endif
 }
 
 void JPEGData::IDCT(double** originMatrix){
@@ -589,17 +505,6 @@ void JPEGData::IDCT(double** originMatrix){
             originMatrix[i][j]=sum;
         }
     }
-    #ifdef _DEBUGOUT_
-    cout << endl;
-    for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 8; j++) {
-            cout.width(3);
-            cout << dec << originMatrix[i][j] << " ";
-        }
-        cout << endl;
-    }
-    cout << endl;
-    #endif
 }
 
 void JPEGData::deQuality(double** originMatrix,int qualityID){
@@ -617,4 +522,69 @@ void JPEGData::PAndNCorrect(double** originMatrix){
                 originMatrix[i][j]=-originMatrix[i][j];
 }
 
+// if (stream[ curIndex ] & 0xD7)       ResetDC();
+// else if (stream[ curIndex ] == 0xD9) endOfDecoder = true;
+// else if (stream[ curIndex ] == 0x00) stream[ curIndex ] = 0xFF;
+string JPEGData::FlagCkeck(fstream& file,int byteInfo){
+    if(byteInfo==0xff){
+        uint8_t info=file.get();
+        if(info&0xD7) {preDCValue[0]=0,preDCValue[1]=0,preDCValue[1];}
+        else if(info==0xD9) EOI=true;
+        else if(info==0x00) return bitset<8>(0xFF).to_string();
+        return "false";
+    }
+    return "false";
+}
+
+uint16_t JPEGData::ReadByte(fstream& file,int len){
+    uint16_t res=file.get();
+    if(len!=1){
+        res=(res<<8)+(uint8_t)file.get();
+    }
+    return res;
+}
+
+uint16_t JPEGData::findHuffmanCodeByBit(fstream& file,int& length,int& pos,string& deque,int curValue,int& curValLen){
+    if(pos==length&&length>=HUFFMAN_DECODE_DEQUE_CACHE){//达到最大缓存
+        deque = deque.substr(pos);
+        int info=file.get();
+        string res=FlagCkeck(file,info);
+        if(res=="false"){
+            string str=bitset<8>(info).to_string();
+            deque.append(str);
+        }
+        else{
+            deque.append(res);
+        }
+        #ifdef _DEBUGOUT_
+        cout<<str;
+        #endif
+        length = deque.length();
+        pos = 0;
+    }
+    else if(length==0 || pos>=length){
+        if(length==0){
+            deque="";
+            pos=0;
+        }
+        int info=file.get();
+        string res=FlagCkeck(file,info);
+        if(res=="false"){
+            string str=bitset<8>(info).to_string();
+            deque.append(str);
+        }
+        else{
+            deque.append(res);
+        }
+        #ifdef _DEBUGOUT_
+        cout<<str;
+        #endif
+        length+=8;
+    }
+    uint8_t temp=(uint8_t)(deque.at(pos++) - '0');
+    //cout<<"\""<<(int)temp<<"\"";
+    curValue = (curValue << 1) + temp;
+    curValLen++;
+    return curValue;
+}
 NAME_SPACE_END()
