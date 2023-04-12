@@ -134,7 +134,9 @@ class JPEGData{
 	bool isYUV411=false;
 	bool isYUV422=false;
 	bool isYUV111=false;
+	uint8_t curDRI=0;//当前重置直流分量标识,这里只取个位方便计算
 	uint16_t resetInterval=0;//单位是MCU
+	int preDCValue[3]={0};  //用于直流差分矫正
 	//量化表
 	vector<JPEGQuality> quality;
 	//huffman码表
@@ -148,7 +150,6 @@ class JPEGData{
 	vector<RGB**> rgb;
 	double** DCTAndIDCTArray;
 	streampos pos;
-	int preDCValue[3]={0};  //用于直流差分矫正
 	bool EOI{false};
 public:
 	JPEGData():
@@ -166,6 +167,12 @@ public:
 		FREE_VECTOR_LP(rgb)
 	}
 	bool readJPEG(const char* filePath);
+
+	int getWidth() const {return width;}
+	int getHeight() const {return height;}
+	vector<RGB**> getRGB() const {return rgb;}
+	int getMaxHSampFactor() const {return max_h_samp_factor;}
+	int getMaxVSampFactor() const {return max_v_samp_factor;}
 
 	double** createDCTAndIDCTArray(int row);
 	//double** createIDCTArray(int row);
