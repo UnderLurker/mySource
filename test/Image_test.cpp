@@ -6,25 +6,32 @@
 #include <sstream>
 #include <stdlib.h>
 #include "Image.h"
+#include "BmpEncoder.h"
 using namespace std;
 using namespace myUtil;
 
-void print(double** input){
-	cout<<endl;
-	for(int i=0;i<8;i++){
-		for(int j=0;j<8;j++){
-			cout<<input[i][j]<<" ";
-		}
-		cout<<endl;
-	}
-	cout<<endl;
-}
+// void print(double** input){
+// 	cout<<endl;
+// 	for(int i=0;i<8;i++){
+// 		for(int j=0;j<8;j++){
+// 			cout<<input[i][j]<<" ";
+// 		}
+// 		cout<<endl;
+// 	}
+// 	cout<<endl;
+// }
 
 int main(){
 	string str="../img/Image/1.jpg";
 	JPEGData data;
+	clock_t startTime=clock();
 	data.readJPEG(str.c_str());
-
+	int size;
+	unsigned char *bitmap = Encoder(data.getRGB(), data.getHeight(), data.getWidth(),
+								8*data.getMaxHSampFactor(),
+								8*data.getMaxVSampFactor(), size);
+	Write("out.bmp", bitmap, size);
+	cout<<dec<<clock()-startTime<<"ms"<<endl;
 	// DCT正反变换测试
 	// JPEGData data;
 	// double** arr=new double*[8];
