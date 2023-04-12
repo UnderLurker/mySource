@@ -185,7 +185,7 @@ protected:
 	void deQuality(double** originMatrix,int qualityID);
 	//隔行正负纠正
 	void PAndNCorrect(double** originMatrix);
-	RGB** YCbCrToRGB(const int* YUV,int curMCUCount);
+	RGB** YCbCrToRGB(const int* YUV);
 	//标记位检查 是否结束,是否重置直流矫正数值，返回要添加的数值
 	string FlagCkeck(fstream& file,int byteInfo);
 	uint16_t ReadByte(fstream& file,int len);

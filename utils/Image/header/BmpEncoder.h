@@ -62,7 +62,7 @@ unsigned char *Encoder(const vector<RGB**>& buf, int height, int width, int mcu_
 		int idx = height - 1 - i;
 		int offsetDst = idx * rowSize + 54; // 54 means the header length
 		// int offsetSrc = i * width;
-		int offsetHeight = (i/mcu_height)*(width/mcu_width);
+		int offsetHeight = ((i+15)/mcu_height)*((width+15)/mcu_width);
 		// fill data
 		for (int j = 0; j < width * 3; j++)
 		{

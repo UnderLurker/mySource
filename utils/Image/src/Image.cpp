@@ -298,7 +298,7 @@ bool JPEGData::huffmanDecode(fstream& file){
         int YUV[]={component[0].h_samp_factor*component[0].v_samp_factor,
                     component[1].h_samp_factor*component[1].v_samp_factor,
                     component[2].h_samp_factor*component[2].v_samp_factor};
-        int curMCUCount=0;      //当前MCU数量
+        int curMCUCount=1;      //当前MCU数量
         int curValueLength=0;   //当前值有多少位
         int curValue=0;         //当前的值
 
@@ -313,17 +313,6 @@ bool JPEGData::huffmanDecode(fstream& file){
         while(!EOI||(pos-file.tellg())!=2){
             // cout<<endl;
             int count=1;
-            // 直流分量重置间隔不为0的
-            if(restart>0){
-                resetInterval--;
-                if(resetInterval==0){
-                    resetInterval=restart;
-                    curDRI+=1;
-                    curDRI&=0x7;
-                    //需要在此处读取两字节信息，看是否为重置标识
-                    //ReadByte(file,2);
-                }
-            }
             for(int i=0;i<3;i++){
                 for(int j=0;j<YUV[i];j++){
                     // cout<<count++<<" ";
@@ -392,10 +381,25 @@ bool JPEGData::huffmanDecode(fstream& file){
             // if(count!=6){
             //     cout<<" ";
             // }
-            RGB** lpRGB = YCbCrToRGB(YUV,curMCUCount);
+            RGB** lpRGB = YCbCrToRGB(YUV);
             FREE_VECTOR_LP(ycbcr)
             rgb.push_back(lpRGB);
-            cout<<"curMCUCount="<<dec<<++curMCUCount<<" pos="<<pos<<"/"<<file.tellg()<<" "<<file.tellg()*100.0/pos<<"%\n";
+            // 直流分量重置间隔不为0的
+            if(restart>0){
+                resetInterval--;
+                if(resetInterval==0){
+                    resetInterval=restart;
+                    curDRI+=1;
+                    curDRI&=0x7;
+                    //需要在此处读取两字节信息，看是否为重置标识
+                    cout<<hex<<ReadByte(file, 2)<<" ";
+                    curBitPos=curBitDequeLength;
+                    preDCValue[0]=0;
+                    preDCValue[1]=0;
+                    preDCValue[2]=0;
+                }
+            }
+            cout<<"curMCUCount="<<dec<<curMCUCount++<<" pos="<<pos<<"/"<<file.tellg()<<" "<<file.tellg()*100.0/pos<<"%\n";
             if(pos-file.tellg()==2) break;
         }
         cout<<"\nsuccessfully\n";
@@ -406,7 +410,7 @@ bool JPEGData::huffmanDecode(fstream& file){
     return true;
 }
 
-RGB** JPEGData::YCbCrToRGB(const int* YUV,int curMCUCount){
+RGB** JPEGData::YCbCrToRGB(const int* YUV){
     RGB **res = new RGB *[ROW * max_v_samp_factor];
     int matrixCount = YUV[0] + YUV[1] + YUV[2];
     int crCount = 0, cbCount = 0;
@@ -536,11 +540,6 @@ string JPEGData::FlagCkeck(fstream& file,int byteInfo){
     if(byteInfo==0xff){
         uint8_t info=file.get();
         string res=bitset<8>(0xFF).to_string();
-        // if (info == curDRI)
-        // {
-        //     preDCValue[0] = 0, preDCValue[1] = 0, preDCValue[1];
-        //     return "false";
-        // }
         if(info==0xD9) {EOI=true;return "false";}
         else if(info==0x00) return res;
         return res + bitset<8>(info).to_string();
@@ -562,9 +561,7 @@ uint16_t JPEGData::findHuffmanCodeByBit(fstream& file,int& length,int& pos,strin
         int info=file.get();
         string res=FlagCkeck(file,info);
         string str=bitset<8>(info).to_string();
-        if(res=="false"){
-            res=bitset<8>(file.get()).to_string();
-        }
+        if(res=="false") res=bitset<8>(file.get()).to_string();
         deque.append(res);
         length = deque.length();
         pos = 0;
@@ -577,13 +574,11 @@ uint16_t JPEGData::findHuffmanCodeByBit(fstream& file,int& length,int& pos,strin
         int info=file.get();
         string res=FlagCkeck(file,info);
         string str=bitset<8>(info).to_string();
-        if(res=="false") res=str;
+        if(res=="false") res=bitset<8>(file.get()).to_string();
         deque.append(res);
         length+=8;
     }
-    uint8_t temp=(uint8_t)(deque.at(pos++) - '0');
-    //cout<<"\""<<(int)temp<<"\"";
-    curValue = (curValue << 1) + temp;
+    curValue = (curValue << 1) + (uint8_t)(deque.at(pos++) - '0');
     curValLen++;
     return curValue;
 }
