@@ -18,8 +18,8 @@ int RGBValueLimit(double input){
     if(input<0) return 0;
     else if(input>255) return 255;
     // 四舍五入、取整均可
-    // return round(input);
-    return (int)(input);
+    // return (int)(input);
+    return round(input);
 }
 
 void print(double** originMatrix){
@@ -159,7 +159,7 @@ bool JPEGData::readJPEG(const char *filePath){
 
             pLen=file.get();
             pLen=(pLen<<8)+file.get();
-            cout<<hex<<pMarker<<" "<<pType<<" "<<pLen<<endl;
+            // cout<<hex<<pMarker<<" "<<pType<<" "<<pLen<<endl;
             if(pMarker!=0xFF) throw exception();
             bool flag=true;
             switch (pType) {
@@ -309,7 +309,7 @@ bool JPEGData::huffmanDecode(fstream& file){
         //一次循环解析一个MCU
         curBitDeque.append(bitset<8>(file.get()).to_string());
         curBitDequeLength=8;
-        cout<<curBitDeque;
+        // cout<<curBitDeque;
         while(!EOI||(pos-file.tellg())!=2){
             // cout<<endl;
             int count=1;
@@ -321,6 +321,7 @@ bool JPEGData::huffmanDecode(fstream& file){
                     uint8_t dcID = scan.componentHuffmanMap[component[i].colorId].first;
                     uint8_t acID = scan.componentHuffmanMap[component[i].colorId].second;
                     int qualityId=component[i].qualityId;
+                    if(qualityId>=quality.size()) qualityId=0;
                     // cout<<endl;
                     while(valCount<64){
                         //用curBitDeque和curBit去找权重，curValue作为当前键值
@@ -335,8 +336,6 @@ bool JPEGData::huffmanDecode(fstream& file){
                         //cout<<dec<<" "<<curBitPos<<" "<<curBitDequeLength<<" ";
                         cout<<"key="<<hex<<curValue<<" len="<<curValueLength<<endl;
                         #endif
-                        // if(curMCUCount>=331)
-                        //     cout<<"key="<<hex<<curValue<<" len="<<curValueLength<<endl;
                         //已经找到了权重和位宽
                         uint8_t weight,zeroCount=0;
                         if(valCount==0) weight = it->second.second;
@@ -363,7 +362,7 @@ bool JPEGData::huffmanDecode(fstream& file){
                     // deQuality(tempZ,qualityId);
                     // print(tempZ);
                     //隔行正负纠正，有的博客说了，但是没感觉有啥帮助
-                    //PAndNCorrect(tempZ);
+                    // PAndNCorrect(tempZ);
                     IDCT(tempZ);                    //dct逆变换
                     ycbcr.push_back(tempZ);
                 #ifdef _DEBUG_
@@ -392,14 +391,15 @@ bool JPEGData::huffmanDecode(fstream& file){
                     curDRI+=1;
                     curDRI&=0x7;
                     //需要在此处读取两字节信息，看是否为重置标识
-                    cout<<hex<<ReadByte(file, 2)<<" ";
+                    file.get();
+                    if(file.get()==0xD9) EOI=true;
                     curBitPos=curBitDequeLength;
                     preDCValue[0]=0;
                     preDCValue[1]=0;
                     preDCValue[2]=0;
                 }
             }
-            cout<<"curMCUCount="<<dec<<curMCUCount++<<" pos="<<pos<<"/"<<file.tellg()<<" "<<file.tellg()*100.0/pos<<"%\n";
+            // cout<<"curMCUCount="<<dec<<curMCUCount++<<" pos="<<pos<<"/"<<file.tellg()<<" "<<file.tellg()*100.0/pos<<"%\n";
             if(pos-file.tellg()==2) break;
         }
         cout<<"\nsuccessfully\n";
@@ -433,13 +433,6 @@ RGB** JPEGData::YCbCrToRGB(const int* YUV){
             double y = ycbcr[yPos][j % ROW][k % COL];
             double cb = ycbcr[cbPos][(int)(j * cb_v_samp_scale)][(int)(k * cb_h_samp_scale)];
             double cr = ycbcr[crPos][(int)(j * cr_v_samp_scale)][(int)(k * cr_h_samp_scale)];
-
-            // res[j][k].red  =RGBValueLimit(1.164*(y-16)+1.596*(cr-128));
-            // res[j][k].green=RGBValueLimit(1.164*(y-16)-0.392*(cb-128)-0.813*(cr-128));
-            // res[j][k].blue =RGBValueLimit(1.164*(y-16)+2.017*(cb-128));
-            // cout<<dec<<128+y+1.402  *cr<<" "
-            //         <<128+y-0.71414*cr-0.34414*cb<<" "
-            //         <<128+y+1.772  *cb<<" ";
 
             res[j][k].red   =RGBValueLimit(128+y+1.402  *cr);
             res[j][k].green =RGBValueLimit(128+y-0.71414*cr-0.34414*cb);
