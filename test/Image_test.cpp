@@ -21,16 +21,21 @@ using namespace myUtil;
 // 	cout<<endl;
 // }
 
-int main(){
-	string str="../img/Image/1.jpg";
+int main(int argc,char* argv[]){
+	// if(argc<3){
+	// 	cout<<"for example: ./main.exe 1.jpg 2.bmp"<<endl;
+	// 	return 0;
+	// }
+	// string input(argv[0]),output(argv[1]);
+	string input="../img/Image/1.jpg",output="out.bmp";
 	JPEGData data;
 	clock_t startTime=clock();
-	data.readJPEG(str.c_str());
+	data.readJPEG(input.c_str());
 	int size;
 	unsigned char *bitmap = Encoder(data.getRGB(), data.getHeight(), data.getWidth(),
 								8*data.getMaxHSampFactor(),
 								8*data.getMaxVSampFactor(), size);
-	Write("out.bmp", bitmap, size);
+	Write(output.c_str(), bitmap, size);
 	cout<<dec<<clock()-startTime<<"ms"<<endl;
 	// DCT正反变换测试
 	// JPEGData data;
