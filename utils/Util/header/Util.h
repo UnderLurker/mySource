@@ -22,6 +22,21 @@ NAME_SPACE_START(myUtil)
         else break;                         \
     }
 
+#define FREE_VECTOR_LP(vectorName) \
+    for(auto item : vectorName){	\
+		for(int i=0;i<ROW;i++)\
+			delete [] item[i];\
+        delete [] item;	\
+    }\
+	vectorName.clear();
+
+//释放二维指针
+#define FREE_LP_2(lpName,row) \
+	for(int i=0;i<row;i++){\
+		delete [] lpName[i];\
+	}\
+	delete [] lpName;
+    
 #define INI_FILE_PATH "config.ini"
 
 class IniValue{
