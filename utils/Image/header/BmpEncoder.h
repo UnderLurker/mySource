@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <iostream>
 #include "Image.h"
+#include "ImageConfig.h"
+#include "Util.h"
 using namespace myUtil;
 
 
@@ -35,9 +37,68 @@ void SetBitmapInfo(unsigned int size, int height, int width)
 	}
 }
 
+RGB getRGB(const vector<RGB**>& buf,int width,int mcu_height,int mcu_width,int row,int col){
+	int offsetHeight = (int)floor(row*1.0/mcu_height)*(int)ceil(width*1.0/mcu_width);
+	int pos=col/mcu_width+offsetHeight;
+	if(pos>=buf.size()) pos=buf.size()-1;
+	return buf[pos][row%mcu_height][col%mcu_height];
+}
+
+#define THRESHOLD 128
+
+double convert(double input){
+	// return round(input)>THRESHOLD?255:0;
+	return round(input);
+}
 
 /* BGR format */
-unsigned char *Encoder(const vector<RGB**>& buf, int height, int width, int mcu_height, int mcu_width, int &size)
+unsigned char *Encoder(const vector<RGB**>& buf, int height, int width, int mcu_height, int mcu_width, int &size,int flag=0)
+{
+	uint8_t *bitmap = nullptr;
+	int rowSize = (24 * width + 31) / 32 * 4;
+	
+	// compute the size of total bytes of image
+	size = rowSize * height + 54; // data size + header size
+	bitmap = new uint8_t [ size ];
+	
+	// set the header info
+	SetBitmapInfo(size, height, width);
+
+	// fill the header area
+	for (int i = 0; i < 54; i++)
+	{
+		bitmap[i] = BmpHeader[i];
+	}
+
+	// fill the data area
+	for (int i = 0; i < height; i++)
+	{
+		// compute the offset of destination bitmap and source image
+		int idx = height - 1 - i;
+		int offsetDst = idx * rowSize + 54; // 54 means the header length
+		int offsetHeight = (int)floor(i*1.0/mcu_height)*(int)ceil(width*1.0/mcu_width);
+		// fill data
+		for (int j = 0; j < width * 3; j++)
+		{
+			int pos=(j/3)/mcu_width+offsetHeight;
+			if(pos>=buf.size()) pos=buf.size()-1;
+			RGB temp=buf[pos][i%mcu_height][(j/3)%mcu_height];
+			if(j%3==0&&(flag==0||flag==1)) bitmap[offsetDst + j] = temp.blue;
+			else if(j%3==1&&(flag==0||flag==2)) bitmap[offsetDst + j] = temp.green;
+			else if(j%3==2&&(flag==0||flag==3)) bitmap[offsetDst + j] = temp.red;
+			// cout<<dec<<pos<<" ";
+		}
+		// fill 0x0, this part can be ignored
+		for (int j = width * 3; j < rowSize; j++)
+		{
+			bitmap[offsetDst +j] = 0x0;
+		}
+	}
+	return bitmap;
+}
+
+/* BGR format */
+unsigned char *gaussianEncoder(const vector<RGB**>& buf, int height, int width, int mcu_height, int mcu_width, int &size,int flag=0)
 {
 	uint8_t *bitmap = nullptr;
 	int rowSize = (24 * width + 31) / 32 * 4;
@@ -55,24 +116,40 @@ unsigned char *Encoder(const vector<RGB**>& buf, int height, int width, int mcu_
 		bitmap[i] = BmpHeader[i];
 	}
 	
+	//高斯变换矩阵
+	int gaussianTemplateRadius=2;
+	double** gaussian=getTwoDimGaussianDistrbute(1,gaussianTemplateRadius);
+
 	// fill the data area
 	for (int i = 0; i < height; i++)
 	{
 		// compute the offset of destination bitmap and source image
 		int idx = height - 1 - i;
 		int offsetDst = idx * rowSize + 54; // 54 means the header length
-		// int offsetSrc = i * width;
-		int offsetHeight = (int)floor(i*1.0/mcu_height)*(int)ceil(width*1.0/mcu_width);
 		// fill data
-		for (int j = 0; j < width * 3; j++)
+		for (int j = 0; j < width; j++)
 		{
-			int pos=(j/3)/mcu_width+offsetHeight;
-			if(pos>=buf.size()) pos=buf.size()-1;
-			RGB temp=buf[pos][i%mcu_height][(j/3)%mcu_height];
-			if(j%3==0) bitmap[offsetDst + j] = temp.blue;
-			else if(j%3==1) bitmap[offsetDst + j] = temp.green;
-			else if(j%3==2) bitmap[offsetDst + j] = temp.red;
-			// cout<<dec<<pos<<" ";
+			double sum[3]={0};
+			int count=0;
+			for(int x=i-gaussianTemplateRadius;x<=i+gaussianTemplateRadius;x++){
+				for(int y=j-gaussianTemplateRadius;y<=j+gaussianTemplateRadius;y++){
+					if(x<0||y<0||y>=width||x>=height) continue;
+					RGB temp=getRGB(buf,width,mcu_height,mcu_width,x,y);
+					int row=x+gaussianTemplateRadius-i,
+						col=y+gaussianTemplateRadius-j;
+					sum[0]+=(temp.red*gaussian[row][col]);
+					sum[1]+=(temp.green*gaussian[row][col]);
+					sum[2]+=(temp.blue*gaussian[row][col]);
+					// cout<<"("<<x<<","<<y<<") ";
+					count++;
+				}
+			}
+			for(int k=0;k<3;k++){
+				if(k==0&&(flag==0||flag==1)) bitmap[offsetDst + j*3 + k] = convert(sum[0]);
+				else if(k==1&&(flag==0||flag==2)) bitmap[offsetDst + j*3 + k] = convert(sum[1]);
+				else if(k==2&&(flag==0||flag==3)) bitmap[offsetDst + j*3 + k] = convert(sum[2]);
+			}
+			// cout<<"("<<i<<","<<j<<") ";
 		}
 		// fill 0x0, this part can be ignored
 		for (int j = width * 3; j < rowSize; j++)
@@ -80,7 +157,7 @@ unsigned char *Encoder(const vector<RGB**>& buf, int height, int width, int mcu_
 			bitmap[offsetDst +j] = 0x0;
 		}
 	}
-
+	FREE_LP_2(gaussian,2*gaussianTemplateRadius+1)
 	return bitmap;
 }
 
