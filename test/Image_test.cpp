@@ -28,16 +28,16 @@ int main(){
 	// FREE_LP_2(input,9)
 
 
-	string str="../img/Image/1.jpg";
+	string str="../img/Image/3.jpg";
 	JPEGData data;
 	clock_t startTime=clock();
 	data.readJPEG(str.c_str());
-	int size;
-	unsigned char *bitmap = Encoder(data.getRGB(), data.getHeight(), data.getWidth(),
-								8*data.getMaxHSampFactor(),
-								8*data.getMaxVSampFactor(), size);
-	Write("out.bmp", bitmap, size);
-	delete[] bitmap;
+	// int size;
+	// unsigned char *bitmap = Encoder(data.getRGB(), data.getHeight(), data.getWidth(),
+	// 							8*data.getMaxHSampFactor(),
+	// 							8*data.getMaxVSampFactor(), size);
+	// Write("out.bmp", bitmap, size);
+	// delete[] bitmap;
 	// bitmap = Encoder(data.getRGB(), data.getHeight(), data.getWidth(),
 	// 							8*data.getMaxHSampFactor(),
 	// 							8*data.getMaxVSampFactor(), size,2);
@@ -49,11 +49,18 @@ int main(){
 	// Write("blue.bmp", bitmap, size);
 	// delete[] bitmap;
 
+	// int size;
+	// unsigned char *bitmap = gaussianEncoder(data.getRGB(), data.getHeight(), data.getWidth(),
+	// 							8*data.getMaxHSampFactor(),
+	// 							8*data.getMaxVSampFactor(), size,0);
+	// Write("gaussian.bmp", bitmap, size);
+	// delete[] bitmap;
+
 	int size;
-	unsigned char *bitmap = gaussianEncoder(data.getRGB(), data.getHeight(), data.getWidth(),
+	unsigned char *bitmap = RGBToGrayEncoder(data.getRGB(), data.getHeight(), data.getWidth(),
 								8*data.getMaxHSampFactor(),
 								8*data.getMaxVSampFactor(), size);
-	Write("gaussian.bmp", bitmap, size);
+	Write("gray.bmp", bitmap, size);
 	delete[] bitmap;
 	cout<<dec<<clock()-startTime<<"ms"<<endl;
 

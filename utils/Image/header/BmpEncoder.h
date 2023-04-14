@@ -1,5 +1,6 @@
 
 #pragma once
+#include <stdint.h>
 #include <stdio.h>
 #include <iostream>
 #include "Image.h"
@@ -7,6 +8,14 @@
 #include "Util.h"
 using namespace myUtil;
 
+#define GAUSSIAN
+
+struct Palette{
+	uint8_t rgbBlue;
+	uint8_t rgbGreen;
+	uint8_t rgbRed;
+	uint8_t rgbAlpha;
+};
 
 /* Bitmap Header, 54 Bytes  */
 static 
@@ -47,8 +56,8 @@ RGB getRGB(const vector<RGB**>& buf,int width,int mcu_height,int mcu_width,int r
 #define THRESHOLD 128
 
 double convert(double input){
-	// return round(input)>THRESHOLD?255:0;
-	return round(input);
+	return round(input)>THRESHOLD?255:0;
+	// return round(input);
 }
 
 /* BGR format */
@@ -117,7 +126,7 @@ unsigned char *gaussianEncoder(const vector<RGB**>& buf, int height, int width, 
 	}
 	
 	//高斯变换矩阵
-	int gaussianTemplateRadius=2;
+	int gaussianTemplateRadius=8;
 	double** gaussian=getTwoDimGaussianDistrbute(1,gaussianTemplateRadius);
 
 	// fill the data area
@@ -137,9 +146,9 @@ unsigned char *gaussianEncoder(const vector<RGB**>& buf, int height, int width, 
 					RGB temp=getRGB(buf,width,mcu_height,mcu_width,x,y);
 					int row=x+gaussianTemplateRadius-i,
 						col=y+gaussianTemplateRadius-j;
-					sum[0]+=(temp.red*gaussian[row][col]);
+					sum[0]+=(temp.blue*gaussian[row][col]);
 					sum[1]+=(temp.green*gaussian[row][col]);
-					sum[2]+=(temp.blue*gaussian[row][col]);
+					sum[2]+=(temp.red*gaussian[row][col]);
 					// cout<<"("<<x<<","<<y<<") ";
 					count++;
 				}
@@ -152,7 +161,86 @@ unsigned char *gaussianEncoder(const vector<RGB**>& buf, int height, int width, 
 			// cout<<"("<<i<<","<<j<<") ";
 		}
 		// fill 0x0, this part can be ignored
-		for (int j = width * 3; j < rowSize; j++)
+		for (int j = width; j < rowSize; j++)
+		{
+			bitmap[offsetDst +j] = 0x0;
+		}
+	}
+	FREE_LP_2(gaussian,2*gaussianTemplateRadius+1)
+	return bitmap;
+}
+
+//转灰度图
+unsigned char *RGBToGrayEncoder(const vector<RGB**>& buf, int height, int width, int mcu_height, int mcu_width, int &size)
+{
+	uint8_t *bitmap = nullptr;
+	int rowSize = ceil(8 * width / 32) * 4;
+	
+	// compute the size of total bytes of image
+	size = rowSize * height + 54 + 4 * 256; // data size + header size
+	bitmap = new uint8_t [ size ];
+	
+	// set the header info
+	SetBitmapInfo(size, height, width);
+
+	BmpHeader[28]=0x08;
+	// fill the header area
+	for (int i = 0; i < 54; i++)
+	{
+		bitmap[i] = BmpHeader[i];
+	}
+
+	// init Palette
+	// Palette rgbPalette[256];
+	for(int i=0;i<256;i++){
+		// Palette rgbPalette;
+		// rgbPalette.rgbBlue=i;
+		// rgbPalette.rgbRed=i;
+		// rgbPalette.rgbGreen=i;
+		// rgbPalette.rgbAlpha=0;
+		bitmap[i*4+0+54]=i;
+		bitmap[i*4+1+54]=i;
+		bitmap[i*4+2+54]=i;
+		bitmap[i*4+3+54]=0;
+	}
+
+	//高斯变换矩阵
+	int gaussianTemplateRadius=8;
+	double** gaussian=getTwoDimGaussianDistrbute(1,gaussianTemplateRadius);
+
+	// fill the data area
+	for (int i = 0; i < height; i++)
+	{
+		// compute the offset of destination bitmap and source image
+		int idx = height - 1 - i,j=0;
+		int offsetDst = idx * rowSize + 54 + 4*256; // 54 means the header length
+		// fill data
+		for (j = 0; j < width; j++)
+		{
+			#ifdef GAUSSIAN
+			double sum=0;
+			int count=0;
+			for(int x=i-gaussianTemplateRadius;x<=i+gaussianTemplateRadius;x++){
+				for(int y=j-gaussianTemplateRadius;y<=j+gaussianTemplateRadius;y++){
+					if(x<0||y<0||y>=width||x>=height) continue;
+					RGB temp=getRGB(buf,width,mcu_height,mcu_width,x,y);
+					int row=x+gaussianTemplateRadius-i,
+						col=y+gaussianTemplateRadius-j;
+					sum+=(temp.blue+temp.red+temp.green)*gaussian[row][col]/3;
+					// cout<<"("<<x<<","<<y<<") ";
+					count++;
+				}
+			}
+			bitmap[offsetDst+j]=sum;
+			#endif
+			#ifndef GAUSSIAN
+			RGB temp=getRGB(buf, width, mcu_height, mcu_width, i, j);
+			//均值法
+			bitmap[offsetDst+j]=(temp.blue+temp.red+temp.green)/3;
+			#endif
+		}
+		// fill 0x0, this part can be ignored
+		for (; j < rowSize; j++)
 		{
 			bitmap[offsetDst +j] = 0x0;
 		}
