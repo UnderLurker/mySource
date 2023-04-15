@@ -192,6 +192,72 @@ protected:
 	uint16_t findHuffmanCodeByBit(fstream& file,int& length,int& pos,string& deque,int curValue,int& curValLen);
 };
 
+#define GAUSSIAN
+#define GAUSSIAN_RADIUS 1
+#define GAUSSIAN_TEMPLATE_RADIUS 8
+#define THRESHOLD 128
+
+struct Palette{
+	uint8_t rgbBlue;
+	uint8_t rgbGreen;
+	uint8_t rgbRed;
+	uint8_t rgbAlpha;
+};
+
+/* Bitmap Header, 54 Bytes  */
+static 
+unsigned char BmpHeader[54] = 
+{
+	0x42, 0x4D, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x36, 0x00, 0x00, 0x00, 0x28, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1B, 0x01, 0x00, 0x00, 0x01, 0x00, 0x18, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x60, 0xCD, 0x04, 0x00, 0x23, 0x2E, 0x00, 0x00, 0x23, 0x2E, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+class BMPData{
+	int dataSize{0};//数据总大小
+	int rowSize{0};//一行有多少个字节（是4的整数倍）
+	int width{0};
+	int height{0};
+	vector<RGB**> buf;//rgb颜色信息
+	bool gray{false};//false 灰度有调色板 true 彩色没有调色板
+	uint8_t* bitmap{nullptr};//最终的数据
+	struct Palette{
+		uint8_t rgbBlue;
+		uint8_t rgbGreen;
+		uint8_t rgbRed;
+		uint8_t rgbAlpha;
+	};
+public:
+	//gray false灰度 true24位彩色
+	BMPData(const vector<RGB**>& _buf,int _width,int _height,bool _gray=false)
+		:buf(_buf),width(_width),height(_height),gray(_gray){
+			Init();
+		}
+	~BMPData(){
+		delete [] bitmap;
+	}
+	//RGB转BMP24位
+	void EncoderByJPEG(int mcu_height, int mcu_width,
+						double (*convert)(double)=[](double in){return in;},
+						int flag=0);
+	//对RGB高斯模糊处理
+	void GaussianEncoderByJPEG(int mcu_height, int mcu_width,
+						double (*convert)(double)=[](double in){return in;},
+						int flag=0);
+	//灰度化
+	void GrayEncoderByJPEG(int mcu_height, int mcu_width, 
+						double (*convert)(double)=[](double in){return in;},
+						double (*GrayAlgorithm)(RGB)=[](RGB in){return (in.blue+in.red+in.green)/3.0;});
+	//对灰度图像高斯模糊处理
+	void GaussianByGray();
+	void saveBMP(const char *fileName);
+protected:
+	void Init();
+	RGB getRGB(int mcu_height,int mcu_width,int row,int col);
+	void SetBitmapInfo(int dataSize,int width,int height);
+};
+
 NAME_SPACE_END()
 
 #endif //!_IMAGE_

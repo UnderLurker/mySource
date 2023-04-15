@@ -14,6 +14,20 @@
 
 NAME_SPACE_START(myUtil)
 
+//获取Two-dimensional Gaussian distribution
+double** getTwoDimGaussianDistrbute(int GaussianRadius,int GaussianTemplateRadius){
+    int n=2*GaussianTemplateRadius+1;
+    double** res=new double*[n];
+    for(int i=0;i<n;i++) res[i]=new double[n];
+    double t=1.0/(2*M_PI*GaussianRadius*GaussianRadius);
+    for(int i=-1*GaussianTemplateRadius;i<=GaussianTemplateRadius;i++){
+        for(int j=-1*GaussianTemplateRadius;j<=GaussianTemplateRadius;j++){
+            res[i+GaussianTemplateRadius][j+GaussianTemplateRadius]=t*exp((-1)*(i*i+j*j)/(2*GaussianRadius*GaussianRadius));
+        }
+    }
+    return res;
+}
+
 int RGBValueLimit(double input){
     if(input<0) return 0;
     else if(input>255) return 255;
@@ -575,4 +589,170 @@ uint16_t JPEGData::findHuffmanCodeByBit(fstream& file,int& length,int& pos,strin
     curValLen++;
     return curValue;
 }
+
+
+void BMPData::Init(){
+    rowSize = ceil((gray?8:24) * width / 32) * 4;
+    dataSize = rowSize * height + 54 + (gray?4*256:0);
+    bitmap=new uint8_t[dataSize];
+    SetBitmapInfo(dataSize,height,width);
+    if(gray) {
+        BmpHeader[28]=0x08;
+        // fill the header area
+        for (int i = 0; i < 54; i++) bitmap[i] = BmpHeader[i];
+        // init Palette
+        for(int i=0;i<256;i++){
+            bitmap[i*4+0+54]=i;
+            bitmap[i*4+1+54]=i;
+            bitmap[i*4+2+54]=i;
+            bitmap[i*4+3+54]=0;
+        }
+    }
+    for(int i=0;i<54;i++){
+        bitmap[i]=BmpHeader[i];
+    }
+}
+
+void BMPData::EncoderByJPEG(int mcu_height, int mcu_width, double (*convert)(double), int flag){
+	// fill the data area
+	for (int i = 0; i < height; i++)
+	{
+		// compute the offset of destination bitmap and source image
+		int idx = height - 1 - i;
+		int offsetDst = idx * rowSize + 54 + (gray?4*256:0); // 54 means the header length
+        int offsetHeight = (int)floor(i*1.0/mcu_height)*(int)ceil(width*1.0/mcu_width);
+		// fill data
+		for (int j = 0; j < width * 3; j++)
+		{
+			int pos=(j/3)/mcu_width+offsetHeight;
+			if(pos>=buf.size()) pos=buf.size()-1;
+			RGB temp=buf[pos][i%mcu_height][(j/3)%mcu_height];
+			if(j%3==0&&(flag==0||flag==1)) bitmap[offsetDst + j] = convert(temp.blue);
+			else if(j%3==1&&(flag==0||flag==2)) bitmap[offsetDst + j] = convert(temp.green);
+			else if(j%3==2&&(flag==0||flag==3)) bitmap[offsetDst + j] = convert(temp.red);
+			// cout<<dec<<pos<<" ";
+		}
+		// fill 0x0, this part can be ignored
+		for (int j = width * 3; j < rowSize; j++)
+		{
+			bitmap[offsetDst +j] = 0x0;
+		}
+	}
+}
+
+//只显示1/3图像
+void BMPData::GaussianEncoderByJPEG(int mcu_height, int mcu_width, double (*convert)(double), int flag){
+	//高斯变换矩阵
+	double** gaussian=getTwoDimGaussianDistrbute(GAUSSIAN_RADIUS,GAUSSIAN_TEMPLATE_RADIUS);
+    // fill the data area
+	for (int i = 0; i < height; i++)
+	{
+		// compute the offset of destination bitmap and source image
+		int idx = height - 1 - i;
+		int offsetDst = idx * rowSize + 54 + (gray?4*256:0); // 54 means the header length
+		// fill data
+		for (int j = 0; j < width; j++)
+		{
+			double sum[3]={0};
+			for(int x = i - GAUSSIAN_TEMPLATE_RADIUS; x <= i + GAUSSIAN_TEMPLATE_RADIUS; x++){
+				for(int y = j - GAUSSIAN_TEMPLATE_RADIUS; y <= j + GAUSSIAN_TEMPLATE_RADIUS; y++){
+					if(x<0||y<0||y>=width||x>=height) continue;
+					RGB temp=getRGB(mcu_height,mcu_width,x,y);
+					int row = x + GAUSSIAN_TEMPLATE_RADIUS - i,
+						col = y + GAUSSIAN_TEMPLATE_RADIUS - j;
+					sum[0] += (temp.blue * gaussian[row][col]);
+					sum[1] += (temp.green * gaussian[row][col]);
+					sum[2] += (temp.red * gaussian[row][col]);
+				}
+			}
+			for(int k=0;k<3;k++){
+				if(k==0&&(flag==0||flag==1)) bitmap[offsetDst + j*3 + k] = convert(sum[0]);
+				else if(k==1&&(flag==0||flag==2)) bitmap[offsetDst + j*3 + k] = convert(sum[1]);
+				else if(k==2&&(flag==0||flag==3)) bitmap[offsetDst + j*3 + k] = convert(sum[2]);
+			}
+            // cout<<j<<" ";
+		}
+		// fill 0x0, this part can be ignored
+		for (int j = width; j < rowSize; j++)
+		{
+			bitmap[offsetDst +j] = 0x0;
+		}
+	}
+	FREE_LP_2(gaussian,2*GAUSSIAN_TEMPLATE_RADIUS+1)
+}
+
+void BMPData::GrayEncoderByJPEG(int mcu_height, int mcu_width, double (*convert)(double), double (*GrayAlgorithm)(RGB)){
+	// fill the data area
+	for (int i = 0; i < height; i++)
+	{
+		// compute the offset of destination bitmap and source image
+		int idx = height - 1 - i,j=0;
+		int offsetDst = idx * rowSize + 54 + (gray?4*256:0); // 54 means the header length
+		// fill data
+		for (j = 0; j < width; j++)
+		{
+			RGB temp=getRGB(mcu_height, mcu_width, i, j);
+			bitmap[offsetDst+j]=convert(GrayAlgorithm(temp));
+		}
+		// fill 0x0, this part can be ignored
+		for (; j < rowSize; j++)
+		{
+			bitmap[offsetDst +j] = 0x0;
+		}
+	}
+}
+
+void BMPData::GaussianByGray(){
+	//高斯变换矩阵
+	double** gaussian=getTwoDimGaussianDistrbute(GAUSSIAN_RADIUS,GAUSSIAN_TEMPLATE_RADIUS);
+    for(int i=0;i<height;i++){
+		int offsetDst = (height-1-i) * rowSize + 54 + (gray?4*256:0); // 54 means the header length
+        for(int j=0;j<rowSize;j++){
+			double sum = 0;
+			for(int x = i - GAUSSIAN_TEMPLATE_RADIUS; x <= i + GAUSSIAN_TEMPLATE_RADIUS; x++){
+				for(int y = j - GAUSSIAN_TEMPLATE_RADIUS; y <= j + GAUSSIAN_TEMPLATE_RADIUS; y++){
+					if(x<0||y<0||y>=width||x>=height) continue;
+					int row = x + GAUSSIAN_TEMPLATE_RADIUS - i,
+						col = y + GAUSSIAN_TEMPLATE_RADIUS - j,
+                        bitmapPos=(height-1-x) * rowSize + 54 + (gray?4*256:0)+j;
+					sum += (bitmap[bitmapPos] * gaussian[row][col]);
+				}
+			}
+            bitmap[offsetDst+j]=sum;
+        }
+    }
+	FREE_LP_2(gaussian,2*GAUSSIAN_TEMPLATE_RADIUS+1)
+}
+
+void BMPData::saveBMP(const char *fileName){
+	FILE *fp = fopen(fileName, "wb+");
+	fwrite(bitmap, 1, dataSize, fp);
+	fclose(fp);
+}
+
+RGB BMPData::getRGB(int mcu_height,int mcu_width,int row,int col){
+	int offsetHeight = (int)floor(row*1.0/mcu_height)*(int)ceil(width*1.0/mcu_width);
+	int pos=col/mcu_width+offsetHeight;
+	if(pos>=buf.size()) pos=buf.size()-1;
+	return buf[pos][row%mcu_height][col%mcu_height];
+}
+
+void BMPData::SetBitmapInfo(int dataSize,int height,int width){
+	for (int i = 0; i < 4; i++)
+	{
+		// size of image ( header + data )
+		BmpHeader[2 + i] = dataSize & 0xff;
+		dataSize >>= 8;
+
+		// width of image
+		BmpHeader[18 + i] = width & 0xff;
+		width >>= 8;
+
+		// height of image
+		BmpHeader[22  + i] = height & 0xff;
+		height >>= 8;
+	}
+}
+
+
 NAME_SPACE_END()

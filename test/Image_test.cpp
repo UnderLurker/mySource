@@ -6,8 +6,6 @@
 #include <sstream>
 #include <stdlib.h>
 #include "Image.h"
-#include "BmpEncoder.h"
-#include "ImageConfig.h"
 using namespace std;
 using namespace myUtil;
 
@@ -27,41 +25,21 @@ int main(){
 	// print(input,9);
 	// FREE_LP_2(input,9)
 
-
-	string str="../img/Image/3.jpg";
+	string str="../img/Image/2.jpg";
 	JPEGData data;
 	clock_t startTime=clock();
 	data.readJPEG(str.c_str());
-	// int size;
-	// unsigned char *bitmap = Encoder(data.getRGB(), data.getHeight(), data.getWidth(),
-	// 							8*data.getMaxHSampFactor(),
-	// 							8*data.getMaxVSampFactor(), size);
-	// Write("out.bmp", bitmap, size);
-	// delete[] bitmap;
-	// bitmap = Encoder(data.getRGB(), data.getHeight(), data.getWidth(),
-	// 							8*data.getMaxHSampFactor(),
-	// 							8*data.getMaxVSampFactor(), size,2);
-	// Write("green.bmp", bitmap, size);
-	// delete[] bitmap;
-	// bitmap = Encoder(data.getRGB(), data.getHeight(), data.getWidth(),
-	// 							8*data.getMaxHSampFactor(),
-	// 							8*data.getMaxVSampFactor(), size,3);
-	// Write("blue.bmp", bitmap, size);
-	// delete[] bitmap;
 
-	// int size;
-	// unsigned char *bitmap = gaussianEncoder(data.getRGB(), data.getHeight(), data.getWidth(),
-	// 							8*data.getMaxHSampFactor(),
-	// 							8*data.getMaxVSampFactor(), size,0);
-	// Write("gaussian.bmp", bitmap, size);
-	// delete[] bitmap;
-
-	int size;
-	unsigned char *bitmap = RGBToGrayEncoder(data.getRGB(), data.getHeight(), data.getWidth(),
-								8*data.getMaxHSampFactor(),
-								8*data.getMaxVSampFactor(), size);
-	Write("gray.bmp", bitmap, size);
-	delete[] bitmap;
+	BMPData bmp(data.getRGB(),data.getWidth(),data.getHeight(),false);
+	bmp.EncoderByJPEG(8*data.getMaxVSampFactor(), 8*data.getMaxHSampFactor());
+	// bmp.GaussianEncoderByJPEG(8*data.getMaxVSampFactor(), 8*data.getMaxHSampFactor());
+	// bmp.GrayEncoderByJPEG(8*data.getMaxVSampFactor(), 8*data.getMaxHSampFactor(),
+	// 		[](double in){
+	// 			// return in>THRESHOLD?255.0:0.0;
+	// 			return in;
+	// 		});
+	// bmp.GaussianByGray();
+	bmp.saveBMP("abc.bmp");
 	cout<<dec<<clock()-startTime<<"ms"<<endl;
 
 	// DCT正反变换测试
