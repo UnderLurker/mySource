@@ -214,6 +214,7 @@ unsigned char BmpHeader[54] =
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
+//目前只能允许直接对
 class BMPData{
 	int dataSize{0};//数据总大小
 	int rowSize{0};//一行有多少个字节（是4的整数倍）
@@ -229,7 +230,7 @@ class BMPData{
 		uint8_t rgbAlpha;
 	};
 public:
-	//gray false灰度 true24位彩色
+	//gray false灰度 true24位彩色这个gray是决定最后生成的图像是否为灰度图像
 	BMPData(const vector<RGB**>& _buf,int _width,int _height,bool _gray=false)
 		:buf(_buf),width(_width),height(_height),gray(_gray){
 			Init();
@@ -241,16 +242,17 @@ public:
 	void EncoderByJPEG(int mcu_height, int mcu_width,
 						double (*convert)(double)=[](double in){return in;},
 						int flag=0);
-	//对RGB高斯模糊处理
-	void GaussianEncoderByJPEG(int mcu_height, int mcu_width,
-						double (*convert)(double)=[](double in){return in;},
-						int flag=0);
-	//灰度化
+	//灰度化,对还没有转成位图数据的
 	void GrayEncoderByJPEG(int mcu_height, int mcu_width, 
 						double (*convert)(double)=[](double in){return in;},
 						double (*GrayAlgorithm)(RGB)=[](RGB in){return (in.blue+in.red+in.green)/3.0;});
-	//对灰度图像高斯模糊处理
-	void GaussianByGray();
+	//灰度化，对已经转为位图数据的
+	void GrayEncoderByBMP(int mcu_height, int mcu_width, 
+						double (*convert)(double)=[](double in){return in;});
+	//高斯模糊处理，isRGB表示当前是对彩色图像还是对灰度图像进行处理
+	void GaussianHandle(int mcu_height, int mcu_width,bool isRGB,
+						double (*convert)(double)=[](double in){return in;},
+						int flag=0);
 	void saveBMP(const char *fileName);
 protected:
 	void Init();

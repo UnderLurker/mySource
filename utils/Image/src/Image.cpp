@@ -640,47 +640,6 @@ void BMPData::EncoderByJPEG(int mcu_height, int mcu_width, double (*convert)(dou
 	}
 }
 
-//只显示1/3图像
-void BMPData::GaussianEncoderByJPEG(int mcu_height, int mcu_width, double (*convert)(double), int flag){
-	//高斯变换矩阵
-	double** gaussian=getTwoDimGaussianDistrbute(GAUSSIAN_RADIUS,GAUSSIAN_TEMPLATE_RADIUS);
-    // fill the data area
-	for (int i = 0; i < height; i++)
-	{
-		// compute the offset of destination bitmap and source image
-		int idx = height - 1 - i;
-		int offsetDst = idx * rowSize + 54 + (gray?4*256:0); // 54 means the header length
-		// fill data
-		for (int j = 0; j < width; j++)
-		{
-			double sum[3]={0};
-			for(int x = i - GAUSSIAN_TEMPLATE_RADIUS; x <= i + GAUSSIAN_TEMPLATE_RADIUS; x++){
-				for(int y = j - GAUSSIAN_TEMPLATE_RADIUS; y <= j + GAUSSIAN_TEMPLATE_RADIUS; y++){
-					if(x<0||y<0||y>=width||x>=height) continue;
-					RGB temp=getRGB(mcu_height,mcu_width,x,y);
-					int row = x + GAUSSIAN_TEMPLATE_RADIUS - i,
-						col = y + GAUSSIAN_TEMPLATE_RADIUS - j;
-					sum[0] += (temp.blue * gaussian[row][col]);
-					sum[1] += (temp.green * gaussian[row][col]);
-					sum[2] += (temp.red * gaussian[row][col]);
-				}
-			}
-			for(int k=0;k<3;k++){
-				if(k==0&&(flag==0||flag==1)) bitmap[offsetDst + j*3 + k] = convert(sum[0]);
-				else if(k==1&&(flag==0||flag==2)) bitmap[offsetDst + j*3 + k] = convert(sum[1]);
-				else if(k==2&&(flag==0||flag==3)) bitmap[offsetDst + j*3 + k] = convert(sum[2]);
-			}
-            // cout<<j<<" ";
-		}
-		// fill 0x0, this part can be ignored
-		for (int j = width; j < rowSize; j++)
-		{
-			bitmap[offsetDst +j] = 0x0;
-		}
-	}
-	FREE_LP_2(gaussian,2*GAUSSIAN_TEMPLATE_RADIUS+1)
-}
-
 void BMPData::GrayEncoderByJPEG(int mcu_height, int mcu_width, double (*convert)(double), double (*GrayAlgorithm)(RGB)){
 	// fill the data area
 	for (int i = 0; i < height; i++)
@@ -702,23 +661,76 @@ void BMPData::GrayEncoderByJPEG(int mcu_height, int mcu_width, double (*convert)
 	}
 }
 
-void BMPData::GaussianByGray(){
+void BMPData::GrayEncoderByBMP(int mcu_height, int mcu_width, double (*convert)(double)){
+	// fill the data area
+	for (int i = 0; i < height; i++)
+	{
+		// compute the offset of destination bitmap and source image
+		int idx = height - 1 - i,j=0;
+		int offsetDst = idx * rowSize + 54 + (gray?4*256:0); // 54 means the header length
+		// fill data
+		for (j = 0; j < width*3; j+=3)
+		{
+            int bitmapPos=(height-1-i) * rowSize + 54 + (gray?4*256:0)+j;
+			bitmap[offsetDst+j]=convert(bitmap[bitmapPos]);
+		}
+		// fill 0x0, this part can be ignored
+		for (; j < rowSize; j++)
+		{
+			bitmap[offsetDst +j] = 0x0;
+		}
+	}
+}
+
+void BMPData::GaussianHandle(int mcu_height, int mcu_width, bool isRGB, double (*convert)(double), int flag){
 	//高斯变换矩阵
 	double** gaussian=getTwoDimGaussianDistrbute(GAUSSIAN_RADIUS,GAUSSIAN_TEMPLATE_RADIUS);
-    for(int i=0;i<height;i++){
-		int offsetDst = (height-1-i) * rowSize + 54 + (gray?4*256:0); // 54 means the header length
-        for(int j=0;j<rowSize;j++){
-			double sum = 0;
-			for(int x = i - GAUSSIAN_TEMPLATE_RADIUS; x <= i + GAUSSIAN_TEMPLATE_RADIUS; x++){
-				for(int y = j - GAUSSIAN_TEMPLATE_RADIUS; y <= j + GAUSSIAN_TEMPLATE_RADIUS; y++){
-					if(x<0||y<0||y>=width||x>=height) continue;
-					int row = x + GAUSSIAN_TEMPLATE_RADIUS - i,
-						col = y + GAUSSIAN_TEMPLATE_RADIUS - j,
-                        bitmapPos=(height-1-x) * rowSize + 54 + (gray?4*256:0)+j;
-					sum += (bitmap[bitmapPos] * gaussian[row][col]);
-				}
-			}
-            bitmap[offsetDst+j]=sum;
+    if(!isRGB){
+        for(int i=0;i<height;i++){
+            int offsetDst = (height-1-i) * rowSize + 54 + (gray?4*256:0);
+            for(int j=0;j<rowSize;j++){
+                double sum = 0;
+                for(int x = i - GAUSSIAN_TEMPLATE_RADIUS; x <= i + GAUSSIAN_TEMPLATE_RADIUS; x++){
+                    for(int y = j - GAUSSIAN_TEMPLATE_RADIUS; y <= j + GAUSSIAN_TEMPLATE_RADIUS; y++){
+                        if(x<0||y<0||y>=width||x>=height) continue;
+                        int row = x + GAUSSIAN_TEMPLATE_RADIUS - i,
+                            col = y + GAUSSIAN_TEMPLATE_RADIUS - j,
+                            bitmapPos=(height-1-x) * rowSize + 54 + (gray?4*256:0)+y;
+                        sum += (bitmap[bitmapPos] * gaussian[row][col]);
+                    }
+                }
+                bitmap[offsetDst+j]=sum;
+            }
+        }
+    }
+    else{
+        for (int i = 0; i < height; i++)
+        {
+            int offsetDst = (height - 1 - i) * rowSize + 54 + (gray?4*256:0);
+            for (int j = 0; j < width; j++)
+            {
+                double sum[3]={0};
+                for(int x = i - GAUSSIAN_TEMPLATE_RADIUS; x <= i + GAUSSIAN_TEMPLATE_RADIUS; x++){
+                    for(int y = j - GAUSSIAN_TEMPLATE_RADIUS; y <= j + GAUSSIAN_TEMPLATE_RADIUS; y++){
+                        if(x<0||y<0||y>=width||x>=height) continue;
+                        RGB temp=getRGB(mcu_height,mcu_width,x,y);
+                        int row = x + GAUSSIAN_TEMPLATE_RADIUS - i,
+                            col = y + GAUSSIAN_TEMPLATE_RADIUS - j;
+                        sum[0] += (temp.blue * gaussian[row][col]);
+                        sum[1] += (temp.green * gaussian[row][col]);
+                        sum[2] += (temp.red * gaussian[row][col]);
+                    }
+                }
+                for(int k=0;k<3;k++){
+                    if(k==0&&(flag==0||flag==1)) bitmap[offsetDst + j*3 + k] = convert(sum[0]);
+                    else if(k==1&&(flag==0||flag==2)) bitmap[offsetDst + j*3 + k] = convert(sum[1]);
+                    else if(k==2&&(flag==0||flag==3)) bitmap[offsetDst + j*3 + k] = convert(sum[2]);
+                }
+            }
+            for (int j = width; j < rowSize; j++)
+            {
+                bitmap[offsetDst +j] = 0x0;
+            }
         }
     }
 	FREE_LP_2(gaussian,2*GAUSSIAN_TEMPLATE_RADIUS+1)
