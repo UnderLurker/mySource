@@ -51,7 +51,9 @@ public:
     int row;
     int col;
     Matrix(){}
+    Matrix(int,int);
     Matrix(int,int,const T&);
+    Matrix(int,int,const vector<T>&);
     Matrix(int,int,vector<vector<T>>&);
     Matrix(const Matrix<T>&);
     T getValue(int row,int col);
@@ -85,6 +87,32 @@ public:
     static Matrix<double> Pascal(int n);
     ~Matrix();
 };
+
+template<typename T>
+Matrix<T>::Matrix(int _row,int _col){
+    this->row=_row;
+    this->col=_col;
+    matrix=new T*[row];
+    for(int i=0;i<row;i++){
+        matrix[i]=new T[col];
+        // memset(matrix[i],0,sizeof(T)*col);
+    }
+}
+
+template<typename T>
+Matrix<T>::Matrix(int _row,int _col,const vector<T>& _val){
+    if(_col*_row!=_val.size()) return;
+    this->row=_row;
+    this->col=_col;
+    matrix=new T*[row];
+    int count=0;
+    for(int i=0;i<row;i++){
+        matrix[i]=new T[col];
+        for(int j=0;j<col;j++){
+            matrix[i][j]=_val[count];
+        }
+    }
+}
 
 template<typename T>
 Matrix<T>::Matrix(int _row,int _col,vector<vector<T>>& _val){
@@ -133,8 +161,7 @@ Matrix<T>::Matrix(const Matrix<T>& obj){
 template<typename T>
 T Matrix<T>::getValue(int row,int col){
     if(row<0||row>this->row||col<0||col>this->col){
-        if(type_name<T>()=="double"||type_name<T>()=="int") return 0;
-        else return T();
+        return T();
     }
     return matrix[row][col];
 }
