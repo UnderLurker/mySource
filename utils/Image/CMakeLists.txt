@@ -7,10 +7,10 @@ file(GLOB SOURCE_FILE ./src/*.cpp)
 
 include_directories(header)
 include_directories(${UTIL_PATH}/Util/header)
-# include_directories(${UTIL_PATH}/Matrix/header)
+include_directories(${UTIL_PATH}/Matrix/header)
 
 add_library(Image_static STATIC ${SOURCE_FILE})
 target_link_libraries(Image_static Util_static)
-# target_link_libraries(Image_static Matrix_static)
+target_link_libraries(Image_static Matrix_static)
 # install(TARGETS Util_static ARCHIVE DESTINATION lib)
 # install(FILES include/*.h DESTINATION lib)
