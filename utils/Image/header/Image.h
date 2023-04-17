@@ -8,6 +8,7 @@
 #define _IMAGE_
 
 #include "Util.h"
+#include "Matrix.h"
 #include <string>
 #include <vector>
 #include <iostream>
@@ -20,20 +21,6 @@ NAME_SPACE_START(myUtil)
 #define HUFFMAN_DECODE_DEQUE_CACHE 64//单位：位
 // #define _DEBUG_
 // #define _DEBUGOUT_
-#define FREE_VECTOR_LP(vectorName) \
-    for(auto item : vectorName){	\
-		for(int i=0;i<ROW;i++)\
-			delete [] item[i];\
-        delete [] item;	\
-    }\
-	vectorName.clear();
-
-//释放二维指针
-#define FREE_LP_2(lpName,row) \
-	for(int i=0;i<row;i++){\
-		delete [] lpName[i];\
-	}\
-	delete [] lpName;
 
 // //用于做dct逆变换
 // #define _A_ cos(M_PI / 4) / 2
@@ -128,9 +115,11 @@ public:
 class JPEGData{
 	int max_h_samp_factor;//行MCU
 	int max_v_samp_factor;//列MCU
-	int width;
-	int height;
-	int precision;
+	int width;//图片宽度
+	int height;//图片高度
+	int mcu_rows;//有多少行mcu
+	int mcu_cols;//有多少列mcu
+	int precision;//精度
 	bool isYUV411=false;
 	bool isYUV422=false;
 	bool isYUV111=false;
@@ -147,10 +136,10 @@ class JPEGData{
 	JPEGScan scan;
 	//vector<int**> deHuffman;
 	vector<double**> ycbcr;
-	vector<RGB**> rgb;
+	vector<RGB**> rgb;//解析出来的rgb信息
 	double** DCTAndIDCTArray;
-	streampos pos;
-	bool EOI{false};
+	streampos pos;//文件的总大小
+	bool EOI{false};//是否
 public:
 	JPEGData():
 			max_h_samp_factor(0),
@@ -164,13 +153,16 @@ public:
 		FREE_LP_2(DCTAndIDCTArray,ROW-1)
 		// FREE_LP_2(DCTArray,ROW-1)
 		// FREE_LP_2(IDCTArray,ROW-1)
-		FREE_VECTOR_LP(rgb)
+		FREE_VECTOR_LP(rgb,ROW)
 	}
 	bool readJPEG(const char* filePath);
 
 	int getWidth() const {return width;}
 	int getHeight() const {return height;}
-	vector<RGB**> getRGB() const {return rgb;}
+	//获取MCU形式的RGB
+	vector<RGB**> getRGB() const{return rgb;}
+	//获取通用的RGB数据
+	Matrix<RGB> getRGBMatrix();
 	int getMaxHSampFactor() const {return max_h_samp_factor;}
 	int getMaxVSampFactor() const {return max_v_samp_factor;}
 
@@ -195,6 +187,7 @@ protected:
 #define GAUSSIAN
 #define GAUSSIAN_RADIUS 1
 #define GAUSSIAN_TEMPLATE_RADIUS 8
+//阈值
 #define THRESHOLD 128
 
 struct Palette{
@@ -220,7 +213,9 @@ class BMPData{
 	int rowSize{0};//一行有多少个字节（是4的整数倍）
 	int width{0};
 	int height{0};
-	vector<RGB**> buf;//rgb颜色信息
+	int flag{0};//图像使用哪一通道，0三通道，1 blue，2 green，3 red
+	Matrix<RGB> buf;//rgb颜色信息
+	Matrix<uint8_t> *grayBuf;//灰度图信息
 	bool gray{false};//false 灰度有调色板 true 彩色没有调色板
 	uint8_t* bitmap{nullptr};//最终的数据
 	struct Palette{
@@ -231,32 +226,25 @@ class BMPData{
 	};
 public:
 	//gray false灰度 true24位彩色这个gray是决定最后生成的图像是否为灰度图像
-	BMPData(const vector<RGB**>& _buf,int _width,int _height,bool _gray=false)
+	BMPData(const Matrix<RGB>& _buf,int _width,int _height,bool _gray=false)
 		:buf(_buf),width(_width),height(_height),gray(_gray){
 			Init();
+			grayBuf=new Matrix<uint8_t>(height,width);
 		}
 	~BMPData(){
 		delete [] bitmap;
 	}
-	//RGB转BMP24位
-	void EncoderByJPEG(int mcu_height, int mcu_width,
-						double (*convert)(double)=[](double in){return in;},
-						int flag=0);
 	//灰度化,对还没有转成位图数据的
-	void GrayEncoderByJPEG(int mcu_height, int mcu_width, 
-						double (*convert)(double)=[](double in){return in;},
+	void GrayEncoder(double (*convert)(double)=[](double in){return in;},
 						double (*GrayAlgorithm)(RGB)=[](RGB in){return (in.blue+in.red+in.green)/3.0;});
-	//灰度化，对已经转为位图数据的
-	void GrayEncoderByBMP(int mcu_height, int mcu_width, 
-						double (*convert)(double)=[](double in){return in;});
 	//高斯模糊处理，isRGB表示当前是对彩色图像还是对灰度图像进行处理
-	void GaussianHandle(int mcu_height, int mcu_width,bool isRGB,
+	void GaussianHandle(bool isRGB,
 						double (*convert)(double)=[](double in){return in;},
 						int flag=0);
 	void saveBMP(const char *fileName);
 protected:
 	void Init();
-	RGB getRGB(int mcu_height,int mcu_width,int row,int col);
+	// RGB getRGB(int mcu_height,int mcu_width,int row,int col);
 	void SetBitmapInfo(int dataSize,int width,int height);
 };
 
