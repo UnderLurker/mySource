@@ -26,17 +26,13 @@ int main(){
 	clock_t startTime=clock();
 	data.readJPEG(str.c_str());
 
-	BMPData bmp(data.getRGB(),data.getWidth(),data.getHeight(),false);
-	// bmp.EncoderByJPEG(8*data.getMaxVSampFactor(), 8*data.getMaxHSampFactor());
-	bmp.GaussianHandle(8*data.getMaxVSampFactor(), 8*data.getMaxHSampFactor(),true);
-	// bmp.GrayEncoderByJPEG(8*data.getMaxVSampFactor(), 8*data.getMaxHSampFactor(),
-	// 		[](double in){
-	// 			// return in>THRESHOLD?255.0:0.0;
-	// 			return in;
-	// 		});
-	// bmp.GrayEncoderByBMP(8*data.getMaxVSampFactor(), 8*data.getMaxHSampFactor());
+	BMPData bmp(data.getRGBMatrix(),data.getWidth(),data.getHeight(),false);
+	// bmp.GrayEncoder();
+	bmp.GaussianHandle(true,[](double in){
+		return in>THRESHOLD?255.0:0.0;
+		// return in;
+	});
 	bmp.saveBMP("abc.bmp");
 	cout<<dec<<clock()-startTime<<"ms"<<endl;
-
     return 0;
 }
