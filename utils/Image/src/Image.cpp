@@ -273,6 +273,8 @@ bool JPEGData::readSOF(fstream& file,uint16_t len){
             /(component[1].h_samp_factor*component[1].v_samp_factor)==1){
             isYUV111=true;
         }
+        mcu_rows=ceil(height/(8*max_v_samp_factor));
+        mcu_cols=ceil(width/(8*max_h_samp_factor));
     } catch (...) {
         return false;
     }
@@ -395,7 +397,7 @@ bool JPEGData::huffmanDecode(fstream& file){
             //     cout<<" ";
             // }
             RGB** lpRGB = YCbCrToRGB(YUV);
-            FREE_VECTOR_LP(ycbcr)
+            FREE_VECTOR_LP(ycbcr,ROW)
             rgb.push_back(lpRGB);
             // 直流分量重置间隔不为0的
             if(restart>0){
@@ -462,6 +464,21 @@ RGB** JPEGData::YCbCrToRGB(const int* YUV){
         // cout<<endl;
     }
     // cout<<endl;
+    return res;
+}
+
+Matrix<RGB> JPEGData::getRGBMatrix(){
+    Matrix<RGB> res(height,width);
+    int mcu_height=8*max_v_samp_factor,
+        mcu_width=8*max_h_samp_factor;
+    for(int row=0;row<height;row++){
+        int rowOffset=(int)floor(row*1.0/mcu_height)*(int)ceil(width*1.0/mcu_width);
+        for(int col=0;col<width;col++){
+            int pos=rowOffset+col/(8*max_h_samp_factor);
+            if(pos>=rgb.size()) pos=rgb.size()-1;
+            res.setValue(row,col,rgb[pos][row%mcu_height][col%mcu_height]);
+        }
+    }
     return res;
 }
 
@@ -613,35 +630,8 @@ void BMPData::Init(){
     }
 }
 
-void BMPData::EncoderByJPEG(int mcu_height, int mcu_width, double (*convert)(double), int flag){
-	// fill the data area
-	for (int i = 0; i < height; i++)
-	{
-		// compute the offset of destination bitmap and source image
-		int idx = height - 1 - i;
-		int offsetDst = idx * rowSize + 54 + (gray?4*256:0); // 54 means the header length
-        int offsetHeight = (int)floor(i*1.0/mcu_height)*(int)ceil(width*1.0/mcu_width);
-		// fill data
-		for (int j = 0; j < width * 3; j++)
-		{
-			int pos=(j/3)/mcu_width+offsetHeight;
-			if(pos>=buf.size()) pos=buf.size()-1;
-			RGB temp=buf[pos][i%mcu_height][(j/3)%mcu_height];
-			if(j%3==0&&(flag==0||flag==1)) bitmap[offsetDst + j] = convert(temp.blue);
-			else if(j%3==1&&(flag==0||flag==2)) bitmap[offsetDst + j] = convert(temp.green);
-			else if(j%3==2&&(flag==0||flag==3)) bitmap[offsetDst + j] = convert(temp.red);
-			// cout<<dec<<pos<<" ";
-		}
-		// fill 0x0, this part can be ignored
-		for (int j = width * 3; j < rowSize; j++)
-		{
-			bitmap[offsetDst +j] = 0x0;
-		}
-	}
-}
-
-void BMPData::GrayEncoderByJPEG(int mcu_height, int mcu_width, double (*convert)(double), double (*GrayAlgorithm)(RGB)){
-	// fill the data area
+void BMPData::GrayEncoder(double (*convert)(double), double (*GrayAlgorithm)(RGB)){
+    // fill the data area
 	for (int i = 0; i < height; i++)
 	{
 		// compute the offset of destination bitmap and source image
@@ -650,42 +640,21 @@ void BMPData::GrayEncoderByJPEG(int mcu_height, int mcu_width, double (*convert)
 		// fill data
 		for (j = 0; j < width; j++)
 		{
-			RGB temp=getRGB(mcu_height, mcu_width, i, j);
-			bitmap[offsetDst+j]=convert(GrayAlgorithm(temp));
+			grayBuf->setValue(i,j,(uint8_t)convert(GrayAlgorithm(buf.getValue(i,j))));
 		}
 		// fill 0x0, this part can be ignored
 		for (; j < rowSize; j++)
 		{
-			bitmap[offsetDst +j] = 0x0;
+			grayBuf->setValue(i,j,0x0);
 		}
 	}
 }
 
-void BMPData::GrayEncoderByBMP(int mcu_height, int mcu_width, double (*convert)(double)){
-	// fill the data area
-	for (int i = 0; i < height; i++)
-	{
-		// compute the offset of destination bitmap and source image
-		int idx = height - 1 - i,j=0;
-		int offsetDst = idx * rowSize + 54 + (gray?4*256:0); // 54 means the header length
-		// fill data
-		for (j = 0; j < width*3; j+=3)
-		{
-            int bitmapPos=(height-1-i) * rowSize + 54 + (gray?4*256:0)+j;
-			bitmap[offsetDst+j]=convert(bitmap[bitmapPos]);
-		}
-		// fill 0x0, this part can be ignored
-		for (; j < rowSize; j++)
-		{
-			bitmap[offsetDst +j] = 0x0;
-		}
-	}
-}
-
-void BMPData::GaussianHandle(int mcu_height, int mcu_width, bool isRGB, double (*convert)(double), int flag){
+void BMPData::GaussianHandle(bool isRGB, double (*convert)(double), int flag){
 	//高斯变换矩阵
 	double** gaussian=getTwoDimGaussianDistrbute(GAUSSIAN_RADIUS,GAUSSIAN_TEMPLATE_RADIUS);
     if(!isRGB){
+        Matrix<uint8_t> *temp=new Matrix<uint8_t>(height,width);
         for(int i=0;i<height;i++){
             int offsetDst = (height-1-i) * rowSize + 54 + (gray?4*256:0);
             for(int j=0;j<rowSize;j++){
@@ -694,60 +663,97 @@ void BMPData::GaussianHandle(int mcu_height, int mcu_width, bool isRGB, double (
                     for(int y = j - GAUSSIAN_TEMPLATE_RADIUS; y <= j + GAUSSIAN_TEMPLATE_RADIUS; y++){
                         if(x<0||y<0||y>=width||x>=height) continue;
                         int row = x + GAUSSIAN_TEMPLATE_RADIUS - i,
-                            col = y + GAUSSIAN_TEMPLATE_RADIUS - j,
-                            bitmapPos=(height-1-x) * rowSize + 54 + (gray?4*256:0)+y;
-                        sum += (bitmap[bitmapPos] * gaussian[row][col]);
+                            col = y + GAUSSIAN_TEMPLATE_RADIUS - j;
+                        sum += (grayBuf->getValue(x,y) * gaussian[row][col]);
                     }
                 }
-                bitmap[offsetDst+j]=sum;
+                temp->setValue(i,j,(uint8_t)convert(sum));
             }
         }
+        delete grayBuf;
+        grayBuf=temp;
     }
     else{
-        for (int i = 0; i < height; i++)
-        {
+        Matrix<RGB> *temp=new Matrix<RGB>(height,width);
+        for (int i = 0; i < height; i++){
             int offsetDst = (height - 1 - i) * rowSize + 54 + (gray?4*256:0);
-            for (int j = 0; j < width; j++)
-            {
+            for (int j = 0; j < width; j++){
                 double sum[3]={0};
                 for(int x = i - GAUSSIAN_TEMPLATE_RADIUS; x <= i + GAUSSIAN_TEMPLATE_RADIUS; x++){
                     for(int y = j - GAUSSIAN_TEMPLATE_RADIUS; y <= j + GAUSSIAN_TEMPLATE_RADIUS; y++){
                         if(x<0||y<0||y>=width||x>=height) continue;
-                        RGB temp=getRGB(mcu_height,mcu_width,x,y);
                         int row = x + GAUSSIAN_TEMPLATE_RADIUS - i,
                             col = y + GAUSSIAN_TEMPLATE_RADIUS - j;
-                        sum[0] += (temp.blue * gaussian[row][col]);
-                        sum[1] += (temp.green * gaussian[row][col]);
-                        sum[2] += (temp.red * gaussian[row][col]);
+                        sum[0] += (buf.getValue(x,y).blue * gaussian[row][col]);
+                        sum[1] += (buf.getValue(x,y).green * gaussian[row][col]);
+                        sum[2] += (buf.getValue(x,y).red * gaussian[row][col]);
                     }
                 }
-                for(int k=0;k<3;k++){
-                    if(k==0&&(flag==0||flag==1)) bitmap[offsetDst + j*3 + k] = convert(sum[0]);
-                    else if(k==1&&(flag==0||flag==2)) bitmap[offsetDst + j*3 + k] = convert(sum[1]);
-                    else if(k==2&&(flag==0||flag==3)) bitmap[offsetDst + j*3 + k] = convert(sum[2]);
-                }
-            }
-            for (int j = width; j < rowSize; j++)
-            {
-                bitmap[offsetDst +j] = 0x0;
+                RGB t;
+                if(flag==0||flag==1) t.blue=convert(sum[0]);
+                if(flag==0||flag==2) t.green=convert(sum[1]);
+                if(flag==0||flag==3) t.red=convert(sum[2]);
+                temp->setValue(i,j,t);
             }
         }
+        buf.~Matrix();
+        buf=*temp;
     }
 	FREE_LP_2(gaussian,2*GAUSSIAN_TEMPLATE_RADIUS+1)
 }
 
 void BMPData::saveBMP(const char *fileName){
+    if(gray){
+        // fill the data area
+        for (int i = 0; i < height; i++)
+        {
+            // compute the offset of destination bitmap and source image
+            int idx = height - 1 - i,j=0;
+            int offsetDst = idx * rowSize + 54 + (gray?4*256:0); // 54 means the header length
+            // fill data
+            for (j = 0; j < width; j++)
+            {
+                bitmap[offsetDst+j]=grayBuf->getValue(i,j);
+            }
+            // fill 0x0, this part can be ignored
+            for (; j < rowSize; j++)
+            {
+                bitmap[offsetDst +j] = 0x0;
+            }
+        }
+    }
+    else{
+        // fill the data area
+        for (int i = 0; i < height; i++)
+        {
+            // compute the offset of destination bitmap and source image
+            int idx = height - 1 - i;
+            int offsetDst = idx * rowSize + 54 + (gray?4*256:0); // 54 means the header length
+            // fill data
+            for (int j = 0; j < width*3; j++)
+            {
+                if(j%3==0&&(flag==0||flag==1)) bitmap[offsetDst + j] = buf.getValue(i,j/3).blue;
+                else if(j%3==1&&(flag==0||flag==2)) bitmap[offsetDst + j] = buf.getValue(i,j/3).green;
+                else if(j%3==2&&(flag==0||flag==3)) bitmap[offsetDst + j] = buf.getValue(i,j/3).red;
+            }
+            // fill 0x0, this part can be ignored
+            for (int j = width*3; j < rowSize; j++)
+            {
+                bitmap[offsetDst +j] = 0x0;
+            }
+        }
+    }
 	FILE *fp = fopen(fileName, "wb+");
 	fwrite(bitmap, 1, dataSize, fp);
 	fclose(fp);
 }
 
-RGB BMPData::getRGB(int mcu_height,int mcu_width,int row,int col){
-	int offsetHeight = (int)floor(row*1.0/mcu_height)*(int)ceil(width*1.0/mcu_width);
-	int pos=col/mcu_width+offsetHeight;
-	if(pos>=buf.size()) pos=buf.size()-1;
-	return buf[pos][row%mcu_height][col%mcu_height];
-}
+// RGB BMPData::getRGB(int mcu_height,int mcu_width,int row,int col){
+// 	int offsetHeight = (int)floor(row*1.0/mcu_height)*(int)ceil(width*1.0/mcu_width);
+// 	int pos=col/mcu_width+offsetHeight;
+// 	if(pos>=buf.size()) pos=buf.size()-1;
+// 	return buf[pos][row%mcu_height][col%mcu_height];
+// }
 
 void BMPData::SetBitmapInfo(int dataSize,int height,int width){
 	for (int i = 0; i < 4; i++)
