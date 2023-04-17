@@ -22,9 +22,9 @@ NAME_SPACE_START(myUtil)
         else break;                         \
     }
 
-#define FREE_VECTOR_LP(vectorName) \
+#define FREE_VECTOR_LP(vectorName,_row) \
     for(auto item : vectorName){	\
-		for(int i=0;i<ROW;i++)\
+		for(int i=0;i<_row;i++)\
 			delete [] item[i];\
         delete [] item;	\
     }\
