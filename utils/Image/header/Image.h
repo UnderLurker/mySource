@@ -197,9 +197,16 @@ struct Palette{
 	uint8_t rgbAlpha;
 };
 
+enum Operator{
+	Sobel		=0,
+	Roberts		=1,
+	Prewitt		=2,
+	Laplacian	=3,
+	Canny		=4
+}; 
+
 /* Bitmap Header, 54 Bytes  */
-static 
-unsigned char BmpHeader[54] = 
+static unsigned char BmpHeader[54] = 
 {
 	0x42, 0x4D, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x36, 0x00, 0x00, 0x00, 0x28, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1B, 0x01, 0x00, 0x00, 0x01, 0x00, 0x18, 0x00, 0x00, 0x00,
@@ -241,6 +248,8 @@ public:
 	void GaussianHandle(bool isRGB,
 						double (*convert)(double)=[](double in){return in;},
 						int flag=0);
+	//边缘检测
+	void EdgeDetect(bool isRGB, double matrix1[3][3], double matrix2[3][3], int row); 
 	void saveBMP(const char *fileName);
 protected:
 	void Init();
