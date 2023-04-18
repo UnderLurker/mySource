@@ -702,6 +702,37 @@ void BMPData::GaussianHandle(bool isRGB, double (*convert)(double), int flag){
 	FREE_LP_2(gaussian,2*GAUSSIAN_TEMPLATE_RADIUS+1)
 }
 
+void BMPData::EdgeDetect(bool isRGB, double matrix1[3][3], double matrix2[3][3], int row){
+    if(!isRGB){
+        Matrix<uint8_t> *temp=new Matrix<uint8_t>(height,width);
+        for(int i=1;i<height-row/2;i++){
+            for(int j=1;j<width-row/2;j++){
+                double g_x=0,g_y=0;
+                for(int x=i-row/2;x<=i+row/2;x++){
+                    for(int y=j-row/2;y<=j+row/2;y++){
+                        for(int k=j-row/2;k<=j+row/2;k++){
+                            if(x<0||k<0||x>=height||k>=width) continue;
+                            int rows=x+row/2-i,
+                                cols=k+row/2-j,
+                                ycols=y+row/2-j;
+                            g_x+=matrix1[rows][cols]*grayBuf->getValue(k,y);
+                            g_y+=grayBuf->getValue(x,k)*matrix2[cols][ycols];
+                            // cout<<dec<<x<<" "<<k<<" "<<cols<<" "<<ycols<<endl;
+                        }
+                    }
+                }
+                g_x/=3,g_y/=3;
+                temp->setValue(i,j,max(g_x,g_y));
+            }
+        }
+        delete grayBuf;
+        grayBuf=temp;
+    }
+    else{
+
+    }
+}
+
 void BMPData::saveBMP(const char *fileName){
     if(gray){
         // fill the data area
