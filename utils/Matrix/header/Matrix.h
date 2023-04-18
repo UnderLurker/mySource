@@ -160,7 +160,7 @@ Matrix<T>::Matrix(const Matrix<T>& obj){
 
 template<typename T>
 T Matrix<T>::getValue(int row,int col){
-    if(row<0||row>this->row||col<0||col>this->col){
+    if(row<0||row>=this->row||col<0||col>=this->col){
         return T();
     }
     return matrix[row][col];
