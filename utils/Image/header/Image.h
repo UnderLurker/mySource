@@ -248,8 +248,8 @@ public:
 	void GaussianHandle(bool isRGB,
 						double (*convert)(double)=[](double in){return in;},
 						int flag=0);
-	//边缘检测
-	void EdgeDetect(bool isRGB, double matrix1[3][3], double matrix2[3][3], int row); 
+	//边缘检测,只对灰度图像
+	void EdgeDetectPrewitt(); 
 	void saveBMP(const char *fileName);
 protected:
 	void Init();
