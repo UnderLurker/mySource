@@ -609,6 +609,7 @@ uint16_t JPEGData::findHuffmanCodeByBit(fstream& file,int& length,int& pos,strin
 
 
 void BMPData::Init(){
+    width+=4-width%4;
     rowSize = ceil((gray?8:24) * width / 32) * 4;
     dataSize = rowSize * height + 54 + (gray?4*256:0);
     bitmap=new uint8_t[dataSize];
