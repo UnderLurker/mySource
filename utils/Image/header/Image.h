@@ -214,6 +214,15 @@ static unsigned char BmpHeader[54] =
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
+static double Prewitt1[3][3]={{-1,-1,-1},{0,0,0},{1,1,1}};
+static double Prewitt2[3][3]={{-1,0,1},{-1,0,1},{-1,0,1}};
+
+static double Roberts1[3][3]={{1,0},{0,-1}};
+static double Roberts2[3][3]={{0,1},{-1,0}};
+
+static double Sobel1[3][3]={{-1,-2,1},{0,0,0},{1,2,1}};
+static double Sobel2[3][3]={{-1,0,1},{-2,0,2},{-1,0,1}};
+
 //目前只能允许直接对
 class BMPData{
 	int dataSize{0};//数据总大小
@@ -236,7 +245,7 @@ public:
 	BMPData(const Matrix<RGB>& _buf,int _width,int _height,bool _gray=false)
 		:buf(_buf),width(_width),height(_height),gray(_gray){
 			Init();
-			grayBuf=new Matrix<uint8_t>(height,width);
+			grayBuf=new Matrix<uint8_t>(height,width,0);
 		}
 	~BMPData(){
 		delete [] bitmap;
@@ -249,7 +258,7 @@ public:
 						double (*convert)(double)=[](double in){return in;},
 						int flag=0);
 	//边缘检测,只对灰度图像
-	void EdgeDetectPrewitt(); 
+	void EdgeDetect(double matrix1[3][3],double matrix2[3][3],int row,uint8_t (*algorithm)(double,double)); 
 	void saveBMP(const char *fileName);
 protected:
 	void Init();
