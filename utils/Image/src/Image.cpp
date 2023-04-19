@@ -702,17 +702,24 @@ void BMPData::GaussianHandle(bool isRGB, double (*convert)(double), int flag){
 	FREE_LP_2(gaussian,2*GAUSSIAN_TEMPLATE_RADIUS+1)
 }
 
-void BMPData::EdgeDetectPrewitt(){
+void BMPData::EdgeDetect(double matrix1[3][3],double matrix2[3][3],int row,uint8_t (*algorithm)(double,double)){
     Matrix<uint8_t> *temp=new Matrix<uint8_t>(height,width);
     for(int i=1;i<height-1;i++){
         for(int j=1;j<width-1;j++){
             double g_x=0,g_y=0;
-            g_x+=grayBuf->getValue(i-1,j-1)+grayBuf->getValue(i-1,j)+grayBuf->getValue(i-1,j+1)
-                -grayBuf->getValue(i+1,j-1)-grayBuf->getValue(i+1,j)-grayBuf->getValue(i+1,j+1);
-            g_y+=grayBuf->getValue(i-1,j+1)+grayBuf->getValue(i,j+1)+grayBuf->getValue(i+1,j+1)
-                -grayBuf->getValue(i-1,j-1)-grayBuf->getValue(i,j-1)-grayBuf->getValue(i+1,j-1);
-            g_x/=3,g_y/=3;
-            temp->setValue(i,j,max(abs(g_x),abs(g_y)));
+            for(int x=0;x<row;x++){
+                for(int y=0;y<row;y++){
+                    g_x+=matrix1[x][y]*grayBuf->getValue(i+x-1,j+y-1);
+                    g_y+=matrix2[x][y]*grayBuf->getValue(i+x-1,j+y-1);
+                }
+            }
+            // g_x+=grayBuf->getValue(i-1,j-1)+grayBuf->getValue(i-1,j)+grayBuf->getValue(i-1,j+1)
+            //     -grayBuf->getValue(i+1,j-1)-grayBuf->getValue(i+1,j)-grayBuf->getValue(i+1,j+1);
+            // g_y+=grayBuf->getValue(i-1,j+1)+grayBuf->getValue(i,j+1)+grayBuf->getValue(i+1,j+1)
+            //     -grayBuf->getValue(i-1,j-1)-grayBuf->getValue(i,j-1)-grayBuf->getValue(i+1,j-1);
+            //如果加入此行，因为之前已经灰度化了，所以会出现灰色
+            // g_x/=3,g_y/=3;
+            temp->setValue(i,j,algorithm(g_x,g_y));
         }
     }
     delete grayBuf;
@@ -749,9 +756,10 @@ void BMPData::saveBMP(const char *fileName){
             // fill data
             for (int j = 0; j < width*3; j++)
             {
-                if(j%3==0&&(flag==0||flag==1)) bitmap[offsetDst + j] = buf.getValue(i,j/3).blue;
-                else if(j%3==1&&(flag==0||flag==2)) bitmap[offsetDst + j] = buf.getValue(i,j/3).green;
-                else if(j%3==2&&(flag==0||flag==3)) bitmap[offsetDst + j] = buf.getValue(i,j/3).red;
+                RGB temp=buf.getValue(i,j/3);
+                if(j%3==0&&(flag==0||flag==1)) bitmap[offsetDst + j] = temp.blue;
+                else if(j%3==1&&(flag==0||flag==2)) bitmap[offsetDst + j] = temp.green;
+                else if(j%3==2&&(flag==0||flag==3)) bitmap[offsetDst + j] = temp.red;
             }
             // fill 0x0, this part can be ignored
             for (int j = width*3; j < rowSize; j++)
