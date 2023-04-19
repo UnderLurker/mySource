@@ -21,22 +21,36 @@ void print(double** input,int n){
 }
 
 int main(){
-	string str="../img/Image/3.jpg";
+	string str="../img/Image/4.jpg";
 	JPEGData data;
 	clock_t startTime=clock();
 	data.readJPEG(str.c_str());
 
-	BMPData bmp(data.getRGBMatrix(),data.getWidth(),data.getHeight(),true);
-	bmp.GrayEncoder();
-	bmp.GaussianHandle(false,[](double in){
-		return in>THRESHOLD?255.0:0.0;
-		// return in;
-	});
-	bmp.saveBMP("gray.bmp");
-	double m1[][3]={{-1,0,1},{-1,0,1},{-1,0,1}},
-		   m2[][3]={{-1,-1,-1},{0,0,0},{1,1,1}};
-	bmp.EdgeDetectPrewitt();
-	bmp.saveBMP("edge.bmp");
+	BMPData bmp(data.getRGBMatrix(),data.getWidth(),data.getHeight(),false);
+	// bmp.GrayEncoder();
+	// bmp.GaussianHandle(false,[](double in){
+	// 	return in>THRESHOLD?255.0:0.0;
+	// 	// return in;
+	// });
+	// bmp.saveBMP("gray.bmp");
+
+	// prewitt
+	// bmp.EdgeDetect(Prewitt1,Prewitt2,3,[](double i1,double i2){
+	// 	return (uint8_t)(max(abs(i1),abs(i2)));
+	// });
+	// bmp.saveBMP("prewitt.bmp");
+
+	// // Roberts
+	// bmp.EdgeDetect(Roberts1,Roberts2,2,[](double i1,double i2){
+	// 	return (uint8_t)(abs(i1)+abs(i2));
+	// });
+	// bmp.saveBMP("robert.bmp");
+
+	// // Sobel
+	// bmp.EdgeDetect(Sobel1,Sobel2,3,[](double i1,double i2){
+	// 	return (uint8_t)(abs(i1)+abs(i2));
+	// });
+	bmp.saveBMP("abc.bmp");
 	cout<<dec<<clock()-startTime<<"ms"<<endl;
     return 0;
 }
