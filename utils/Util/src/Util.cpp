@@ -238,4 +238,35 @@ void Timer::end(){
     runFlag=false;
 }
 
+vector<string> Split(const string& source, char ch){
+    vector<string> res;
+    size_t pre=0,pos=0;
+    while((pos=source.find(ch,pre))!=string::npos){
+        string str(source.begin()+pre,source.begin()+pos);
+        res.push_back(str);
+        pre=pos+1;
+    }
+    if(pre!=0) res.push_back(source.substr(pre));
+    return res;
+}
+vector<string> Split(const char* source,size_t len,char ch){
+    string str(source);
+    return Split(str,ch);
+}
+vector<wstring> Split(const wstring& source, wchar_t ch){
+    vector<wstring> res;
+    size_t pre=0,pos=0;
+    while((pos=source.find(ch,pre))!=wstring::npos){
+        wstring str(source.begin()+pre,source.begin()+pos);
+        res.push_back(str);
+        pre=pos+1;
+    }
+    if(pre!=0) res.push_back(source.substr(pre));
+    return res;
+}
+vector<wstring> Split(const wchar_t* source,size_t len,wchar_t ch){
+    wstring str(source);
+    return Split(str,ch);
+}
+
 NAME_SPACE_END()
