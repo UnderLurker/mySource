@@ -8,7 +8,9 @@
 #define OFFSET(className,fieldName) (size_t)&(((className*)0)->fieldName)
 
 #include <string>
+#include <vector>
 #include <map>
+using namespace std;
 #ifndef _UTIL_
 #define _UTIL_
 
@@ -115,6 +117,11 @@ public:
     //结束运行
     void end();
 };
+
+vector<string> Split(const string& source, char ch);
+vector<string> Split(const char* source,size_t len,char ch);
+vector<wstring> Split(const wstring& source, wchar_t ch);
+vector<wstring> Split(const wchar_t* source,size_t len,wchar_t ch);
 
 NAME_SPACE_END()
 
