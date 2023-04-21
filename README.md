@@ -5,4 +5,4 @@
 可以解析YUV为111，411，422等类型图片，但是性能有待提升，解析2.45MB图片耗时10941ms（debug下）
 ## bmp编码器
 提供高斯模糊处理算法（可以自定义二维高斯分布的矩阵大小），和灰度处理<br>
-添加了边缘检测算法，支持<strong>Prewitt算子</strong>
+添加了边缘检测算法，支持<strong>Prewitt Roberts Sobel算子</strong>
