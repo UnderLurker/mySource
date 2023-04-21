@@ -223,17 +223,20 @@ static double Roberts2[3][3]={{0,1},{-1,0}};
 static double Sobel1[3][3]={{-1,-2,1},{0,0,0},{1,2,1}};
 static double Sobel2[3][3]={{-1,0,1},{-2,0,2},{-1,0,1}};
 
-//目前只能允许直接对
+//此类只编码倒立图像，即height>0
 class BMPData{
-	int dataSize{0};//数据总大小
-	int rowSize{0};//一行有多少个字节（是4的整数倍）
+	int dataSize{0};					//数据总大小
+	int rowSize{0};						//一行有多少个字节（是4的整数倍）
 	int width{0};
 	int height{0};
-	int flag{0};//图像使用哪一通道，0三通道，1 blue，2 green，3 red
-	Matrix<RGB> buf;//rgb颜色信息
-	Matrix<uint8_t> *grayBuf;//灰度图信息
-	bool gray{false};//false 灰度有调色板 true 彩色没有调色板
-	uint8_t* bitmap{nullptr};//最终的数据
+	int offbits{54};					//文件头到位图数据的偏移量
+	int flag{0};						//图像使用哪一通道，0三通道，1 blue，2 green，3 red
+	Matrix<RGB> buf;					//rgb颜色信息
+	Matrix<uint8_t> *grayBuf{nullptr};	//灰度图信息
+	Matrix<RGB> *rgb{nullptr};			//图像的rgb信息
+	bool gray{false};					//false 灰度有调色板 true 彩色没有调色板
+	bool forward{true};					//true 为height>0数据表示从图像左下到右上
+	uint8_t* bitmap{nullptr};			//最终的数据
 	struct Palette{
 		uint8_t rgbBlue;
 		uint8_t rgbGreen;
@@ -241,15 +244,19 @@ class BMPData{
 		uint8_t rgbAlpha;
 	};
 public:
-	//gray false灰度 true24位彩色这个gray是决定最后生成的图像是否为灰度图像
+	BMPData(){}
+	//重新编码 gray false灰度 true24位彩色这个gray是决定最后生成的图像是否为灰度图像
 	BMPData(const Matrix<RGB>& _buf,int _width,int _height,bool _gray=false)
 		:buf(_buf),width(_width),height(_height),gray(_gray){
 			Init();
 			grayBuf=new Matrix<uint8_t>(height,width,0);
 		}
 	~BMPData(){
-		delete [] bitmap;
+		if (bitmap) delete[] bitmap;
+		if (grayBuf) delete grayBuf;
+		if (rgb) delete rgb;
 	}
+	void readBMP(const string& filePath);
 	//灰度化,对还没有转成位图数据的
 	void GrayEncoder(double (*convert)(double)=[](double in){return in;},
 						double (*GrayAlgorithm)(RGB)=[](RGB in){return (in.blue+in.red+in.green)/3.0;});
@@ -264,6 +271,8 @@ protected:
 	void Init();
 	// RGB getRGB(int mcu_height,int mcu_width,int row,int col);
 	void SetBitmapInfo(int dataSize,int width,int height);
+
+	void analysisHead(uint8_t *head);
 };
 
 NAME_SPACE_END()
