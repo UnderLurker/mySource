@@ -1,9 +1,13 @@
 cmake_minimum_required(VERSION 3.0.0)
 project(MAIN VERSION 0.1.0)
 
+# 添加opencv引用
+set(OpenCV_DIR  D:/opencv/build/x64/vc16/lib)
 set(CMAKE_BUILD_TYPE Debug)
 set(UTILS_PATH ${PROJECT_SOURCE_DIR}/utils)
 set(UTILS_TEST_PATH ${PROJECT_SOURCE_DIR}/test)
+
+find_package(OpenCV REQUIRED)
 
 add_subdirectory(utils/Matrix)
 add_subdirectory(utils/Log)
@@ -20,6 +24,8 @@ add_executable(JsonTest ${UTILS_TEST_PATH}/json_test.cpp)
 add_executable(ServerTest ${UTILS_TEST_PATH}/server_test.cpp)
 add_executable(MatrixTest ${UTILS_TEST_PATH}/Matrix_test.cpp)
 add_executable(ImageTest ${UTILS_TEST_PATH}/Image_test.cpp)
+add_executable(UtilTest ${UTILS_TEST_PATH}/Util_test.cpp)
+add_executable(OpencvTest ${UTILS_TEST_PATH}/Opencv_test.cpp)
 
 include_directories(${UTILS_PATH}/Matrix/header)
 include_directories(${UTILS_PATH}/Log/header)
@@ -29,6 +35,8 @@ include_directories(${UTILS_PATH}/Reflex/header)
 include_directories(${UTILS_PATH}/Singleton/header)
 include_directories(${UTILS_PATH}/Server/header)
 include_directories(${UTILS_PATH}/Image/header)
+include_directories(${OpenCV_INCLUDE_DIRS})
+
 
 target_link_libraries(MAIN Matrix_static logger_static Util_static)
 target_link_libraries(MAIN Singleton_static)
@@ -38,6 +46,8 @@ target_link_libraries(MAIN Server_static)
 
 target_link_libraries(ImageTest Image_static)
 target_link_libraries(ServerTest Server_static)
+target_link_libraries(UtilTest Util_static)
+target_link_libraries(OpencvTest ${OpenCV_LIBS})
 
 enable_testing()
 
@@ -46,3 +56,5 @@ add_test(Json_Test JsonTest)
 add_test(Server_Test ServerTest)
 add_test(Matrix_Test MatrixTest)
 add_test(Image_Test ImageTest)
+add_test(Util_Test UtilTest)
+add_test(Opencv_Test OpencvTest)
