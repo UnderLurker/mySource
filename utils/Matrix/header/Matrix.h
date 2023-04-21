@@ -48,8 +48,8 @@ class Matrix{
     using value_type = T;
 public:
     value_type** matrix;
-    int row;
-    int col;
+    int row{0};
+    int col{0};
     Matrix(){}
     Matrix(int,int);
     Matrix(int,int,const T&);
