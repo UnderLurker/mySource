@@ -607,12 +607,19 @@ uint16_t JPEGData::findHuffmanCodeByBit(fstream& file,int& length,int& pos,strin
     return curValue;
 }
 
+void BMPData::readBMP(const string& filePath){
+    fstream file(filePath.c_str(),ios::in|ios::binary);
+    if(file.fail()) return;
+    uint8_t head[54]="";
+    for(int i=0;i<54;i++) head[i]=file.get();
+}
 
 void BMPData::Init(){
     width+=4-width%4;
     rowSize = ceil((gray?8:24) * width / 32) * 4;
     dataSize = rowSize * height + 54 + (gray?4*256:0);
     bitmap=new uint8_t[dataSize];
+    offbits = 54 + (gray ? 4 * 256 : 0);
     SetBitmapInfo(dataSize,height,width);
     if(gray) {
         BmpHeader[28]=0x08;
@@ -748,14 +755,15 @@ void BMPData::saveBMP(const char *fileName){
         }
     }
     else{
+        int i=0;
         // fill the data area
-        for (int i = 0; i < height; i++)
+        for (i = 0; i < height; i++)
         {
             // compute the offset of destination bitmap and source image
-            int idx = height - 1 - i;
+            int idx = height - 1 - i,j = 0;
             int offsetDst = idx * rowSize + 54 + (gray?4*256:0); // 54 means the header length
             // fill data
-            for (int j = 0; j < width*3; j++)
+            for (j = 0; j < width*3; j++)
             {
                 RGB temp=buf.getValue(i,j/3);
                 if(j%3==0&&(flag==0||flag==1)) bitmap[offsetDst + j] = temp.blue;
@@ -763,7 +771,7 @@ void BMPData::saveBMP(const char *fileName){
                 else if(j%3==2&&(flag==0||flag==3)) bitmap[offsetDst + j] = temp.red;
             }
             // fill 0x0, this part can be ignored
-            for (int j = width*3; j < rowSize; j++)
+            for (; j < rowSize; j++)
             {
                 bitmap[offsetDst +j] = 0x0;
             }
@@ -793,9 +801,31 @@ void BMPData::SetBitmapInfo(int dataSize,int height,int width){
 		width >>= 8;
 
 		// height of image
-		BmpHeader[22  + i] = height & 0xff;
+		BmpHeader[22 + i] = height & 0xff;
 		height >>= 8;
-	}
+
+        // offset of image data
+        BmpHeader[10 + i] = offbits & 0xff;
+        offbits >>= 8;
+    }
+}
+
+void BMPData::analysisHead(uint8_t *head){
+    for(int i=3;i>=0;i--){
+        // size of image ( all data )
+        dataSize<<=8;
+        dataSize+=head[2+i];
+        // offset of image data
+        offbits<<=8;
+        offbits+=head[0xa +i];
+        // width of image
+        width<<=8;
+        width+=head[18+i];
+        // height of image
+        height<<=8;
+        height+=head[22+i];
+    }
+    
 }
 
 
