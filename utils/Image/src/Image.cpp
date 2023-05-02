@@ -47,6 +47,15 @@ void print(double** originMatrix){
     cout<<endl;
 }
 
+int getBitLength(int num){
+    int res=0;
+    while(num){
+        res+=1;
+        num>>=1;
+    }
+    return res;
+}
+
 double** UnZigZag(int* originArray){
     double** table=new double*[ROW];
     for(int i=0;i<ROW;i++) table[i]=new double[COL];
@@ -64,6 +73,63 @@ double** UnZigZag(int* originArray){
         else if (y > 7) { y = 7; x += 2; }
     }
     return table;
+}
+
+double* ZigZag(double** originArray){
+    double* res=new double[ROW*COL];
+    int cur=0,x=0,y=0;
+    bool flag = true;//true是右上 false是左下
+    while (cur < 64) {
+        res[cur++]=originArray[y][x];
+        if (flag) { x++; y--; }
+        else { x--; y++; }
+        if (x < 0 || y < 0 || x>7 || y>7) flag = !flag;
+        if (x < 0 && y>7) { x = 1; y = 7; }
+        if (x < 0) x = 0;
+        else if (x > 7) { x = 7; y += 2; }
+        if (y < 0) y = 0;
+        else if (y > 7) { y = 7; x += 2; }
+    }
+    return res;
+}
+
+void writeByte(fstream& file,uint8_t val){
+    file.write((char*)&val, 1);
+}
+
+void writeTwoByte(fstream& file,uint16_t val){
+    writeByte(file, val>>8);
+    writeByte(file, val&0xFF);
+}
+
+#define WRITE_BIT_TO_FILE(file, bitCurPos, curValue, len, realData)            \
+  while (len > (8 - bitCurPos)) {                                              \
+    int rightMoveBit = len + bitCurPos - 8;                                    \
+    int bitValue = realData >> rightMoveBit;                                   \
+    curValue |= bitValue;                                                      \
+    writeByte(file, (uint8_t)curValue);                                        \
+    realData -= bitValue << rightMoveBit;                                      \
+    len -= 8 - bitCurPos;                                                      \
+    curValue = bitCurPos = 0;                                                  \
+  }                                                                            \
+  curValue |= realData << (8 - bitCurPos - len);                               \
+  bitCurPos += len;                                                            \
+  if (bitCurPos >= 8) {                                                        \
+    writeByte(file, (uint8_t)curValue);                                        \
+    curValue = bitCurPos = 0;                                                  \
+  }
+
+static int bitCurPos = 0;   // 当前字节在哪个bit位
+static int curBitValue = 0;    // 当前值是多少
+void writeBit(fstream& file,int realData,pair<uint16_t,uint8_t>& huffmanCode){
+
+    int codeLen=huffmanCode.second,code=huffmanCode.first;
+    WRITE_BIT_TO_FILE(file, bitCurPos, curBitValue, codeLen, code)
+
+    if (realData == 0)
+        return;
+    int len = getBitLength((int)abs(realData));
+    WRITE_BIT_TO_FILE(file, bitCurPos, curBitValue, len, realData)
 }
 
 bool JPEGScan::Init(fstream &file, uint16_t len){
@@ -107,7 +173,6 @@ bool JPEGHuffmanCode::Init(fstream &file, uint16_t len){
                 curPos++;
             }
         }
-
     }
     catch(...){
         return false;
@@ -121,6 +186,38 @@ bool JPEGHuffmanCode::findKey(const uint16_t& code,const uint8_t& bit,iterator& 
     if(it==table.end()) return true;
     return it->second.first!=bit;
 }
+
+void JPEGHuffmanCode::write(fstream &file){
+    // Y dc
+    writeByte(file, (uint8_t)FLAG);
+    writeByte(file, (uint8_t)DHT);
+    writeTwoByte(file, (uint16_t)0x001F);
+    writeByte(file, (uint8_t)0x00);
+    for(int i=0;i<17;i++) writeByte(file, bits_dc_luminance[i]);
+    for(int i=0;i<12;i++) writeByte(file, val_dc_luminance[i]);
+    // Y ac
+    writeByte(file, (uint8_t)FLAG);
+    writeByte(file, (uint8_t)DHT);
+    writeTwoByte(file, (uint16_t)0x00B5);
+    writeByte(file, (uint8_t)0x10);
+    for(int i=0;i<17;i++) writeByte(file, bits_ac_luminance[i]);
+    for(int i=0;i<162;i++) writeByte(file, val_ac_luminance[i]);
+    // UV dc
+    writeByte(file, (uint8_t)FLAG);
+    writeByte(file, (uint8_t)DHT);
+    writeTwoByte(file, (uint16_t)0x001F);
+    writeByte(file, (uint8_t)0x01);
+    for(int i=0;i<17;i++) writeByte(file, bits_dc_chrominance[i]);
+    for(int i=0;i<12;i++) writeByte(file, val_dc_chrominance[i]);
+    // UV ac
+    writeByte(file, (uint8_t)FLAG);
+    writeByte(file, (uint8_t)DHT);
+    writeTwoByte(file, (uint16_t)0x00B5);
+    writeByte(file, (uint8_t)0x11);
+    for(int i=0;i<17;i++) writeByte(file, bits_ac_chrominance[i]);
+    for(int i=0;i<162;i++) writeByte(file, val_ac_chrominance[i]);
+}
+
 bool JPEGQuality::Init(fstream &file, uint16_t len){
     try{
         int info=file.get();
@@ -136,6 +233,23 @@ bool JPEGQuality::Init(fstream &file, uint16_t len){
         return false;
     }
     return true;
+}
+
+void JPEGQuality::write(fstream &file){
+    writeByte(file, FLAG);
+    writeByte(file, DQT);
+    writeTwoByte(file, (uint16_t)0x0043);
+    writeByte(file, (uint8_t)0x00);
+    for(int i=0;i<64;i++){
+        writeByte(file, YQualityTable[i]);
+    }
+    writeByte(file, FLAG);
+    writeByte(file, DQT);
+    writeTwoByte(file, (uint16_t)0x0043);
+    writeByte(file, (uint8_t)0x01);
+    for(int i=0;i<64;i++){
+        writeByte(file, CQualityTable[i]);
+    }
 }
 
 bool JPEGComponent::Init(fstream &file, uint16_t len){
@@ -238,6 +352,75 @@ bool JPEGData::readJPEG(const char *filePath){
             // cout<<endl;
         }
     } catch (...) {
+        file.close();
+        return false;
+    }
+    file.close();
+    return true;
+}
+
+bool JPEGData::writeJPEG(const char* filePath, int samp_factor[3][2]){
+    max_h_samp_factor=0;
+    max_v_samp_factor=0;
+    for(int i=0;i<3;i++){
+        write_samp_factor[i][0]=samp_factor[i][0];
+        write_samp_factor[i][1]=samp_factor[i][1];
+        max_h_samp_factor=max(max_h_samp_factor,write_samp_factor[i][0]);
+        max_v_samp_factor=max(max_v_samp_factor,write_samp_factor[i][1]);
+    }
+    fstream file(filePath,ios::out|ios::binary);
+    if(file.fail()) return false;
+    try{
+        createDCEnHuffman();
+        createACEnHuffman();
+        writeTwoByte(file, (uint16_t)((FLAG << 8) + SOI));  // SOI
+        JPEGQuality::write(file);                           // DQT
+        writeTwoByte(file, (uint16_t)((FLAG << 8) + SOF0)); // SOF
+        writeTwoByte(file, (uint16_t)0x0011);
+        writeByte(file, (uint8_t)0x08);
+        writeTwoByte(file, (uint16_t)height);
+        writeTwoByte(file, (uint16_t)width);
+        writeByte(file, (uint8_t)0x03);
+
+        writeByte(file, (uint8_t)0x01);
+        writeByte(file, (uint8_t)((samp_factor[0][0] << 4) + samp_factor[0][1]));
+        writeByte(file, (uint8_t)0x00);
+
+        writeByte(file, (uint8_t)0x02);
+        writeByte(file, (uint8_t)((samp_factor[1][0] << 4) + samp_factor[1][1]));
+        writeByte(file, (uint8_t)0x01);
+
+        writeByte(file, (uint8_t)0x03);
+        writeByte(file, (uint8_t)((samp_factor[2][0] << 4) + samp_factor[2][1]));
+        writeByte(file, (uint8_t)0x01);
+
+        JPEGHuffmanCode::write(file);   // DHT
+        writeTwoByte(file, (uint16_t)((FLAG << 8) + DRI)); // DRI
+        writeTwoByte(file, (uint16_t)0x0004);
+        writeTwoByte(file, (uint16_t)mcu_cols);
+        writeTwoByte(file, (uint16_t)((FLAG<<8)+SOS)); // SOS
+        writeTwoByte(file, (uint16_t)0x000C);
+        writeByte(file, (uint8_t)0x03);
+
+        writeByte(file, (uint8_t)0x01);
+        writeByte(file, (uint8_t)0x00);
+        writeByte(file, (uint8_t)0x00);
+        
+        writeByte(file, (uint8_t)0x02);
+        writeByte(file, (uint8_t)0x01);
+        writeByte(file, (uint8_t)0x01);
+
+        writeByte(file, (uint8_t)0x03);
+        writeByte(file, (uint8_t)0x01);
+        writeByte(file, (uint8_t)0x01);
+
+        writeByte(file, (uint8_t)0);
+        writeByte(file, (uint8_t)0);
+        writeByte(file, (uint8_t)0);
+        RGBToYCbCr(getRGBMatrix(), file);
+        writeTwoByte(file, (uint16_t)((FLAG << 8) + (uint8_t)JPEGPType::EOI));  // EOI
+    }
+    catch(...){
         file.close();
         return false;
     }
@@ -444,8 +627,8 @@ RGB** JPEGData::YCbCrToRGB(const int* YUV){
     for(int j=0;j<ROW * max_v_samp_factor;j++){
         for(int k=0;k<COL * max_h_samp_factor;k++){
             int yPos = (j / ROW) * component[0].h_samp_factor + (k / COL);
-            int cbPos = YUV[0] + (int)((k / ROW) * cb_v_samp_scale) + (int)((j / COL) * cb_h_samp_scale);
-            int crPos = YUV[0] + YUV[1] + (int)((k / ROW) * cr_v_samp_scale) + (int)((j / COL) * cr_h_samp_scale);
+            int cbPos = YUV[0] + (int)((k / COL) * cb_v_samp_scale) + (int)((j / ROW) * cb_h_samp_scale);
+            int crPos = YUV[0] + YUV[1] + (int)((k / COL) * cr_v_samp_scale) + (int)((j / ROW) * cr_h_samp_scale);
             double y = ycbcr[yPos][j % ROW][k % COL];
             double cb = ycbcr[cbPos][(int)(j * cb_v_samp_scale)][(int)(k * cb_h_samp_scale)];
             double cr = ycbcr[crPos][(int)(j * cr_v_samp_scale)][(int)(k * cr_h_samp_scale)];
@@ -467,10 +650,109 @@ RGB** JPEGData::YCbCrToRGB(const int* YUV){
     return res;
 }
 
+void JPEGData::RGBToYCbCr(Matrix<RGB> _rgb, fstream& file){
+    // vector<double*> res;
+    int mcu_width  = COL * max_h_samp_factor,
+        mcu_height = ROW * max_v_samp_factor;
+    int YUV[3] = {write_samp_factor[0][0] * write_samp_factor[0][1],
+                  write_samp_factor[1][0] * write_samp_factor[1][1],
+                  write_samp_factor[2][0] * write_samp_factor[2][1]};
+    int y_h_param  = max_h_samp_factor * 1.0 / write_samp_factor[0][0],
+        y_v_param  = max_v_samp_factor * 1.0 / write_samp_factor[0][1],
+        cb_h_param = max_h_samp_factor * 1.0 / write_samp_factor[1][0],
+        cb_v_param = max_v_samp_factor * 1.0 / write_samp_factor[1][1],
+        cr_h_param = max_h_samp_factor * 1.0 / write_samp_factor[2][0],
+        cr_v_param = max_v_samp_factor * 1.0 / write_samp_factor[2][1];
+    double cb_h_samp_scale=write_samp_factor[1][0]*1.0/max_h_samp_factor,
+           cb_v_samp_scale=write_samp_factor[1][1]*1.0/max_v_samp_factor,
+           cr_h_samp_scale=write_samp_factor[2][0]*1.0/max_h_samp_factor,
+           cr_v_samp_scale=write_samp_factor[2][1]*1.0/max_v_samp_factor;
+    preDCValue[0] = preDCValue[1] = preDCValue[2] = 0;
+    mcu_rows=ceil(_rgb.row*1.0/mcu_height);
+    mcu_cols=ceil(_rgb.col*1.0/mcu_width);
+    int n = mcu_rows * mcu_cols, nSize = 0, DRI = mcu_cols, DriFLAG = 0xD0;
+    // res.resize(n);
+    while(n>0){
+        double*** yuv=new double**[YUV[0]+YUV[1]+YUV[2]];
+        int count=0;
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < YUV[i]; j++) {
+                yuv[count] = new double *[ROW];
+                for (int k = 0; k < ROW; k++) {
+                    yuv[count][k] = new double[COL];
+                    memset(yuv[count][k], 0.0, sizeof(double) * COL);
+                }
+                count++;
+            }
+        }
+        int row = nSize * mcu_height / mcu_cols,
+            col = (nSize % mcu_cols) * mcu_width;
+        for (int i = 0; i < mcu_height; i++) {
+            for (int j = 0; j < mcu_width; j++) {
+                RGB t = _rgb.getValue(row+i, col+j);//得到的是一整个mcu，但是要把它分成多个8*8矩阵
+                double y  =  0.299 * t.red + 0.587 * t.green + 0.114 * t.blue;
+                double cb = -0.147 * t.red - 0.289 * t.green + 0.436 * t.blue;
+                double cr =  0.615 * t.red - 0.515 * t.green - 0.100 * t.blue;
+                int yPos = (i / ROW) * max_h_samp_factor + (j / COL);
+                int cbPos = YUV[0] + (int)((j / COL) * cb_v_samp_scale) +
+                            (int)((i / ROW) * cb_h_samp_scale);
+                int crPos = YUV[0] + YUV[1] +
+                            (int)((j / COL) * cr_v_samp_scale) +
+                            (int)((i / ROW) * cr_h_samp_scale);
+
+                if (i % y_v_param == 0 && j % y_h_param == 0)
+                    yuv[yPos][i % ROW][j % COL] = y;
+                if (i % cb_v_param == 0 && j % cb_h_param == 0)
+                    yuv[cbPos][i % ROW][j % COL] = cb;
+                if (i % cr_v_param == 0 && j % cr_h_param == 0)
+                    yuv[crPos][i % ROW][j % COL] = cr;
+            }
+        }
+        int pos = 0;
+        for (int i = 0; i < 3; i++) {
+            int huffmanID = i == 0 ? 0 : 1;
+            for (int j = 0; j < YUV[i]; j++) {
+                // for(int k=0;k<)
+                DCT(yuv[pos]);
+                double *temp = ZigZag(yuv[pos++]);
+                Quality(temp, i >= YUV[0] ? 2 : 1);
+                int zeroCount=0;
+                for(int k=0;k<64;k++){
+                    temp[k] = round(temp[k]);
+                    if (k == 0) // 下面进行差分编码
+                        temp[0] -= preDCValue[i];
+                    int len = getBitLength((int)abs(temp[k]));
+                    if (temp[k] < 0){
+                        temp[k] = pow(2, len) + temp[k] - 1;
+                        len = getBitLength((int)abs(temp[k]));
+                    }
+                    if(k==0) writeBit(file, temp[k], en_dc_huffman[huffmanID].table[len]);
+                    else if(temp[k]==0){ zeroCount++; continue;}
+                    else{ writeBit(file, temp[k], en_ac_huffman[huffmanID].table[(zeroCount << 4) + len]);zeroCount = 0;}
+                }
+                if(zeroCount!=0) writeBit(file, 0, en_ac_huffman[huffmanID].table[0]);
+                if (nSize % DRI == 0) {
+                    preDCValue[0] = preDCValue[1] = preDCValue[2] = 0;
+                    writeTwoByte(file, (uint16_t)((FLAG << 8) + DriFLAG++));
+                    if (DriFLAG > 0xD7)
+                        DriFLAG = 0xD0;
+                }
+                if (curBitValue != 0)
+                    writeByte(file, (uint8_t)curBitValue);
+                bitCurPos = curBitValue = 0;
+            }
+        }
+        FREE_LP_3(yuv, YUV[0] + YUV[1] + YUV[2], ROW)
+        n--;
+        nSize++;
+    }
+    // return res;
+}
+
 Matrix<RGB> JPEGData::getRGBMatrix(){
     Matrix<RGB> res(height,width);
-    int mcu_height=8*max_v_samp_factor,
-        mcu_width=8*max_h_samp_factor;
+    int mcu_height=ROW*max_v_samp_factor,
+        mcu_width=COL*max_h_samp_factor;
     for(int row=0;row<height;row++){
         int rowOffset=(int)floor(row*1.0/mcu_height)*(int)ceil(width*1.0/mcu_width);
         for(int col=0;col<width;col++){
@@ -553,6 +835,12 @@ void JPEGData::deQuality(double** originMatrix,int qualityID){
     }
 }
 
+void JPEGData::Quality(double* originMatrix,int qualityID){
+    for(int i=0;i<ROW*COL;i++){
+        originMatrix[i]=round(originMatrix[i]/(qualityID==1?YQualityTable[i]:CQualityTable[i]));
+    }
+}
+
 void JPEGData::PAndNCorrect(double** originMatrix){
     for(int i=0;i<ROW;i++)
         if(i%2==1)
@@ -560,7 +848,7 @@ void JPEGData::PAndNCorrect(double** originMatrix){
                 originMatrix[i][j]=-originMatrix[i][j];
 }
 
-string JPEGData::FlagCkeck(fstream& file,int byteInfo){
+string JPEGData::FlagCheck(fstream& file,int byteInfo){
     if(byteInfo==0xff){
         uint8_t info=file.get();
         string res=bitset<8>(0xFF).to_string();
@@ -583,7 +871,7 @@ uint16_t JPEGData::findHuffmanCodeByBit(fstream& file,int& length,int& pos,strin
     if(pos==length&&length>=HUFFMAN_DECODE_DEQUE_CACHE){//达到最大缓存
         deque = deque.substr(pos);
         int info=file.get();
-        string res=FlagCkeck(file,info);
+        string res=FlagCheck(file,info);
         string str=bitset<8>(info).to_string();
         if(res=="false") res=bitset<8>(file.get()).to_string();
         deque.append(res);
@@ -596,7 +884,7 @@ uint16_t JPEGData::findHuffmanCodeByBit(fstream& file,int& length,int& pos,strin
             pos=0;
         }
         int info=file.get();
-        string res=FlagCkeck(file,info);
+        string res=FlagCheck(file,info);
         string str=bitset<8>(info).to_string();
         if(res=="false") res=bitset<8>(file.get()).to_string();
         deque.append(res);
@@ -605,6 +893,65 @@ uint16_t JPEGData::findHuffmanCodeByBit(fstream& file,int& length,int& pos,strin
     curValue = (curValue << 1) + (uint8_t)(deque.at(pos++) - '0');
     curValLen++;
     return curValue;
+}
+
+void JPEGData::createDCEnHuffman(){
+    JPEGHuffmanEncode table1,table2;
+    int curCode=0,curPos=0;
+    for(int i=0;i<16;i++){
+        int count=bits_dc_luminance[i];
+        curCode<<=1;
+        while(count--){
+            uint16_t code=curCode++;
+            uint8_t bit=i+1,weight=val_dc_luminance[curPos++];
+            pair<uint16_t, uint8_t> t1(code,bit);
+            pair<uint8_t, pair<uint16_t, uint8_t>> t2(weight,t1);
+            table1.table.insert(t2);
+        }
+    }
+    curCode=curPos=0;
+    for(int i=0;i<16;i++){
+        int count=bits_dc_chrominance[i];
+        curCode<<=1;
+        while(count--){
+            uint16_t code=curCode++;
+            uint8_t bit=i+1,weight=val_dc_chrominance[curPos++];
+            pair<uint16_t, uint8_t> t1(code,bit);
+            pair<uint8_t, pair<uint16_t, uint8_t>> t2(weight,t1);
+            table2.table.insert(t2);
+        }
+    }
+    en_dc_huffman.push_back(table1);
+    en_dc_huffman.push_back(table2);
+}
+void JPEGData::createACEnHuffman(){
+    JPEGHuffmanEncode table1,table2;
+    int curCode=0,curPos=0;
+    for(int i=0;i<16;i++){
+        int count=bits_ac_luminance[i];
+        curCode<<=1;
+        while(count--){
+            uint16_t code=curCode++;
+            uint8_t bit=i+1,weight=val_ac_luminance[curPos++];
+            pair<uint16_t, uint8_t> t1(code,bit);
+            pair<uint8_t, pair<uint16_t, uint8_t>> t2(weight,t1);
+            table1.table.insert(t2);
+        }
+    }
+    curCode=curPos=0;
+    for(int i=0;i<16;i++){
+        int count=bits_ac_chrominance[i];
+        curCode<<=1;
+        while(count--){
+            uint16_t code=curCode++;
+            uint8_t bit=i+1,weight=val_ac_chrominance[curPos++];
+            pair<uint16_t, uint8_t> t1(code,bit);
+            pair<uint8_t, pair<uint16_t, uint8_t>> t2(weight,t1);
+            table2.table.insert(t2);
+        }
+    }
+    en_ac_huffman.push_back(table1);
+    en_ac_huffman.push_back(table2);
 }
 
 void BMPData::readBMP(const string& filePath){

@@ -18,27 +18,39 @@ using namespace std;
 
 NAME_SPACE_START(myUtil)
 
-#define REMOVE_SPACE(str) \
-    for(auto it=str.begin();it!=str.end();){    \
-        if(*it==' ') it=str.erase(it);      \
-        else break;                         \
-    }
+#define REMOVE_SPACE(str)                                                      \
+  for (auto it = str.begin(); it != str.end();) {                              \
+    if (*it == ' ')                                                            \
+      it = str.erase(it);                                                      \
+    else                                                                       \
+      break;                                                                   \
+  }
 
-#define FREE_VECTOR_LP(vectorName,_row) \
-    for(auto item : vectorName){	\
-		for(int i=0;i<_row;i++)\
-			delete [] item[i];\
-        delete [] item;	\
-    }\
-	vectorName.clear();
+#define FREE_VECTOR_LP(vectorName, _row)                                       \
+  for (auto item : vectorName) {                                               \
+    for (int i = 0; i < _row; i++)                                             \
+      delete[] item[i];                                                        \
+    delete[] item;                                                             \
+  }                                                                            \
+  vectorName.clear();
 
 //释放二维指针
-#define FREE_LP_2(lpName,row) \
-	for(int i=0;i<row;i++){\
-		delete [] lpName[i];\
-	}\
-	delete [] lpName;
-    
+#define FREE_LP_2(lpName, row)                                                 \
+  for (int i = 0; i < row; i++) {                                              \
+    delete[] lpName[i];                                                        \
+  }                                                                            \
+  delete[] lpName;
+
+//释放三维指针
+#define FREE_LP_3(lpName, men1, men2)                                          \
+  for (int x = 0; x < men1; x++) {                                             \
+    for (int y = 0; y < men2; y++) {                                           \
+      delete[] lpName[x][y];                                                   \
+    }                                                                          \
+    delete[] lpName[x];                                                        \
+  }                                                                            \
+  delete[] lpName;
+
 #define INI_FILE_PATH "config.ini"
 
 class IniValue{

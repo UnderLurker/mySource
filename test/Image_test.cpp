@@ -21,12 +21,18 @@ void print(double** input,int n){
 }
 
 int main(){
-	string str="../img/Image/4.jpg";
+	string str="../img/Image/3.jpg";
 	JPEGData data;
 	clock_t startTime=clock();
 	data.readJPEG(str.c_str());
+	int input[3][2]={
+		{2,2},
+		{1,1},
+		{1,1}
+	};
+	data.writeJPEG("./8.jpg",input);
 
-	BMPData bmp(data.getRGBMatrix(),data.getWidth(),data.getHeight(),false);
+	// BMPData bmp(data.getRGBMatrix(),data.getWidth(),data.getHeight(),true);
 	// bmp.GrayEncoder();
 	// bmp.GaussianHandle(false,[](double in){
 	// 	return in>THRESHOLD?255.0:0.0;
@@ -50,7 +56,7 @@ int main(){
 	// bmp.EdgeDetect(Sobel1,Sobel2,3,[](double i1,double i2){
 	// 	return (uint8_t)(abs(i1)+abs(i2));
 	// });
-	bmp.saveBMP("abc.bmp");
+	// bmp.saveBMP("abc.bmp");
 	cout<<dec<<clock()-startTime<<"ms"<<endl;
     return 0;
 }
