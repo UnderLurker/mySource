@@ -132,6 +132,25 @@ static const uint8_t val_ac_chrominance[] = {
 	0xea, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8,
 	0xf9, 0xfa 
 };
+
+static const int Zig[64]={
+	0, 1, 8, 16, 9, 2, 3, 10,
+	17, 24, 32, 25, 18, 11, 4, 5,
+	12, 19, 26, 33, 40, 48, 41, 34,
+	27, 20, 13, 6, 7, 14, 21, 28,
+	35, 42, 49, 56, 57, 50, 43, 36,
+	29, 22, 15, 23, 30, 37, 44, 51,
+	58, 59, 52, 45, 38, 31, 39, 46,
+	53, 60, 61, 54, 47, 55, 62, 63
+};
+
+static const uint8_t APP[18]={
+	0xff,0xe0,0x00,0x10,0x4a,
+	0x46,0x49,0x46,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00
+};
+
 //段类型
 enum JPEGPType{
     SOF0    = 0xC0,     //帧开始
@@ -275,7 +294,7 @@ protected:
 	bool readData(fstream& file);
 	bool huffmanDecode(fstream& file);
 	void deQuality(double** originMatrix,int qualityID);
-	void Quality(double* originMatrix,int qualityID);
+	void Quality(double** originMatrix,int qualityID);
 	void PAndNCorrect(double** originMatrix);//隔行正负纠正
 
 	RGB** YCbCrToRGB(const int* YUV);

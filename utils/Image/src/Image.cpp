@@ -77,18 +77,8 @@ double** UnZigZag(int* originArray){
 
 double* ZigZag(double** originArray){
     double* res=new double[ROW*COL];
-    int cur=0,x=0,y=0;
-    bool flag = true;//true是右上 false是左下
-    while (cur < 64) {
-        res[cur++]=originArray[y][x];
-        if (flag) { x++; y--; }
-        else { x--; y++; }
-        if (x < 0 || y < 0 || x>7 || y>7) flag = !flag;
-        if (x < 0 && y>7) { x = 1; y = 7; }
-        if (x < 0) x = 0;
-        else if (x > 7) { x = 7; y += 2; }
-        if (y < 0) y = 0;
-        else if (y > 7) { y = 7; x += 2; }
+    for(int i=0;i<64;i++){
+        res[i]=originArray[Zig[i]/ROW][Zig[i]%COL];
     }
     return res;
 }
@@ -108,6 +98,8 @@ void writeTwoByte(fstream& file,uint16_t val){
     int bitValue = realData >> rightMoveBit;                                   \
     curValue |= bitValue;                                                      \
     writeByte(file, (uint8_t)curValue);                                        \
+    if (curValue == 0xFF)                                                      \
+      writeByte(file, (uint8_t)0);                                             \
     realData -= bitValue << rightMoveBit;                                      \
     len -= 8 - bitCurPos;                                                      \
     curValue = bitCurPos = 0;                                                  \
@@ -116,6 +108,8 @@ void writeTwoByte(fstream& file,uint16_t val){
   bitCurPos += len;                                                            \
   if (bitCurPos >= 8) {                                                        \
     writeByte(file, (uint8_t)curValue);                                        \
+    if (curValue == 0xFF)                                                      \
+      writeByte(file, (uint8_t)0);                                             \
     curValue = bitCurPos = 0;                                                  \
   }
 
@@ -193,28 +187,28 @@ void JPEGHuffmanCode::write(fstream &file){
     writeByte(file, (uint8_t)DHT);
     writeTwoByte(file, (uint16_t)0x001F);
     writeByte(file, (uint8_t)0x00);
-    for(int i=0;i<17;i++) writeByte(file, bits_dc_luminance[i]);
+    for(int i=0;i<16;i++) writeByte(file, bits_dc_luminance[i]);
     for(int i=0;i<12;i++) writeByte(file, val_dc_luminance[i]);
     // Y ac
     writeByte(file, (uint8_t)FLAG);
     writeByte(file, (uint8_t)DHT);
     writeTwoByte(file, (uint16_t)0x00B5);
     writeByte(file, (uint8_t)0x10);
-    for(int i=0;i<17;i++) writeByte(file, bits_ac_luminance[i]);
+    for(int i=0;i<16;i++) writeByte(file, bits_ac_luminance[i]);
     for(int i=0;i<162;i++) writeByte(file, val_ac_luminance[i]);
     // UV dc
     writeByte(file, (uint8_t)FLAG);
     writeByte(file, (uint8_t)DHT);
     writeTwoByte(file, (uint16_t)0x001F);
     writeByte(file, (uint8_t)0x01);
-    for(int i=0;i<17;i++) writeByte(file, bits_dc_chrominance[i]);
+    for(int i=0;i<16;i++) writeByte(file, bits_dc_chrominance[i]);
     for(int i=0;i<12;i++) writeByte(file, val_dc_chrominance[i]);
     // UV ac
     writeByte(file, (uint8_t)FLAG);
     writeByte(file, (uint8_t)DHT);
     writeTwoByte(file, (uint16_t)0x00B5);
     writeByte(file, (uint8_t)0x11);
-    for(int i=0;i<17;i++) writeByte(file, bits_ac_chrominance[i]);
+    for(int i=0;i<16;i++) writeByte(file, bits_ac_chrominance[i]);
     for(int i=0;i<162;i++) writeByte(file, val_ac_chrominance[i]);
 }
 
@@ -374,6 +368,9 @@ bool JPEGData::writeJPEG(const char* filePath, int samp_factor[3][2]){
         createDCEnHuffman();
         createACEnHuffman();
         writeTwoByte(file, (uint16_t)((FLAG << 8) + SOI));  // SOI
+        for(int i=0;i<18;i++){              //APP
+            writeByte(file, APP[i]);
+        }
         JPEGQuality::write(file);                           // DQT
         writeTwoByte(file, (uint16_t)((FLAG << 8) + SOF0)); // SOF
         writeTwoByte(file, (uint16_t)0x0011);
@@ -415,7 +412,7 @@ bool JPEGData::writeJPEG(const char* filePath, int samp_factor[3][2]){
         writeByte(file, (uint8_t)0x01);
 
         writeByte(file, (uint8_t)0);
-        writeByte(file, (uint8_t)0);
+        writeByte(file, (uint8_t)0x3F);
         writeByte(file, (uint8_t)0);
         RGBToYCbCr(getRGBMatrix(), file);
         writeTwoByte(file, (uint16_t)((FLAG << 8) + (uint8_t)JPEGPType::EOI));  // EOI
@@ -691,8 +688,8 @@ void JPEGData::RGBToYCbCr(Matrix<RGB> _rgb, fstream& file){
             for (int j = 0; j < mcu_width; j++) {
                 RGB t = _rgb.getValue(row+i, col+j);//得到的是一整个mcu，但是要把它分成多个8*8矩阵
                 double y  =  0.299 * t.red + 0.587 * t.green + 0.114 * t.blue;
-                double cb = -0.147 * t.red - 0.289 * t.green + 0.436 * t.blue;
-                double cr =  0.615 * t.red - 0.515 * t.green - 0.100 * t.blue;
+                double cb = -0.169 * t.red - 0.331 * t.green + 0.500 * t.blue + 128;
+                double cr =  0.500 * t.red - 0.419 * t.green - 0.081 * t.blue + 128;
                 int yPos = (i / ROW) * max_h_samp_factor + (j / COL);
                 int cbPos = YUV[0] + (int)((j / COL) * cb_v_samp_scale) +
                             (int)((i / ROW) * cb_h_samp_scale);
@@ -714,8 +711,8 @@ void JPEGData::RGBToYCbCr(Matrix<RGB> _rgb, fstream& file){
             for (int j = 0; j < YUV[i]; j++) {
                 // for(int k=0;k<)
                 DCT(yuv[pos]);
+                Quality(yuv[pos], i >= YUV[0] ? 2 : 1);
                 double *temp = ZigZag(yuv[pos++]);
-                Quality(temp, i >= YUV[0] ? 2 : 1);
                 int zeroCount=0;
                 for(int k=0;k<64;k++){
                     temp[k] = round(temp[k]);
@@ -731,14 +728,17 @@ void JPEGData::RGBToYCbCr(Matrix<RGB> _rgb, fstream& file){
                     else{ writeBit(file, temp[k], en_ac_huffman[huffmanID].table[(zeroCount << 4) + len]);zeroCount = 0;}
                 }
                 if(zeroCount!=0) writeBit(file, 0, en_ac_huffman[huffmanID].table[0]);
+                if (curBitValue != 0){
+                    writeByte(file, (uint8_t)curBitValue);
+                    if (curBitValue == 0xFF)
+                        writeByte(file, (uint8_t)0);    
+                }
                 if (nSize % DRI == 0) {
                     preDCValue[0] = preDCValue[1] = preDCValue[2] = 0;
                     writeTwoByte(file, (uint16_t)((FLAG << 8) + DriFLAG++));
                     if (DriFLAG > 0xD7)
                         DriFLAG = 0xD0;
                 }
-                if (curBitValue != 0)
-                    writeByte(file, (uint8_t)curBitValue);
                 bitCurPos = curBitValue = 0;
             }
         }
@@ -835,9 +835,14 @@ void JPEGData::deQuality(double** originMatrix,int qualityID){
     }
 }
 
-void JPEGData::Quality(double* originMatrix,int qualityID){
-    for(int i=0;i<ROW*COL;i++){
-        originMatrix[i]=round(originMatrix[i]/(qualityID==1?YQualityTable[i]:CQualityTable[i]));
+void JPEGData::Quality(double** originMatrix,int qualityID){
+    for(int i=0;i<ROW;i++){
+        for(int j=0;j<COL;j++){
+            originMatrix[i][j] =
+                round(originMatrix[i][j] /
+                      (qualityID == 1 ? YQualityTable[i * ROW + COL]
+                                      : CQualityTable[i * ROW + COL]));
+        }
     }
 }
 
