@@ -21,7 +21,7 @@ void print(double** input,int n){
 }
 
 int main(){
-	string str="../img/Image/8.jpg";
+	string str="../img/Image/3.jpg";
 	JPEGData data;
 	clock_t startTime=clock();
 	data.readJPEG(str.c_str());

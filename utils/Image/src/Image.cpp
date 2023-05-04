@@ -401,15 +401,12 @@ bool JPEGData::writeJPEG(const char* filePath, int samp_factor[3][2]){
 
         writeByte(file, (uint8_t)0x01);
         writeByte(file, (uint8_t)0x00);
-        writeByte(file, (uint8_t)0x00);
         
         writeByte(file, (uint8_t)0x02);
-        writeByte(file, (uint8_t)0x01);
-        writeByte(file, (uint8_t)0x01);
+        writeByte(file, (uint8_t)0x11);
 
         writeByte(file, (uint8_t)0x03);
-        writeByte(file, (uint8_t)0x01);
-        writeByte(file, (uint8_t)0x01);
+        writeByte(file, (uint8_t)0x11);
 
         writeByte(file, (uint8_t)0);
         writeByte(file, (uint8_t)0x3F);
@@ -687,9 +684,9 @@ void JPEGData::RGBToYCbCr(Matrix<RGB> _rgb, fstream& file){
         for (int i = 0; i < mcu_height; i++) {
             for (int j = 0; j < mcu_width; j++) {
                 RGB t = _rgb.getValue(row+i, col+j);//得到的是一整个mcu，但是要把它分成多个8*8矩阵
-                double y  =  0.299 * t.red + 0.587 * t.green + 0.114 * t.blue;
-                double cb = -0.169 * t.red - 0.331 * t.green + 0.500 * t.blue + 128;
-                double cr =  0.500 * t.red - 0.419 * t.green - 0.081 * t.blue + 128;
+                double y  =  0.299 * t.red + 0.587 * t.green + 0.114 * t.blue - 128;
+                double cb = -0.1687 * t.red - 0.3313 * t.green + 0.500 * t.blue;
+                double cr =  0.500 * t.red - 0.4187 * t.green - 0.0813 * t.blue;
                 int yPos = (i / ROW) * max_h_samp_factor + (j / COL);
                 int cbPos = YUV[0] + (int)((j / COL) * cb_v_samp_scale) +
                             (int)((i / ROW) * cb_h_samp_scale);
@@ -718,20 +715,38 @@ void JPEGData::RGBToYCbCr(Matrix<RGB> _rgb, fstream& file){
                     temp[k] = round(temp[k]);
                     if (k == 0) // 下面进行差分编码
                         temp[0] -= preDCValue[i];
+                    while (temp[k] == 0 && k != 0) {
+                        zeroCount++;
+                        k++;
+                    }
                     int len = getBitLength((int)abs(temp[k]));
                     if (temp[k] < 0){
                         temp[k] = pow(2, len) + temp[k] - 1;
-                        len = getBitLength((int)abs(temp[k]));
+                        // len = getBitLength((int)abs(temp[k]));
                     }
                     if(k==0) writeBit(file, temp[k], en_dc_huffman[huffmanID].table[len]);
-                    else if(temp[k]==0){ zeroCount++; continue;}
-                    else{ writeBit(file, temp[k], en_ac_huffman[huffmanID].table[(zeroCount << 4) + len]);zeroCount = 0;}
+                    else {
+                        if(zeroCount>=16&&bitCurPos!=0){
+                            writeByte(file, (uint8_t)curBitValue);
+                            if (curBitValue == 0xFF)
+                                writeByte(file, (uint8_t)0);
+                            bitCurPos = curBitValue = 0;
+                        }
+                        while(zeroCount>=16){
+                            writeByte(file, (uint8_t)0xf0);
+                            zeroCount%=16;
+                        }
+                        writeBit(file, temp[k],
+                                 en_ac_huffman[huffmanID]
+                                     .table[(zeroCount << 4) + len]);
+                        zeroCount = 0;
+                    }
                 }
-                if(zeroCount!=0) writeBit(file, 0, en_ac_huffman[huffmanID].table[0]);
-                if (curBitValue != 0){
+                if (bitCurPos != 0){
                     writeByte(file, (uint8_t)curBitValue);
                     if (curBitValue == 0xFF)
-                        writeByte(file, (uint8_t)0);    
+                        writeByte(file, (uint8_t)0);
+                    if (zeroCount != 0) writeByte(file, (uint8_t)0x00);
                 }
                 if (nSize % DRI == 0) {
                     preDCValue[0] = preDCValue[1] = preDCValue[2] = 0;
