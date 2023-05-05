@@ -77,20 +77,35 @@ double** UnZigZag(int* originArray){
 
 double* ZigZag(double** originArray){
     double* res=new double[ROW*COL];
-    for(int i=0;i<64;i++){
-        res[i]=originArray[Zig[i]/ROW][Zig[i]%COL];
+    // for(int i=0;i<64;i++){
+    //     res[Zig[i]]=originArray[i/ROW][i%COL];
+    // }
+    int cur=0,x=0,y=0;
+    bool flag = true;//true是右上 false是左下
+    while (cur < 64) {
+        res[cur++] = originArray[y][x];
+        if (flag) { x++; y--; }
+        else { x--; y++; }
+        if (x < 0 || y < 0 || x>7 || y>7) flag = !flag;
+        if (x < 0 && y>7) { x = 1; y = 7; }
+        if (x < 0) x = 0;
+        else if (x > 7) { x = 7; y += 2; }
+        if (y < 0) y = 0;
+        else if (y > 7) { y = 7; x += 2; }
     }
     return res;
 }
 
 void writeByte(fstream& file,uint8_t val){
     file.write((char*)&val, 1);
+    // cout<<hex<<(int)val<<" ";
 }
 
 void writeTwoByte(fstream& file,uint16_t val){
     writeByte(file, val>>8);
     writeByte(file, val&0xFF);
 }
+
 
 #define WRITE_BIT_TO_FILE(file, bitCurPos, curValue, len, realData)            \
   while (len > (8 - bitCurPos)) {                                              \
@@ -115,15 +130,35 @@ void writeTwoByte(fstream& file,uint16_t val){
 
 static int bitCurPos = 0;   // 当前字节在哪个bit位
 static int curBitValue = 0;    // 当前值是多少
-void writeBit(fstream& file,int realData,pair<uint16_t,uint8_t>& huffmanCode){
+void writeBitToFile(fstream& file,int len,int realData){
+    while (len > (8 - bitCurPos))
+    {
+        int rightMoveBit = len + bitCurPos - 8;
+        int bitValue = realData >> rightMoveBit;
+        curBitValue |= bitValue;
+        writeByte(file, (uint8_t)curBitValue);
+        if (curBitValue == 0xFF)
+            writeByte(file, (uint8_t)0);
+        realData -= bitValue << rightMoveBit;
+        len -= 8 - bitCurPos;
+        curBitValue = bitCurPos = 0;
+    }
+    curBitValue |= realData << (8 - bitCurPos - len);
+    bitCurPos += len;
+    if (bitCurPos >= 8)
+    {
+        writeByte(file, (uint8_t)curBitValue);
+        if (curBitValue == 0xFF)
+            writeByte(file, (uint8_t)0);
+        curBitValue = bitCurPos = 0;
+    }
+}
+void writeBit(fstream& file,int len, int realData,pair<uint16_t,uint8_t>& huffmanCode){
 
     int codeLen=huffmanCode.second,code=huffmanCode.first;
-    WRITE_BIT_TO_FILE(file, bitCurPos, curBitValue, codeLen, code)
+    writeBitToFile(file, codeLen, code);
 
-    if (realData == 0)
-        return;
-    int len = getBitLength((int)abs(realData));
-    WRITE_BIT_TO_FILE(file, bitCurPos, curBitValue, len, realData)
+    writeBitToFile(file, len, realData);
 }
 
 bool JPEGScan::Init(fstream &file, uint16_t len){
@@ -631,6 +666,7 @@ RGB** JPEGData::YCbCrToRGB(const int* YUV){
             res[j][k].green =RGBValueLimit(128+y-0.71414*cr-0.34414*cb);
             res[j][k].blue  =RGBValueLimit(128+y+1.772  *cb);
 
+            // cout<<dec<<"("<<(int)y<<","<<(int)cb<<","<<(int)cr<<")"<<" ";
             
             // 输出当前选择的矩阵
             //cout<<dec<<yPos<<" "<<cbPos<<" "<<crPos<<" ";
@@ -674,7 +710,7 @@ void JPEGData::RGBToYCbCr(Matrix<RGB> _rgb, fstream& file){
                 yuv[count] = new double *[ROW];
                 for (int k = 0; k < ROW; k++) {
                     yuv[count][k] = new double[COL];
-                    memset(yuv[count][k], 0.0, sizeof(double) * COL);
+                    memset(yuv[count][k], 0, sizeof(double) * COL);
                 }
                 count++;
             }
@@ -684,9 +720,9 @@ void JPEGData::RGBToYCbCr(Matrix<RGB> _rgb, fstream& file){
         for (int i = 0; i < mcu_height; i++) {
             for (int j = 0; j < mcu_width; j++) {
                 RGB t = _rgb.getValue(row+i, col+j);//得到的是一整个mcu，但是要把它分成多个8*8矩阵
-                double y  =  0.299 * t.red + 0.587 * t.green + 0.114 * t.blue - 128;
-                double cb = -0.1687 * t.red - 0.3313 * t.green + 0.500 * t.blue;
-                double cr =  0.500 * t.red - 0.4187 * t.green - 0.0813 * t.blue;
+                double y  = RGBValueLimit(0.299 * t.red + 0.587 * t.green + 0.114 * t.blue);
+                double cb = RGBValueLimit(-0.1687 * t.red - 0.3313 * t.green + 0.500 * t.blue + 128);
+                double cr = RGBValueLimit(0.500 * t.red - 0.4187 * t.green - 0.0813 * t.blue + 128);
                 int yPos = (i / ROW) * max_h_samp_factor + (j / COL);
                 int cbPos = YUV[0] + (int)((j / COL) * cb_v_samp_scale) +
                             (int)((i / ROW) * cb_h_samp_scale);
@@ -697,66 +733,61 @@ void JPEGData::RGBToYCbCr(Matrix<RGB> _rgb, fstream& file){
                 if (i % y_v_param == 0 && j % y_h_param == 0)
                     yuv[yPos][i % ROW][j % COL] = y;
                 if (i % cb_v_param == 0 && j % cb_h_param == 0)
-                    yuv[cbPos][i % ROW][j % COL] = cb;
+                    yuv[cbPos][i / cb_v_param][j / cb_h_param] = cb;
                 if (i % cr_v_param == 0 && j % cr_h_param == 0)
-                    yuv[crPos][i % ROW][j % COL] = cr;
+                    yuv[crPos][i / cr_v_param][j / cr_h_param] = cr;
+                // cout<<dec<<"("<<(int)y<<","<<(int)cb<<","<<(int)cr<<")"<<" ";
             }
+            // cout<<endl;
         }
+        // cout<<endl;
         int pos = 0;
         for (int i = 0; i < 3; i++) {
             int huffmanID = i == 0 ? 0 : 1;
             for (int j = 0; j < YUV[i]; j++) {
-                // for(int k=0;k<)
                 DCT(yuv[pos]);
                 Quality(yuv[pos], i >= YUV[0] ? 2 : 1);
                 double *temp = ZigZag(yuv[pos++]);
                 int zeroCount=0;
-                for(int k=0;k<64;k++){
-                    temp[k] = round(temp[k]);
-                    if (k == 0) // 下面进行差分编码
-                        temp[0] -= preDCValue[i];
-                    while (temp[k] == 0 && k != 0) {
+                int endPos=63;
+                temp[0] -= preDCValue[i];// 进行差分编码
+                while(endPos>0&&temp[endPos]==0) endPos--;
+                for(int k=0;k<=endPos;k++){
+                    while(k<=endPos&&temp[k]==0&&k!=0){
                         zeroCount++;
                         k++;
                     }
                     int len = getBitLength((int)abs(temp[k]));
                     if (temp[k] < 0){
                         temp[k] = pow(2, len) + temp[k] - 1;
-                        // len = getBitLength((int)abs(temp[k]));
                     }
-                    if(k==0) writeBit(file, temp[k], en_dc_huffman[huffmanID].table[len]);
-                    else {
-                        if(zeroCount>=16&&bitCurPos!=0){
-                            writeByte(file, (uint8_t)curBitValue);
-                            if (curBitValue == 0xFF)
-                                writeByte(file, (uint8_t)0);
-                            bitCurPos = curBitValue = 0;
-                        }
+                    if (k == 0) writeBit(file, len, temp[k], en_dc_huffman[huffmanID].table[len]);
+                    else
+                    {
                         while(zeroCount>=16){
-                            writeByte(file, (uint8_t)0xf0);
-                            zeroCount%=16;
+                            writeBitToFile(file,en_ac_huffman[huffmanID].table[0xf0].second,
+                                                en_ac_huffman[huffmanID].table[0xf0].first);
+                            zeroCount-=16;
                         }
-                        writeBit(file, temp[k],
-                                 en_ac_huffman[huffmanID]
-                                     .table[(zeroCount << 4) + len]);
+                        writeBit(file, len, temp[k], en_ac_huffman[huffmanID].table[(zeroCount << 4) | len]);
                         zeroCount = 0;
                     }
                 }
-                if (bitCurPos != 0){
-                    writeByte(file, (uint8_t)curBitValue);
-                    if (curBitValue == 0xFF)
-                        writeByte(file, (uint8_t)0);
-                    if (zeroCount != 0) writeByte(file, (uint8_t)0x00);
-                }
-                if (nSize % DRI == 0) {
-                    preDCValue[0] = preDCValue[1] = preDCValue[2] = 0;
-                    writeTwoByte(file, (uint16_t)((FLAG << 8) + DriFLAG++));
-                    if (DriFLAG > 0xD7)
-                        DriFLAG = 0xD0;
-                }
-                bitCurPos = curBitValue = 0;
+                if(endPos!=63) writeBitToFile(file, en_ac_huffman[huffmanID].table[0x00].second,
+                                                    en_ac_huffman[huffmanID].table[0x00].first);
             }
         }
+        if (bitCurPos != 0){
+            writeByte(file, (uint8_t)curBitValue);
+        }
+        bitCurPos = curBitValue = 0;
+        if ((nSize+1) % DRI == 0) {
+            preDCValue[0] = preDCValue[1] = preDCValue[2] = 0;
+            writeTwoByte(file, (uint16_t)((FLAG << 8) + DriFLAG++));
+            if (DriFLAG > 0xD7)
+                DriFLAG = 0xD0;
+        }
+        // cout<<endl;
         FREE_LP_3(yuv, YUV[0] + YUV[1] + YUV[2], ROW)
         n--;
         nSize++;
@@ -859,6 +890,9 @@ void JPEGData::Quality(double** originMatrix,int qualityID){
                                       : CQualityTable[i * ROW + COL]));
         }
     }
+    // for(int i=0;i<64;i++){
+    //     originMatrix[i]=round(originMatrix[i]/(qualityID == 1 ? YQualityTable[i]:CQualityTable[i]));
+    // }
 }
 
 void JPEGData::PAndNCorrect(double** originMatrix){
