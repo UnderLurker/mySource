@@ -21,6 +21,7 @@ NAME_SPACE_START(myUtil)
 #define HUFFMAN_DECODE_DEQUE_CACHE 64//单位：位
 // #define _DEBUG_
 // #define _DEBUGOUT_
+// #define _WRITE_DEBUG_
 
 // //用于做dct逆变换
 // #define _A_ cos(M_PI / 4) / 2
@@ -40,7 +41,7 @@ NAME_SPACE_START(myUtil)
 // 	{_F_, -_C_, _C_, -_F_, -_F_, _C_, -_C_, _F_},
 // 	{_G_, -_E_, _D_, -_B_, _B_, -_D_, _E_, -_G_}};
 
-static const uint8_t YQualityTable[64] = {
+static uint8_t YQualityTable[64] = {
     16, 11, 10, 16, 24,  40,  51,  61,  
 	12, 12, 14, 19, 26,  58,  60,  55,
     14, 13, 16, 24, 40,  57,  69,  56,  
@@ -50,7 +51,7 @@ static const uint8_t YQualityTable[64] = {
     49, 64, 78, 87, 103, 121, 120, 101, 
 	72, 92, 95, 98, 112, 100, 103, 99};
 
-static const uint8_t CQualityTable[64]={
+static uint8_t CQualityTable[64]={
 	17, 18, 24, 47, 99, 99, 99, 99,
 	18, 21, 26, 66, 99, 99, 99, 99,
 	24, 26, 56, 99, 99, 99, 99, 99,
@@ -134,22 +135,14 @@ static const uint8_t val_ac_chrominance[] = {
 };
 
 static const int Zig[64]={
-	/*0, 1, 8, 16, 9, 2, 3, 10,
+	0, 1, 8, 16, 9, 2, 3, 10,
 	17, 24, 32, 25, 18, 11, 4, 5,
 	12, 19, 26, 33, 40, 48, 41, 34,
 	27, 20, 13, 6, 7, 14, 21, 28,
 	35, 42, 49, 56, 57, 50, 43, 36,
 	29, 22, 15, 23, 30, 37, 44, 51,
 	58, 59, 52, 45, 38, 31, 39, 46,
-	53, 60, 61, 54, 47, 55, 62, 63*/
-	0, 1, 5, 6,14,15,27,28,
-	2, 4, 7,13,16,26,29,42,
-	3, 8,12,17,25,30,41,43,
-	9,11,18,24,31,40,44,53,
-	10,19,23,32,39,45,52,54,
-	20,22,33,38,46,51,55,60,
-	21,34,37,47,50,56,59,61,
-	35,36,48,49,57,58,62,63 
+	53, 60, 61, 54, 47, 55, 62, 63
 };
 
 static const uint8_t APP[18]={
@@ -285,7 +278,7 @@ public:
 	//解析图片
 	bool readJPEG(const char* filePath);
 	//生成图片,采样因子h v
-	bool writeJPEG(const char* filePath, int samp_factor[3][2]);
+	bool writeJPEG(const char* filePath, int samp_factor[3][2], int quality_scale);
 
 	int getWidth() const {return width;}
 	int getHeight() const {return height;}
@@ -302,7 +295,7 @@ protected:
 	bool readData(fstream& file);
 	bool huffmanDecode(fstream& file);
 	void deQuality(double** originMatrix,int qualityID);
-	void Quality(double** originMatrix,int qualityID);
+	void Quality(double* originMatrix,int qualityID);
 	void PAndNCorrect(double** originMatrix);//隔行正负纠正
 
 	RGB** YCbCrToRGB(const int* YUV);
@@ -314,6 +307,8 @@ protected:
 	uint16_t findHuffmanCodeByBit(fstream& file,int& length,int& pos,string& deque,int curValue,int& curValLen);
 	void createDCEnHuffman();
 	void createACEnHuffman();
+private:
+	void initQualityTable(int quality_scale);
 };
 
 #define GAUSSIAN
