@@ -731,6 +731,7 @@ void JPEGData::RGBToYCbCr(Matrix<RGB> _rgb, fstream& file){
             }
             int row = mcu_y * mcu_height,
                 col = mcu_x * mcu_width;
+            // cout<<dec<<"("<<row<<","<<col<<") ";
             for (int i = 0; i < mcu_height; i++) {
                 for (int j = 0; j < mcu_width; j++) {
                     RGB t = _rgb.getValue(row + i, col + j); // 得到的是一整个mcu，但是要把它分成多个8*8矩阵
@@ -788,11 +789,12 @@ void JPEGData::RGBToYCbCr(Matrix<RGB> _rgb, fstream& file){
                         writeBit(file, lenAC, temp[k], en_ac_huffman[huffmanID].table[(zeroCount << 4) | lenAC]);
                         zeroCount = 0;
                     }
-                    if(endPos!=64) writeBitToFile(file, en_ac_huffman[huffmanID].table[0x00].second, en_ac_huffman[huffmanID].table[0x00].first);
+                    if(endPos!=63) writeBitToFile(file, en_ac_huffman[huffmanID].table[0x00].second, en_ac_huffman[huffmanID].table[0x00].first);
                 }
             }
             FREE_LP_3(yuv, YUV[0] + YUV[1] + YUV[2], ROW)
         }
+        // cout<<endl;
         if (bitCurPos != 0) writeByte(file, (uint8_t)curBitValue);
         bitCurPos = curBitValue = 0;
         preDCValue[0] = preDCValue[1] = preDCValue[2] = 0;
