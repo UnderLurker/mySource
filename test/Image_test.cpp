@@ -21,7 +21,7 @@ void print(double** input,int n){
 }
 
 int main(){
-	string str="../img/Image/3.jpg";
+	string str="../img/Image/2.jpg";
 	JPEGData data;
 	clock_t startTime=clock();
 	data.readJPEG(str.c_str());
@@ -30,7 +30,7 @@ int main(){
 		{1,1},
 		{1,1}
 	};
-	data.writeJPEG("./8.jpg",input,1);
+	data.writeJPEG("../img/Image/9.jpg",input, 99);
 
 	// BMPData bmp(data.getRGBMatrix(),data.getWidth(),data.getHeight(),false);
 	// bmp.GrayEncoder();

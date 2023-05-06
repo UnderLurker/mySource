@@ -405,6 +405,7 @@ bool JPEGData::readJPEG(const char *filePath){
 }
 
 bool JPEGData::writeJPEG(const char* filePath, int samp_factor[3][2], int quality_scale){
+    auto _rgb = getRGBMatrix();
     max_h_samp_factor=0;
     max_v_samp_factor=0;
     for(int i=0;i<3;i++){
@@ -446,7 +447,7 @@ bool JPEGData::writeJPEG(const char* filePath, int samp_factor[3][2], int qualit
         JPEGHuffmanCode::write(file);   // DHT
         writeTwoByte(file, (uint16_t)((FLAG << 8) + DRI)); // DRI
         writeTwoByte(file, (uint16_t)0x0004);
-        writeTwoByte(file, (uint16_t)mcu_cols);
+        writeTwoByte(file, (uint16_t)ceil(_rgb.col * 1.0 / (ROW * max_h_samp_factor)));
         writeTwoByte(file, (uint16_t)((FLAG<<8)+SOS)); // SOS
         writeTwoByte(file, (uint16_t)0x000C);
         writeByte(file, (uint8_t)0x03);
@@ -463,7 +464,7 @@ bool JPEGData::writeJPEG(const char* filePath, int samp_factor[3][2], int qualit
         writeByte(file, (uint8_t)0);
         writeByte(file, (uint8_t)0x3F);
         writeByte(file, (uint8_t)0);
-        RGBToYCbCr(getRGBMatrix(), file);
+        RGBToYCbCr(_rgb, file);
         writeTwoByte(file, (uint16_t)((FLAG << 8) + (uint8_t)JPEGPType::EOI));  // EOI
     }
     catch(...){
@@ -813,7 +814,7 @@ Matrix<RGB> JPEGData::getRGBMatrix(){
         for(int col=0;col<width;col++){
             int pos=rowOffset+col/(8*max_h_samp_factor);
             if(pos>=rgb.size()) pos=rgb.size()-1;
-            res.setValue(row,col,rgb[pos][row%mcu_height][col%mcu_height]);
+            res.setValue(row,col,rgb[pos][row%mcu_height][col%mcu_width]);
         }
     }
     return res;
@@ -1043,9 +1044,10 @@ void BMPData::readBMP(const string& filePath){
 }
 
 void BMPData::Init(){
-    width+=4-width%4;
-    rowSize = ceil((gray?8:24) * width / 32) * 4;
-    dataSize = rowSize * height + 54 + (gray?4*256:0);
+    width += (4 - width % 4) % 4;
+    rowSize = ceil((gray ? 8 : 24) * width / 32) * 4;
+    // rowSize = max(rowSize, 3 * width+(4-width%4)%4);
+    dataSize = rowSize * height + 54 + (gray ? 4 * 256 : 0);
     bitmap=new uint8_t[dataSize];
     offbits = 54 + (gray ? 4 * 256 : 0);
     SetBitmapInfo(dataSize,height,width);
@@ -1171,13 +1173,11 @@ void BMPData::saveBMP(const char *fileName){
             int idx = height - 1 - i,j=0;
             int offsetDst = idx * rowSize + 54 + (gray?4*256:0); // 54 means the header length
             // fill data
-            for (j = 0; j < width; j++)
-            {
+            for (j = 0; j < width; j++) {
                 bitmap[offsetDst+j]=grayBuf->getValue(i,j);
             }
             // fill 0x0, this part can be ignored
-            for (; j < rowSize; j++)
-            {
+            for (; j < rowSize; j++) {
                 bitmap[offsetDst +j] = 0x0;
             }
         }
@@ -1191,16 +1191,14 @@ void BMPData::saveBMP(const char *fileName){
             int idx = height - 1 - i,j = 0;
             int offsetDst = idx * rowSize + 54 + (gray?4*256:0); // 54 means the header length
             // fill data
-            for (j = 0; j < width*3; j++)
-            {
+            for (j = 0; j < width * 3; j++) {
                 RGB temp=buf.getValue(i,j/3);
                 if(j%3==0&&(flag==0||flag==1)) bitmap[offsetDst + j] = temp.blue;
                 else if(j%3==1&&(flag==0||flag==2)) bitmap[offsetDst + j] = temp.green;
                 else if(j%3==2&&(flag==0||flag==3)) bitmap[offsetDst + j] = temp.red;
             }
             // fill 0x0, this part can be ignored
-            for (; j < rowSize; j++)
-            {
+            for (; j < rowSize; j++) {
                 bitmap[offsetDst +j] = 0x0;
             }
         }
