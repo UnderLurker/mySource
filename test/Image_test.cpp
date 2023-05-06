@@ -30,7 +30,7 @@ int main(){
 		{1,1},
 		{1,1}
 	};
-	data.writeJPEG("./8.jpg",input);
+	data.writeJPEG("./8.jpg",input,1);
 
 	// BMPData bmp(data.getRGBMatrix(),data.getWidth(),data.getHeight(),false);
 	// bmp.GrayEncoder();
