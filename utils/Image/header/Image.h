@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <fstream>
@@ -174,10 +175,44 @@ enum JPEGPType{
 double** UnZigZag(int* originArray);
 
 struct RGB{
-	uint8_t red;
-	uint8_t green;
-	uint8_t blue;
+	uint8_t red{0};
+	uint8_t green{0};
+	uint8_t blue{0};
+	uint8_t alpha{0};
+	RGB(){}
+	RGB(uint8_t r,uint8_t g,uint8_t b,uint8_t a=0):red(r),green(g),blue(b),alpha(a){}
 };
+
+static const RGB RGB_BLACK = RGB(0,0,0);
+static const RGB RGB_WHITE = RGB(255,255,255);
+static const RGB RGB_RED = RGB(255,0,0);
+static const RGB RGB_GREEN = RGB(0,255,0);
+static const RGB RGB_BLUE = RGB(0,0,255);
+
+//放大图像的矩阵，比例大于1且为整数
+template<typename T>
+Matrix<T> AmplifyMatrix(T **rgb, int width, int height, int scale = 1){
+    int resWidth = width * scale, resHeight = height * scale;
+    Matrix<T> res(resHeight, resWidth);
+    for (int i = 0; i < resHeight; i++) {
+        for (int j = 0; j < resWidth; j++) {
+            res.setValue(i, j, rgb[i / scale][j / scale]);
+        }
+    }
+    return res;
+}
+template<typename T>
+Matrix<RGB> AmplifyMatrix(Matrix<T>& rgb, int scale = 1){
+    int resWidth = rgb.col * scale, resHeight = rgb.row * scale;
+    Matrix<T> res(resHeight, resWidth);
+    for (int i = 0; i < resHeight; i++) {
+        for (int j = 0; j < resWidth; j++) {
+            res.setValue(i, j, rgb.getValue(i/scale, j/scale));
+        }
+    }
+    return res;
+}
+
 
 //SOS
 class JPEGScan{
@@ -364,24 +399,49 @@ class BMPData{
 	bool gray{false};					//false 灰度有调色板 true 彩色没有调色板
 	bool forward{true};					//true 为height>0数据表示从图像左下到右上
 	uint8_t* bitmap{nullptr};			//最终的数据
+	bool isEncode{true};				//是否为编码
 	struct Palette{
 		uint8_t rgbBlue;
 		uint8_t rgbGreen;
 		uint8_t rgbRed;
 		uint8_t rgbAlpha;
 	};
+	struct BMPHeader{
+		uint32_t bfHeadSize;
+		uint16_t bfReserved1;
+		uint16_t bfReserved2;
+		uint32_t bfOffBits;
+		uint32_t biHeadSize;
+		uint32_t biWidth;
+		uint32_t biHeight;
+		uint16_t biPlanes;
+		uint16_t biBitCount;
+		uint32_t biCompression;
+		uint32_t biSizeImage;
+		uint32_t biXPelsPerMeter;
+		uint32_t biYPelsPerMeter;
+		uint32_t biClrUsed;
+		uint32_t biClrImportant;
+	};
+	vector<Palette> palettes;			//调色板信息
+	BMPHeader bmpHeader;
 public:
-	BMPData(){}
+	BMPData(){
+		isEncode=false;
+	}
 	//重新编码 gray false灰度 true24位彩色这个gray是决定最后生成的图像是否为灰度图像
 	BMPData(const Matrix<RGB>& _buf,int _width,int _height,bool _gray=false)
 		:buf(_buf),width(_width),height(_height),gray(_gray){
 			Init();
+			isEncode=true;
 			grayBuf=new Matrix<uint8_t>(height,width,0);
 		}
 	~BMPData(){
-		if (bitmap) delete[] bitmap;
-		if (grayBuf) delete grayBuf;
-		if (rgb) delete rgb;
+		if(isEncode){
+			if (bitmap) delete[] bitmap;
+			if (grayBuf) delete grayBuf;
+			if (rgb) delete rgb;
+		}
 	}
 	void readBMP(const string& filePath);
 	//灰度化,对还没有转成位图数据的

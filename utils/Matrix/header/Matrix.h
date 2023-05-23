@@ -58,6 +58,7 @@ public:
     Matrix(const Matrix<T>&);
     T getValue(int row,int col);
     void setValue(int row,int col,const T& value);
+    void setValByArray(Matrix<int>& visit,const vector<T>& lists,int rPos,int cPos);
     Matrix<T>& operator+(const Matrix&);
     Matrix<T>& operator-(const Matrix&);
     Matrix<double> operator*(Matrix<double>& obj);
@@ -170,6 +171,19 @@ template<typename T>
 void Matrix<T>::setValue(int row,int col,const T& value){
     if(row<0||row>this->row||col<0||col>this->col) return;
     matrix[row][col]=value;
+}
+
+//将二维数组中的非0项目设置为lists对应的值，位置对应关系为-1
+template<typename T>
+void Matrix<T>::setValByArray(Matrix<int>& visit,const vector<T>& lists,int rPos,int cPos){
+    for(int r=0;r<visit.row&&r<row;r++){
+        for(int c=0;c<visit.col&&c<col;c++){
+            int pos=visit.getValue(r, c);
+            if(pos<=0) continue;
+            T t=lists[pos-1];
+            this->setValue(r, c, t);
+        }
+    }
 }
 
 template<typename T>

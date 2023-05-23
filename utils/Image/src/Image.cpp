@@ -1,4 +1,5 @@
 #include "Image.h"
+#include "Matrix.h"
 #include "Util.h"
 #include <algorithm>
 #include <cmath>
@@ -7,6 +8,7 @@
 #include <stdint.h>
 #include <bitset>
 #include <stdlib.h>
+#include <string.h>
 #include <utility>
 #include <cstring>
 #include <vector>
@@ -121,28 +123,6 @@ void writeTwoByte(fstream& file,uint16_t val){
     writeByte(file, val>>8);
     writeByte(file, val&0xFF);
 }
-
-
-#define WRITE_BIT_TO_FILE(file, bitCurPos, curValue, len, realData)            \
-  while (len > (8 - bitCurPos)) {                                              \
-    int rightMoveBit = len + bitCurPos - 8;                                    \
-    int bitValue = realData >> rightMoveBit;                                   \
-    curValue |= bitValue;                                                      \
-    writeByte(file, (uint8_t)curValue);                                        \
-    if (curValue == 0xFF)                                                      \
-      writeByte(file, (uint8_t)0);                                             \
-    realData -= bitValue << rightMoveBit;                                      \
-    len -= 8 - bitCurPos;                                                      \
-    curValue = bitCurPos = 0;                                                  \
-  }                                                                            \
-  curValue |= realData << (8 - bitCurPos - len);                               \
-  bitCurPos += len;                                                            \
-  if (bitCurPos >= 8) {                                                        \
-    writeByte(file, (uint8_t)curValue);                                        \
-    if (curValue == 0xFF)                                                      \
-      writeByte(file, (uint8_t)0);                                             \
-    curValue = bitCurPos = 0;                                                  \
-  }
 
 static int bitCurPos = 0;   // 当前字节在哪个bit位
 static int curBitValue = 0;    // 当前值是多少
@@ -1039,8 +1019,43 @@ void JPEGData::initQualityTable(int quality_scale){
 void BMPData::readBMP(const string& filePath){
     fstream file(filePath.c_str(),ios::in|ios::binary);
     if(file.fail()) return;
-    uint8_t head[54]="";
-    for(int i=0;i<54;i++) head[i]=file.get();
+    file.seekg(2,ios::beg);
+    try{
+        //header
+        file.read((char*)&bmpHeader, sizeof(bmpHeader));
+        //palette
+        file.seekg(54,ios::beg);
+        char* p=new char[bmpHeader.bfOffBits-54];
+        file.read(p, bmpHeader.bfOffBits-54);
+        for(int i=0;i<(bmpHeader.bfOffBits-54)/4;i++){
+            Palette pal;
+            pal.rgbRed=p[i*4+0];
+            pal.rgbGreen=p[i*4+1];
+            pal.rgbBlue=p[i*4+2];
+            pal.rgbAlpha=p[i*4+3];
+            palettes.push_back(pal);
+        }
+        //image data
+		rgb=new Matrix<RGB>(bmpHeader.biHeight,bmpHeader.biWidth);
+        file.seekg(bmpHeader.bfOffBits,ios::beg);
+        int readSize=bmpHeader.biBitCount/8;
+        while(!file.eof()){
+            uint32_t t;
+            file.read((char*)&t, readSize);
+            int offset=readSize==4?8:0;
+            RGB info;
+            info.red=(t>>(0+offset))&0xff;
+            info.green=(t>>(8+offset))&0xff;
+            info.blue=(t>>(16+offset))&0xff;
+            
+        }
+    }
+    catch(...){
+        file.close();
+        return;
+    }
+    file.close();
+    return;
 }
 
 void BMPData::Init(){

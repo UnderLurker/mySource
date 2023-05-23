@@ -9,29 +9,33 @@
 #ifndef _LOGGER_
 #define _LOGGER_
 
-NAME_SPACE_START(Log)
+NAME_SPACE_START(myUtil)
+
+#define BUFSIZE 4096//格式化后的字符串最大缓存
+
+enum LogType{
+    INFO=0,
+    DEBUG,
+    WARNING,
+    ERROR
+};
 
 class Logger{
 public:
-    Logger() = delete;
+    Logger() = default;
     Logger(const Logger&) = delete;
-    Logger(std::string logFilePath = "", std::string logFileName = "");
     ~Logger() = default;
-    void LogStart(std::string context);
-    void LogEnd(std::string context);
-    void Debug(std::string context);
-    void Error(std::string context);
-    void Warning(std::string context);
-    void Info(std::string context);
-    bool OpenFile(std::string absolutePath);
-    bool CloseFile();
-    std::stringstream GetCurrentTime();
+    static void Init(const std::string& iniPath);
+    static void LogStart(const wchar_t* fmt, ...);
+    static void LogEnd(const char* fmt, ...);
+    static void Debug(const char* fmt, ...);
+    static void Error(const char* fmt, ...);
+    static void Warning(const char* fmt, ...);
+    static void Info(const char* fmt, ...);
+    static std::stringstream GetCurrentTime();
 public:
-    static std::string m_logFilePath;
-    static std::string m_title;
-private:
-    std::ofstream _file;
-    std::string absPath;
+    static std::string filePath;
+    static LogType LogLevel;
 };
 
 NAME_SPACE_END()

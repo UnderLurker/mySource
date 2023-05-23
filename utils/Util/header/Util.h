@@ -1,5 +1,8 @@
 #pragma once
 #include <cstddef>
+#include <cstdint>
+#include <ios>
+#include <stdint.h>
 #include <time.h>
 #include <vadefs.h>
 #define NAME_SPACE_START(name) namespace name {
@@ -134,6 +137,13 @@ vector<string> Split(const string& source, char ch);
 vector<string> Split(const char* source,size_t len,char ch);
 vector<wstring> Split(const wstring& source, wchar_t ch);
 vector<wstring> Split(const wchar_t* source,size_t len,wchar_t ch);
+
+//github上找的，我写的我也找不出问题在哪里
+class MD5{
+public:
+  static string encodeFile(const string& filePath);
+  static string encodeStr(const string& str);
+};
 
 NAME_SPACE_END()
 

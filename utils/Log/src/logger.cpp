@@ -1,93 +1,25 @@
+#include <stdio.h>
+#include <vadefs.h>
+#define _CRT_SECURE_NO_WARNINGS
 #include "logger.h"
+#include <chrono>
 #include <ctime>
+#include <tchar.h>
 #include <exception>
-#include <fstream>
-#include <ios>
-#include <iterator>
-#include <ostream>
+#include <iomanip>
 #include <sstream>
-#include <streambuf>
-#include <string>
-#include <time.h>
+#include <stdarg.h>
 
-std::string basePath = "C:\\";  //日志路径
-std::string baseTitle = "logger.txt"; //日志文件名
+NAME_SPACE_START(myUtil)
 
-NAME_SPACE_START(Log)
+std::ofstream _file;
 
-std::string Logger::m_logFilePath = basePath;
-std::string Logger::m_title = baseTitle;
+std::string Logger::filePath = "logger.txt";
+LogType Logger::LogLevel = INFO;
 
-Logger::Logger(std::string logFilePath, std::string logFileName){
-    std::string absolutePath = "";
-    if(logFilePath != ""){
-        absolutePath += logFilePath;
-    }
-    else{
-        absolutePath += Logger::m_logFilePath;
-    }
-    if(logFileName != ""){
-        absolutePath += logFileName;
-    }
-    else{
-        absolutePath += Logger::m_title;
-    }
-    this->absPath = absolutePath;
-}
-
-void Logger::LogStart(std::string context = ""){
-    if(!this->OpenFile(this->absPath)) return;
-    std::stringstream ss=GetCurrentTime();
-    _file<<ss.str()
-         <<"------------------------------Log Start"
-         <<" "<<context<<" "
-         <<"------------------------------"<<std::endl;
-    this->CloseFile();
-}
-void Logger::LogEnd(std::string context = ""){
-    if(!this->OpenFile(this->absPath)) return;
-    std::stringstream ss=GetCurrentTime();
-    _file<<ss.str()
-         <<"------------------------------Log End"
-         <<" "<<context<<" "
-         <<"------------------------------"<<std::endl;
-    this->CloseFile();
-}
-void Logger::Debug(std::string context = ""){
-    if(!this->OpenFile(this->absPath)) return;
-    std::stringstream ss=GetCurrentTime();
-    _file<<ss.str()
-         <<"[Log Debug]:"
-         <<context<<std::endl;
-    this->CloseFile();
-}
-void Logger::Error(std::string context = ""){
-    if(!this->OpenFile(this->absPath)) return;
-    std::stringstream ss=GetCurrentTime();
-    _file<<ss.str()
-         <<"[Log Error]:"
-         <<context<<std::endl;
-    this->CloseFile();
-}
-void Logger::Warning(std::string context = ""){
-    if(!this->OpenFile(this->absPath)) return;
-    std::stringstream ss=GetCurrentTime();
-    _file<<ss.str()
-         <<"[Log Warning]:"
-         <<context<<std::endl;
-    this->CloseFile();
-}
-void Logger::Info(std::string context = ""){
-    if(!this->OpenFile(this->absPath)) return;
-    std::stringstream ss=GetCurrentTime();
-    _file<<ss.str()
-         <<"[Log Info]:"
-         <<context<<std::endl;
-    this->CloseFile();
-}
-bool Logger::OpenFile(std::string absolutePath){
+bool OpenFile(std::string filePath){
     try {
-        this->_file.open(absolutePath, std::ios::out | std::ios::app);
+        _file.open(filePath, std::ios::out | std::ios::app);
         if(!_file.is_open()){
             return false;
         }
@@ -97,9 +29,9 @@ bool Logger::OpenFile(std::string absolutePath){
     }
 }
 
-bool Logger::CloseFile(){
+bool CloseFile(){
     try{
-        this->_file.close();
+        _file.close();
         return true;
     }
     catch(std::exception ex){
@@ -107,14 +39,81 @@ bool Logger::CloseFile(){
     }
 }
 
+void Logger::Init(const std::string& iniPath){
+    IniHelper ini(iniPath);
+    Logger::filePath = (string)ini.getIniConfig("logger", "loggerFilePath", "./logger.txt");
+    std::string t = (string)ini.getIniConfig("logger", "loggerLevel", "INFO");
+    LogType iniLevel=INFO;
+    if(t=="DEBUG") iniLevel=DEBUG;
+    else if(t=="WARNING") iniLevel=WARNING;
+    else if(t=="ERROR") iniLevel=ERROR;
+    Logger::LogLevel=iniLevel;
+}
+
+void Logger::LogStart(const wchar_t* fmt, ...){
+    if(!OpenFile(Logger::filePath)) return;
+    wchar_t *buf=new wchar_t[BUFSIZE];
+    va_list args;
+    va_start(args,fmt);
+    _vswprintf(buf, fmt, args);
+    va_end(args);
+    std::stringstream ss=GetCurrentTime();
+    _file<<ss.str()
+         <<"------------------------------Log Start"
+         <<" "<<*buf<<" "
+         <<"------------------------------"<<std::endl;
+    CloseFile();
+}
+void Logger::LogEnd(const char* context, ...){
+    if(!OpenFile(Logger::filePath)) return;
+    std::stringstream ss=GetCurrentTime();
+    _file<<ss.str()
+         <<"------------------------------Log End"
+         <<" "<<context<<" "
+         <<"------------------------------"<<std::endl;
+    CloseFile();
+}
+void Logger::Debug(const char* context, ...){
+    if(DEBUG<Logger::LogLevel) return;
+    if(!OpenFile(Logger::filePath)) return;
+    std::stringstream ss=GetCurrentTime();
+    _file<<ss.str()
+         <<"[Debug]:"
+         <<context<<std::endl;
+    CloseFile();
+}
+void Logger::Error(const char* context, ...){
+    if(ERROR<Logger::LogLevel) return;
+    if(!OpenFile(Logger::filePath)) return;
+    std::stringstream ss=GetCurrentTime();
+    _file<<ss.str()
+         <<"[Error]:"
+         <<context<<std::endl;
+    CloseFile();
+}
+void Logger::Warning(const char* context, ...){
+    if(WARNING<Logger::LogLevel) return;
+    if(!OpenFile(Logger::filePath)) return;
+    std::stringstream ss=GetCurrentTime();
+    _file<<ss.str()
+         <<"[Warning]:"
+         <<context<<std::endl;
+    CloseFile();
+}
+void Logger::Info(const char* context, ...){
+    if(INFO<Logger::LogLevel) return;
+    if(!OpenFile(Logger::filePath)) return;
+    std::stringstream ss=GetCurrentTime();
+    _file<<ss.str()
+         <<"[Info]:"
+         <<context<<std::endl;
+    CloseFile();
+}
+
 std::stringstream Logger::GetCurrentTime(){
+    time_t time=chrono::system_clock::to_time_t(chrono::system_clock::now());
     std::stringstream ss;
-    time_t now=time(nullptr);
-    tm curr_tm;
-    localtime_s(&curr_tm, &now);
-    ss<<curr_tm.tm_year<<"-"<<curr_tm.tm_mon<<"-"<<curr_tm.tm_yday
-      <<" "<<curr_tm.tm_hour<<":"<<curr_tm.tm_min<<":"<<curr_tm.tm_sec
-      <<" ";
+    ss << put_time(localtime(&time), "%Y-%m-%d %H:%M:%S");
     return ss;
 }
 
