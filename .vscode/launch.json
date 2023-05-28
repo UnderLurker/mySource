@@ -8,7 +8,7 @@
             "name": "C++调试",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/MAIN.exe",
+            "program": "${workspaceFolder}/build/ImageTest.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",

@@ -16,8 +16,8 @@ void print(double** input,int n){
 			cout<<input[i][j]<<" ";
 		}
 		cout<<endl;
-	}
-	cout<<endl;
+        }
+        cout<<endl;
 }
 
 int main(){

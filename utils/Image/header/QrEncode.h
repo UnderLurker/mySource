@@ -9,6 +9,13 @@
 
 NAME_SPACE_START(myUtil)
 
+enum ErrorCorrectionLevel{
+    L,  //Recovers 7% of data
+    M,  //Recovers 15% of data
+    Q,  //Recovers 25% of data
+    H   //Recovers 30% of data
+};
+
 class QREncode{
 public:
     QREncode(const string& imageFilePath):_imageFilePath(imageFilePath){}
@@ -18,6 +25,8 @@ public:
     Matrix<RGB> getFileRGB();
 private:
     string _imageFilePath;
+    int sideLength{17};
+    ErrorCorrectionLevel errorCorLevel{ErrorCorrectionLevel::L};
 };
 
 NAME_SPACE_END()
