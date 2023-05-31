@@ -1,6 +1,8 @@
 #pragma once
+#include <stdint.h>
 #include <string>
 #include <vector>
+#include <map>
 #ifndef _QR_ENCODE_
 #define _QR_ENCODE_
 
@@ -9,22 +11,51 @@
 #include "Image.h"
 
 NAME_SPACE_START(myUtil)
+using namespace std;
+
+// Step 1: Choose the Error Correction Level
+// Step 2: Determine the Smallest Version for the Data
+// Step 3: Add the Mode Indicator
+// Step 4: Add the Character Count Indicator
+//  The character count indicator must be placed after the mode indicator.
+// Step 3: Encode Using the Selected Mode
+// Step 4: Break Up into 8-bit Codewords and Add Pad Bytes if Necessary
 
 #define VERSION_COUNT 40
-
+#define MODE_INDICATOR_BIT_LENGTH 4
+//对应第几行
 enum ErrorCorrectionLevel{
     L = 0,  // Recovers 7% of data
     M = 1,  // Recovers 15% of data
     Q = 2,  // Recovers 25% of data
     H = 3   // Recovers 30% of data
 };
-
+//对应第几列
 enum DataType{
     NumMode=0,
     AlpNumMode,
     ByteMode,
     KanjiMode
 };
+// Mode Indicator	Character Count Indicator	Encoded Data
+
+//QRCode Mode Indicator 对应DataType, 此编码长度为MODE_INDICATOR_BIT_LENGTH
+//The encoded data must start with the appropriate mode indicator 
+//that specifies the mode being used for the bits that come after it.
+const static int ModeIndicator[]={
+    //NumMode AlpNumMode ByteMode KanjiMode ECIMode
+    1,2,4,8,7
+};
+
+// 将编码数据的长度编译为对应长度的二进制位，共有三种长度，每种长度中对应4种DataType
+// The character count indicator is a string of bits that 
+// represents the number of characters that are being encoded.
+const static int CharCountIndicator[3][4]{
+    {10,9,8,8},     // version 1~9
+    {12,11,16,10},  // version 10~26
+    {14,13,16,12},  // version 27~40
+};
+
 
 //Character Capacities by Version, Mode, and Error Correction
 const static int CharCapTable[40][4][4]={
@@ -72,22 +103,37 @@ const static int CharCapTable[40][4][4]={
     {{7089,4296,2953,1817},{5596,3391,2331,1435},{3993,2420,1663,1024},{3057,1852,1273,784}},
 };
 
+static map<uint8_t,uint8_t> AlpValMappingTable={
+    {0,0},{1,1},{2,2},{3,3},{4,4},{5,5},{6,6},{7,7},{8,8},{9,9},
+    {'A',10},{'B',11},{'C',12},{'D',13},{'E',14},{'F',15},{'G',16},{'H',17},{'I',18},
+    {'J',19},{'K',20},{'L',21},{'M',22},{'N',23},{'O',24},{'P',25},{'Q',26},{'R',27},
+    {'S',28},{'T',29},{'U',30},{'V',31},{'W',32},{'X',33},{'Y',34},{'Z',35},{' ',36},
+    {'$',37},{'%',38},{'*',39},{'+',40},{'-',41},{'.',42},{'/',43},{':',44}
+};
+
 class QREncode{
 public:
+    QREncode(){}
     QREncode(const string& imageFilePath):_imageFilePath(imageFilePath){}
     ~QREncode(){}
-    Matrix<int> encoding(const string& encodeData);
+    Matrix<RGB> encoding(const string& encodeData);
     string decoding(const string& outputPath);
 
-    Matrix<RGB> getFileRGB();
+    int getSideLen() { return 21 + 4 * (version - 1); }
 protected:
     bool init();
+    string NumModeEncoding();
+    string AlpNumModeEncoding();
+    string ByteModeEncoding();
+    string KanjiModeEncoding();
 private:
     string encodeData;
     string _imageFilePath;
     ErrorCorrectionLevel level{L};
     DataType type{KanjiMode};
-    int version{0};
+    int version{0}; //matrix sideLen: 21+4*(version-1)
+    int charCount{0};
+    Matrix<RGB> *imgData{nullptr};
 };
 
 NAME_SPACE_END()
