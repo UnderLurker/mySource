@@ -139,7 +139,7 @@ const static int GeneratorPolynomialCoff[24][31]={
     {0,41,173,145,152,216,31,179,182,50,48,110,86,239,96,222,125,42,173,226,193,224,130,156,37,251,216,238,40,192,180}
 };
 
-// index = (verion-1)*4+(int)level
+// index = (version-1)*4+(int)level
 // Total Number of Data Codewords for this Version and EC Level
 // EC Codewords Per Block
 // Number of Blocks in Group 1	
@@ -350,7 +350,58 @@ const static int LogTable[256]={
     88,176,125,250,233,207,131,27,54,108,216,173,71,142,1
 };
 
+//List of Versions and Required Remainder Bits
+const static int RemainderBits[40]={
+    0,7,7,7,7,7,0,0,0,0,0,0,0,3,3,3,3,3,3,3,4,4,4,4,4,4,4,3,3,3,3,3,3,3,0,0,0,0,0,0
+};
 
+//Alignment Pattern Locations Table
+const static int AlignmentPatternLocal[][7]={
+    {0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0},
+    {6,18,0,0,0,0,0},
+    {6,22,0,0,0,0,0},
+    {6,26,0,0,0,0,0},
+    {6,30,0,0,0,0,0},
+    {6,34,0,0,0,0,0},
+    {6,22,38,0,0,0,0},
+    {6,24,42,0,0,0,0},
+    {6,26,46,0,0,0,0},
+    {6,28,50,0,0,0,0},
+    {6,30,54,0,0,0,0},
+    {6,32,58,0,0,0,0},
+    {6,34,62,0,0,0,0},
+    {6,26,46,66,0,0,0},
+    {6,26,48,70,0,0,0},
+    {6,26,50,74,0,0,0},
+    {6,30,54,78,0,0,0},
+    {6,30,56,82,0,0,0},
+    {6,30,58,86,0,0,0},
+    {6,34,62,90,0,0,0},
+    {6,28,50,72,94,0,0},
+    {6,26,50,74,98,0,0},
+    {6,30,54,78,102,0,0},
+    {6,28,54,80,106,0,0},
+    {6,32,58,84,110,0,0},
+    {6,30,58,86,114,0,0},
+    {6,34,62,90,118,0,0},
+    {6,26,50,74,98,122,0},
+    {6,30,54,78,102,126,0},
+    {6,26,52,78,104,130,0},
+    {6,30,56,82,108,134,0},
+    {6,34,60,86,112,138,0},
+    {6,30,58,86,114,142,0},
+    {6,34,62,90,118,146,0},
+    {6,30,54,78,102,126,150},
+    {6,24,50,76,102,128,154},
+    {6,28,54,80,106,132,158},
+    {6,32,58,84,110,136,162},
+    {6,26,54,82,110,138,166},
+    {6,30,58,86,114,142,170}
+};
+
+//获取纠错码字
+vector<int> getErrorCurrentWords(int* coefficient,int cofLen,int ErrorCurrentTableIndex);
 
 class QREncode{
 public:
@@ -372,6 +423,8 @@ protected:
     string KanjiModeEncoding();
     void fillEncodeData(string& code);
     void errorCurrentEncoding(string& code);
+    //得到编码的二维矩阵
+    Matrix<int> MatrixCode(const string& code);
 private:
     string encodeData;
     wstring encodeWData;

@@ -1,5 +1,7 @@
 #include "Image.h"
+#include "QrEncode.h"
 #include <cstdint>
+#include <fstream>
 #include <string>
 #define _CRT_SECURE_NO_WARNINGS
 #include <iostream>
@@ -16,35 +18,67 @@ void print(Matrix<RGB> res){
                 <<(int)d.green<<","
                 <<(int)d.blue<<") ";
         }
-        cout<<endl;
+        cout << endl;
     }
+}
+string string_to_hex(const string &str) // transfer string to hex-string
+{
+    string result ="";
+    string tmp;
+    stringstream ss;
+    int n=str.size();
+    for (int i = 0; i < str.size(); i++) {
+        ss << hex << int(str[i]) << endl;
+        ss >> tmp;
+        result += tmp + '\n';
+    }
+    return result;
 }
 int main(){
     // QREncode q("../bin/CMakeFiles/Image_static.dir");
-    // Logger a;
-    // Logger::Init("F:/Visual-Studio-practice/CC++/mySource/config.ini");
+    // Logger::Init("../config.ini");
     // Logger::LogStart(L"aaa%saaa",L"main");
     // Logger::Info("info");
     // Logger::Debug("debug");
     // Logger::Warning("warning");
     // Logger::Error("error");
-    // Logger::LogEnd("main");
-    Matrix<RGB> source(6,6,RGB_WHITE);
-    vector<RGB> rgb;
-    rgb.push_back(RGB_BLACK);
-    rgb.push_back(RGB_BLUE);
-    vector<vector<int>> input{
-        {1,0,1,0,1,0},
-        {0,1,0,1,0,1},
-        {1,0,2,0,1,0},
-        {0,1,0,1,0,1},
-        {1,0,1,0,1,0},
-        {0,1,0,1,0,1}
-    };
-    Matrix<int> in(6,6,input);
-    source.setValByArray(in, rgb, 0, 0);
-    BMPData bmp(AmplifyMatrix<RGB>(source,100),6*100,6*100,false);
+    // Logger::LogEnd("aaa%sbbbb","cccc");
+    
+    // Matrix<RGB> source(6,6,RGB_WHITE);
+    // vector<RGB> rgb;
+    // rgb.push_back(RGB_BLACK);
+    // vector<vector<int>> input{
+    //     {1,0,1,0,1,0},
+    //     {0,1,0,1,0,1},
+    //     {1,0,1,0,1,0},
+    //     {0,1,0,1,0,1},
+    //     {1,0,1,0,1,0},
+    //     {0,1,0,1,0,1}
+    // };
+    // Matrix<int> in(6,6,input);
+    // source.setValByArray(in, rgb, 0, 0);
+    // BMPData bmp(AmplifyMatrix<RGB>(source,100),6*100,6*100,true);
     // bmp.GrayEncoder();
-    bmp.saveBMP("custom.bmp");
+    // bmp.saveBMP("custom.bmp");
+
+    // QREncode code;
+    // auto rgb=code.encoding("abcdefghij");
+    // BMPData bmp(AmplifyMatrix<RGB>(rgb,20),
+    //         code.getSideLen()*20,
+    //         code.getSideLen()*20,true);
+    // bmp.GrayEncoder();
+    // bmp.saveBMP("qrcode.bmp");
+    // cout<<string_to_hex("你好");
+    // fstream file("./1.txt",ios::in|ios::binary);
+    // while(!file.eof()){
+    //     cout<<hex<<file.get()<<endl;
+    // }
+    // cout<<endl;
+    int arr[]={67,85,70,134,87,38,85,194,119,50,6,18,6,103,38};
+    auto res = getErrorCurrentWords(arr, 15, 18);
+    for(int item : res){
+        cout<<item<<" ";
+    }
+    cout<<endl;
     return 0;
 }

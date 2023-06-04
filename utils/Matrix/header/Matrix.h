@@ -55,6 +55,7 @@ public:
     Matrix(int,int,const T&);
     Matrix(int,int,const vector<T>&);
     Matrix(int,int,vector<vector<T>>&);
+    Matrix(int _row, int _col, const T** val, int val_row, int val_col);
     Matrix(const Matrix<T>&);
     T getValue(int row,int col);
     void setValue(int row,int col,const T& value);
@@ -126,6 +127,20 @@ Matrix<T>::Matrix(int _row,int _col,vector<vector<T>>& _val){
     for(int i=0;i<row;i++){
         for(int j=0;j<col;j++){
             matrix[i][j]=_val[i][j];
+        }
+    }
+}
+template<typename T>
+Matrix<T>::Matrix(int _row, int _col, const T** val, int val_row, int val_col){
+    this->col=_col;
+    this->row=_row;
+    matrix=new T*[row];
+    for(int i=0;i<row;i++){
+        matrix[i]=new T[col];
+    }
+    for(int i=0;i<min(row,val_row);i++){
+        for(int j=0;j<min(col,val_col);j++){
+            matrix[i][j]=val[i][j];
         }
     }
 }

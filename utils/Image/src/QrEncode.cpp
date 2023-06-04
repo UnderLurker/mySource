@@ -5,9 +5,34 @@
 #include <algorithm>
 #include <bitset>
 #include <stack>
+#include <cstdlib>
+#include <cstring>
 #include <string>
+#include <vector>
 
 NAME_SPACE_START(myUtil)
+
+//获取纠错码字
+vector<int> getErrorCurrentWords(int* coefficient,int cofLen,int ErrorCurrentTableIndex){
+    int polynomialLen=ErrorCurrentTable[ErrorCurrentTableIndex][1]+1;
+    int* coeff=new int[cofLen + polynomialLen - 1];
+    memset(coeff, 0, sizeof(int)*(cofLen + polynomialLen - 1));
+    memcpy_s(coeff, sizeof(int)*cofLen, coefficient, sizeof(int)*cofLen);
+    for(int i=0;i<cofLen;i++){
+        // 1.Multiply the Generator Polynomial by the Lead Term of the XOR result from the previous step
+        // 2.XOR the result with the result from step 14b
+        int exponent=AntiLogTable[coeff[i]];
+        for(int j=0;j<max(cofLen-i,polynomialLen);j++){
+            int cof=LogTable[(exponent+GeneratorPolynomialCoff[polynomialLen-8][j])%255];
+            if(j>=polynomialLen) cof=0;
+            coeff[i+j] = coeff[i+j] ^ cof;
+        }
+    }
+    vector<int> res(polynomialLen-1,0);
+    for(int i=0;i<polynomialLen-1;i++) res[i]=coeff[cofLen+i];
+    delete [] coeff;
+    return res;
+}
 
 Matrix<RGB> QREncode::encoding(const string &encodeData){
     this->encodeData=encodeData;
@@ -22,8 +47,9 @@ Matrix<RGB> QREncode::encoding(const string &encodeData){
     else if(type==DataType::ByteMode) code.append(ByteModeEncoding());
     else if(type==DataType::KanjiMode) code.append(KanjiModeEncoding());
     fillEncodeData(code);
-
-
+    errorCurrentEncoding(code);
+    Matrix<int> source = MatrixCode(code);
+    imgData->setValByArray(source, vector<RGB>{RGB_BLACK}, 0, 0);
     return imgData==nullptr?Matrix<RGB>():*imgData;
 }
 
@@ -162,7 +188,6 @@ void QREncode::fillEncodeData(string& code){
         if(i%2==0) code.append("11101100");
         else code.append("00010001");
     }
-    errorCurrentEncoding(code);
 }
 
 void QREncode::errorCurrentEncoding(string& code){
@@ -178,35 +203,112 @@ void QREncode::errorCurrentEncoding(string& code){
     int row=(version-1)*4+(int)level,codePos=0;
     int groupCount = ErrorCurrentTable[row][4]==0?1:2;
     int*** group=new int**[groupCount];
-    // first group
-    group[0]=new int*[ErrorCurrentTable[row][2]];
-    for(int blockOfGroup=0;blockOfGroup<ErrorCurrentTable[row][2];blockOfGroup++){
-        group[0][blockOfGroup]=new int[ErrorCurrentTable[row][3]];
-        for(int blocks=0;blocks<ErrorCurrentTable[row][3]&&codePos<=code.size();blocks++){
-            int t=0;
-            for(int k=0;k<8;k++){
-                t<<=1;
-                t+=code[codePos+k]-'0';
+    vector<vector<int>> currentWords;
+    int maxCodeWordsLen=0,maxCurrentCodeWordsLen=0;
+
+    for(int i=0;i<groupCount;i++){
+        int blockCol=2,codeWordsCol=3;
+        if(i==1){
+            blockCol=4;
+            codeWordsCol=5;
+        }
+        group[i]=new int*[ErrorCurrentTable[row][blockCol]];
+        for(int blockOfGroup=0;blockOfGroup<ErrorCurrentTable[row][blockCol];blockOfGroup++){
+            group[i][blockOfGroup]=new int[ErrorCurrentTable[row][codeWordsCol]];
+            maxCodeWordsLen=max(maxCodeWordsLen,ErrorCurrentTable[row][codeWordsCol]);
+            for(int blocks=0;blocks<ErrorCurrentTable[row][codeWordsCol]&&codePos<=code.size();blocks++){
+                int t=0;
+                for(int k=0;k<8;k++){
+                    t<<=1;
+                    t+=code[codePos+k]-'0';
+                }
+                group[i][blockOfGroup][blocks]=t;
+                codePos+=8;
             }
-            group[0][blockOfGroup][blocks]=t;
-            codePos+=8;
+            vector<int> CurrentCodeWords = getErrorCurrentWords(group[i][blockOfGroup], ErrorCurrentTable[row][codeWordsCol],row);
+            currentWords.push_back(CurrentCodeWords);
+            maxCurrentCodeWordsLen=max(maxCurrentCodeWordsLen,(int)CurrentCodeWords.size());
         }
     }
-    // second group
-    if(groupCount==1) return;
-    group[1]=new int*[ErrorCurrentTable[row][4]];
-    for(int blockOfGroup=0;blockOfGroup<ErrorCurrentTable[row][4];blockOfGroup++){
-        group[1][blockOfGroup]=new int[ErrorCurrentTable[row][3]];
-        for(int blocks=0;blocks<ErrorCurrentTable[row][5]&&codePos<=code.size();blocks++){
-            int t=0;
-            for(int k=0;k<8;k++){
-                t<<=1;
-                t+=code[codePos+k]-'0';
+    //Structure Final Message
+    code = "";
+    //Interleave the Blocks
+    for(int i=0;i<maxCodeWordsLen;i++){
+        for(int j=0;j<groupCount;j++){
+            int blockCol=2,codeWordsCol=3;
+            if(j==1){
+                blockCol=4;
+                codeWordsCol=5;
             }
-            group[1][blockOfGroup][blocks]=t;
-            codePos+=8;
+            for(int k=0;k<ErrorCurrentTable[row][blockCol];k++){
+                int dataLen=ErrorCurrentTable[row][codeWordsCol];
+                if(i>=dataLen) continue;
+                code.append(bitset<8>(group[j][k][i]).to_string());
+            }
         }
     }
+    //Interleave the Error Correction Codewords
+    for(int i=0;i<maxCurrentCodeWordsLen;i++){
+        for(int j=0;j<currentWords.size();j++){
+            if(i>=currentWords[i].size()) continue;
+            code.append(bitset<8>(currentWords[j][i]).to_string());
+        }
+    }
+    //Add Remainder Bits
+    code.append(string(RemainderBits[version-1],'0'));
+}
+
+vector<vector<int>> FinderPatterns={
+    {1,1,1,1,1,1,1},
+    {1,0,0,0,0,0,1},
+    {1,0,1,1,1,0,1},
+    {1,0,1,1,1,0,1},
+    {1,0,1,1,1,0,1},
+    {1,0,0,0,0,0,1},
+    {1,1,1,1,1,1,1}
+};
+
+vector<vector<int>> AlignmentPatterns={
+    {1,1,1,1,1},
+    {1,0,0,0,1},
+    {1,0,1,0,1},
+    {1,0,0,0,1},
+    {1,1,1,1,1}
+};
+
+Matrix<int> QREncode::MatrixCode(const string& code){
+    // Step 5: Add the Dark Module and Reserved Areas
+    // Step 6: Place the Data Bits
+    Matrix<int> res(getSideLen(),getSideLen(),0);
+    Matrix<int> finder(7,7,FinderPatterns),
+                alignment(5,5,AlignmentPatterns);
+    vector<int> val{1};
+
+    // Step 1: Add the Finder Patterns
+    res.setValByArray(finder, val, 0, 0);
+    res.setValByArray(finder, val, 0, getSideLen()-7-1);
+    res.setValByArray(finder, val, getSideLen()-7-1, 0);
+
+    // Step 2: Add the Separators
+    // 因为我们的底色就是白色，所以省略
+
+    // Step 3: Add the Alignment Patterns
+    for(int i=0;i<7;i++){
+        for(int j=0;j<7;j++){
+            if(AlignmentPatterns[version][i]==0||
+                AlignmentPatterns[version][j]==0) continue;
+            int row=AlignmentPatterns[version][i],
+                col=AlignmentPatterns[version][j];
+            //判断是否与finder重合
+            if((row-2<8&&col-2<8)||
+                (row-2<8&&col+2>getSideLen()-9)||
+                (row+2>getSideLen()-9&&col-2<8)) continue;
+            res.setValByArray(alignment, val, row-2, col-2);
+        }
+    }
+    // Step 4: Add the Timing Patterns
+
+    return res;
 }
 
 NAME_SPACE_END()
