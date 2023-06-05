@@ -12,6 +12,8 @@
 
 NAME_SPACE_START(myUtil)
 
+#define BACKGROUND_COLOR RGB_WHITE
+
 //获取纠错码字
 vector<int> getErrorCurrentWords(int* coefficient,int cofLen,int ErrorCurrentTableIndex){
     int polynomialLen=ErrorCurrentTable[ErrorCurrentTableIndex][1]+1;
@@ -37,7 +39,7 @@ vector<int> getErrorCurrentWords(int* coefficient,int cofLen,int ErrorCurrentTab
 Matrix<RGB> QREncode::encoding(const string &encodeData){
     this->encodeData=encodeData;
     if(!init()) return Matrix<RGB>();
-    imgData=new Matrix<RGB>(getSideLen(),getSideLen(),RGB_WHITE);
+    imgData=new Matrix<RGB>(getSideLen(),getSideLen(),BACKGROUND_COLOR);
 
     // char encoding
     string code=bitset<MODE_INDICATOR_BIT_LENGTH>(ModeIndicator[(int)type]).to_string();
@@ -277,12 +279,10 @@ vector<vector<int>> AlignmentPatterns={
 };
 
 Matrix<int> QREncode::MatrixCode(const string& code){
-    // Step 5: Add the Dark Module and Reserved Areas
-    // Step 6: Place the Data Bits
-    Matrix<int> res(getSideLen(),getSideLen(),0);
+    Matrix<int> res(getSideLen(),getSideLen(),-1);
     Matrix<int> finder(7,7,FinderPatterns),
                 alignment(5,5,AlignmentPatterns);
-    vector<int> val{1};
+    vector<int> val{1};//默认是白色，1为黑色
 
     // Step 1: Add the Finder Patterns
     res.setValByArray(finder, val, 0, 0);
@@ -290,10 +290,20 @@ Matrix<int> QREncode::MatrixCode(const string& code){
     res.setValByArray(finder, val, getSideLen()-7-1, 0);
 
     // Step 2: Add the Separators
-    // 因为我们的底色就是白色，所以省略
+    for(int i=0;i<8;i++){
+        //左上
+        res.setValue(7, i, 0);
+        res.setValue(i, 7, 0);
+        //左下
+        res.setValue(getSideLen()-1-i, 7, 0);
+        res.setValue(getSideLen()-8, i, 0);
+        //右上
+        res.setValue(7, getSideLen()-1-i, 0);
+        res.setValue(i, getSideLen()-8, 0);
+    }
 
     // Step 3: Add the Alignment Patterns
-    for(int i=0;i<7;i++){
+    for(int i=0;i<7&&version!=1;i++){
         for(int j=0;j<7;j++){
             if(AlignmentPatterns[version][i]==0||
                 AlignmentPatterns[version][j]==0) continue;
@@ -306,7 +316,56 @@ Matrix<int> QREncode::MatrixCode(const string& code){
             res.setValByArray(alignment, val, row-2, col-2);
         }
     }
+    
     // Step 4: Add the Timing Patterns
+    for(int i=8;i<getSideLen()-8;i+=2){
+        if(res.getValue(i, 6)==-1) res.setValue(i, 6, 1);
+        if(res.getValue(6, i)==-1) res.setValue(6, i, 1);
+        
+        if(res.getValue(i+1, 6)==-1) res.setValue(i+1, 6, 0);
+        if(res.getValue(6, i+1)==-1) res.setValue(6, i+1, 0);
+    }
+
+    // Step 5: Add the Dark Module and Reserved Areas
+    // Dark Module
+    res.setValue(4*version+9, 8, 1);
+    // Reserve the Format Information Area  set value 2
+    for(int i=0;i<9;i++){
+        //左上
+        if(res.getValue(8, i)==-1) res.setValue(8, i, 2);
+        if(res.getValue(i, 8)==-1) res.setValue(i, 8, 2);
+        //左下
+        if(res.getValue(getSideLen()-1-i, 8)==-1&&i<7) res.setValue(getSideLen()-1-i, 8, 2);
+        //右上
+        if(res.getValue(8, getSideLen()-1-i)==-1&&i<8) res.setValue(8, getSideLen()-1-i, 2);
+    }
+    // QR codes versions 7 and larger must contain two areas where version information bits are placed. Each of area 6×3. set value 3
+    for(int i=0;i<3&&version>=7;i++){
+        for(int j=0;j<6;j++){
+            res.setValue(getSideLen()-9-i, j, 3);
+            res.setValue(j, getSideLen()-9-i, 3);
+        }
+    }
+
+    // Step 6: Place the Data Bits
+    int r=getSideLen()-1,c=getSideLen()-1,codePos=0;
+    bool upWard=true,right=true;
+    while(r>=0&&r<getSideLen()&&c>=0&&c<getSideLen()&&codePos<code.size()){
+        if(res.getValue(r, c)==-1){
+            res.setValue(r, c, code[codePos++]);
+        }
+        if(upWard){
+            if(right) {right=!right; c-=1;}
+            else {right=!right; c+=1; r-=1;}
+        }
+        else{
+            if(c==6) {c=5; right=true;}
+            if(right) {right=!right; c-=1;}
+            else {right=!right; c+=1; r+=1;}
+        }
+        if(r<0){r=0;upWard=!upWard;}
+        else if(r>=getSideLen()) {r=getSideLen()-1;upWard=!upWard;}
+    }
 
     return res;
 }
