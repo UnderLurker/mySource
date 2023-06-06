@@ -4,6 +4,7 @@
 #include "Util.h"
 #include <algorithm>
 #include <bitset>
+#include <list>
 #include <stack>
 #include <cstdlib>
 #include <cstring>
@@ -13,6 +14,191 @@
 NAME_SPACE_START(myUtil)
 
 #define BACKGROUND_COLOR RGB_WHITE
+
+
+vector<function<bool(int,int)>> MaskFunctions={
+    [](int row,int column)->int{
+        return (row+column)%2==0;
+    },
+    [](int row,int column)->int{
+        return row%2==0;
+    },
+    [](int row,int column)->int{
+        return column%3==0;
+    },
+    [](int row,int column)->int{
+        return (row+column)%3==0;
+    },
+    [](int row,int column)->int{
+        return ((int)floor(row/2.0)+(int)floor(column/3.0))%2==0;
+    },
+    [](int row,int column)->int{
+        return ((row*column)%2+(row*column)%3)==0;
+    },
+    [](int row,int column)->int{
+        return ((row*column)%2+(row*column)%3)%2==0;
+    },
+    [](int row,int column)->int{
+        return ((row+column)%2+(row*column)%3)%2==0;
+    }
+};
+
+vector<Matrix<int>> getMaskList(const Matrix<int>& data){
+    vector<Matrix<int>> res;
+    res.resize(8);
+    for(int i=0;i<MaskFunctions.size();i++){
+        Matrix<int> temp(data);
+        for(int r=0;r<temp.row;r++){
+            for(int c=0;c<temp.col;c++){
+                if((temp.getValue(r, c)==5||temp.getValue(r, c)==6)&&MaskFunctions[i](r,c)){
+                    temp.setValue(r, c, 6-temp.getValue(r, c));
+                }
+            }
+        }
+        res[i]=temp;
+    }
+    return res;
+}
+
+vector<int> Next(string pattern){
+	vector<int> next;
+	next.push_back(0);	//next容器的首位必定为0
+	for (int i = 1, j = 0; i < pattern.length(); i++)
+	{
+		while (j > 0 && pattern[j] != pattern[i])
+		{ 
+			j = next[j - 1];
+		}
+		if (pattern[i] == pattern[j])
+		{
+			j++; 
+		}
+		next.push_back(j);
+	}
+	return next;
+}
+
+int KMPCount(const string& target,const string& pattern){
+    int res=0;
+    auto next=Next(pattern);
+    for (int i = 0, j = 0; i < target.length(); i++)
+	{
+		while (j > 0 && target[i] != pattern[j])
+		{
+			j = next[j - 1];
+		}
+		if (target[i] == pattern[j])
+		{
+			j++;
+		}
+		if (j == pattern.length())
+		{
+            res++;
+			j = next[j - 1];
+		}
+	}
+    return res;
+}
+
+// The first rule gives the QR code a penalty for each group of five or more same-colored modules in a row (or column).
+int Rule1(const Matrix<int>& data){
+    // row
+    int sum=0;
+    for(int i=0;i<data.row;i++){
+        int ContinueCount=1;
+        for(int j=1;j<data.col;j++){
+            if(data.getValue(i, j)==data.getValue(i, j-1)) ContinueCount++;
+            else if(ContinueCount>=5){
+                sum+=ContinueCount-3;
+                ContinueCount=1;
+            }
+            else{
+                ContinueCount=1;
+            }
+        }
+        if(ContinueCount>=5) sum+=ContinueCount-3;
+    }
+    // col
+    for(int i=0;i<data.col;i++){
+        int ContinueCount=1;
+        for(int j=1;j<data.row;j++){
+            if(data.getValue(j, i)==data.getValue(j-1, i)) ContinueCount++;
+            else if(ContinueCount>=5){
+                sum+=ContinueCount-3;
+                ContinueCount=1;
+            }
+            else{
+                ContinueCount=1;
+            }
+        }
+        if(ContinueCount>=5) sum+=ContinueCount-3;
+    }
+    return sum;
+}
+
+// The second rule gives the QR code a penalty for each 2x2 area of same-colored modules in the matrix.
+int Rule2(const Matrix<int>& data){
+    int sum=0;
+    for(int r=0;r<data.row-1;r++){
+        for(int c=0;c<data.col-1;c++){
+            if(data.getValue(r, c)==data.getValue(r, c+1)&&
+               data.getValue(r, c+1)==data.getValue(r+1, c)&&
+               data.getValue(r+1, c)==data.getValue(r+1, c+1)){
+                sum+=3;
+            }
+        }
+    }
+    return sum;
+}
+
+// The third rule gives the QR code a large penalty if there are patterns that look similar to the finder patterns.
+int Rule3(const Matrix<int>& data){
+    int sum=0;
+    //row
+    for(int r=0;r<data.row;r++){
+        string temp="";
+        for(int c=0;c<data.col;c++){
+            temp.append(string(1,'0'+data.getValue(r, c)));
+        }
+        sum+=40*KMPCount(temp, "10111010000");
+        sum+=40*KMPCount(temp, "00001011101");
+    }
+    //col
+    for(int c=0;c<data.col;c++){
+        string temp="";
+        for(int r=0;r<data.row;r++){
+            temp.append(string(1,'0'+data.getValue(r, c)));
+        }
+        sum+=40*KMPCount(temp, "10111010000");
+        sum+=40*KMPCount(temp, "00001011101");
+    }
+    return sum;
+}
+
+// The fourth rule gives the QR code a penalty if more than half of the modules are dark or light, with a larger penalty for a larger difference.
+int Rule4(const Matrix<int>& data){
+    int sum=0,darkCount=0,total=data.row*data.col;
+    for(int r=0;r<data.row;r++){
+        for(int c=0;c<data.col;c++){
+            if(data.getValue(r, c)==1) darkCount++;
+        }
+    }
+    int number=ceil((1.0*darkCount)/total);
+    int bigTemp=number%10>5?(10-number%10):(5-number%10);
+    int smallTemp=number%10>5?(number%10-5):number%10;
+    int big=abs(number+bigTemp-50)/5,small=abs(number-smallTemp-50)/5;
+    sum=min(big,small)*10;
+    return sum;
+}
+
+int Evaluate(const Matrix<int>& data){
+    int evaluateValue=0,sum=0;
+    sum+=Rule1(data);
+    sum+=Rule2(data);
+    sum+=Rule3(data);
+    sum+=Rule4(data);
+    return evaluateValue;
+}
 
 //获取纠错码字
 vector<int> getErrorCurrentWords(int* coefficient,int cofLen,int ErrorCurrentTableIndex){
@@ -283,6 +469,7 @@ Matrix<int> QREncode::MatrixCode(const string& code){
     Matrix<int> finder(7,7,FinderPatterns),
                 alignment(5,5,AlignmentPatterns);
     vector<int> val{1};//默认是白色，1为黑色
+    int ReserveArea=1;
 
     // Step 1: Add the Finder Patterns
     res.setValByArray(finder, val, 0, 0);
@@ -352,7 +539,7 @@ Matrix<int> QREncode::MatrixCode(const string& code){
     bool upWard=true,right=true;
     while(r>=0&&r<getSideLen()&&c>=0&&c<getSideLen()&&codePos<code.size()){
         if(res.getValue(r, c)==-1){
-            res.setValue(r, c, code[codePos++]);
+            res.setValue(r, c, code[codePos++]-'0'+5);//此处赋值将数据值赋值为5和6，目的是使后面mask方便
         }
         if(upWard){
             if(right) {right=!right; c-=1;}
@@ -364,10 +551,54 @@ Matrix<int> QREncode::MatrixCode(const string& code){
             else {right=!right; c+=1; r+=1;}
         }
         if(r<0){r=0;upWard=!upWard;}
-        else if(r>=getSideLen()) {r=getSideLen()-1;upWard=!upWard;}
+        if(r>=getSideLen()) {r=getSideLen()-1;upWard=!upWard;}
     }
 
+    // mask evaluate
+    auto dataMatrix=getMaskList(res);
+    int minScore=INT_MAX, minScorePos=0;
+    for(int i=0;i<dataMatrix.size();i++){
+        int t=Evaluate(dataMatrix[i]);
+        if(t<minScore){
+            minScore=t;
+            minScorePos=i;
+            maskIndex=i;
+        }
+    }
+    res=dataMatrix[minScorePos];
+
     return res;
+}
+
+void QREncode::FormatAndVersionInfo(Matrix<int>& matrix){
+    // Format String
+    int LevelBitSequences[]={1,0,3,2};
+    int cur=LevelBitSequences[(int)level],curMaskIndex=maskIndex;
+    int code[15]={0};
+    int polynomial[11]={1,0,1,0,0,1,1,0,1,1,1};
+    int maskPattern[]={1,0,1,0,1,0,0,0,0,0,1,0,0,1,0};
+    for(int i=1;i>=0;i--){
+        code[i]=cur%2;
+        cur>>=1;
+    }
+    for(int i=4;i>1;i--){
+        code[i]=curMaskIndex%2;
+        curMaskIndex>>=1;
+    }
+
+    int pos=0;
+    while(pos<5){
+        while(code[pos]==0) pos++;
+        for(int i=pos;i<15;i++){
+            int temp=polynomial[i-pos];
+            if(i-pos>10) temp=0;
+            code[i]=code[i]^temp;
+        }
+    }
+    for(int i=0;i<15;i++){
+        code[i]=code[i]^maskPattern[i];
+    }
+    // Version Information
 }
 
 NAME_SPACE_END()
