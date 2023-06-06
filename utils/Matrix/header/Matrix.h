@@ -196,7 +196,7 @@ void Matrix<T>::setValByArray(Matrix<int>& visit,const vector<T>& lists,int rPos
             int pos=visit.getValue(r, c);
             if(pos<=0) continue;
             T t=lists[pos-1];
-            this->setValue(r, c, t);
+            this->setValue(r+rPos, c+cPos, t);
         }
     }
 }

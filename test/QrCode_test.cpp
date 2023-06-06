@@ -83,34 +83,10 @@ int main(){
     // }
     // cout<<endl;
 
-    int LevelBitSequences[]={1,0,3,2};
-    int cur=1,curMaskIndex=4;
-    int code[15]={0};
-    int polynomial[11]={1,0,1,0,0,1,1,0,1,1,1};
-    int maskPattern[]={1,0,1,0,1,0,0,0,0,0,1,0,0,1,0};
-    for(int i=1;i>=0;i--){
-        code[i]=cur%2;
-        cur>>=1;
-    }
-    for(int i=4;i>1;i--){
-        code[i]=curMaskIndex%2;
-        curMaskIndex>>=1;
-    }
-
-    int pos=0;
-    while(pos<5){
-        while(code[pos]==0) pos++;
-        for(int i=pos;i<15;i++){
-            int temp=polynomial[i-pos];
-            if(i-pos>10) temp=0;
-            code[i]=code[i]^temp;
-        }
-        
-        for(int i=0;i<15;i++){
-            code[i]=code[i]^maskPattern[i];
-            cout<<code[i];
-        }
-        cout<<endl;
-    }
+    QREncode qr;
+    Matrix<RGB> rgb=qr.encoding("HELLO WORD");
+    BMPData bmp(AmplifyMatrix<RGB>(rgb,4),rgb.col*4,rgb.row*4,true);
+    bmp.GrayEncoder();
+    bmp.saveBMP("qr.bmp");
     return 0;
 }

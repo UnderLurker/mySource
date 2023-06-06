@@ -200,6 +200,49 @@ int Evaluate(const Matrix<int>& data){
     return evaluateValue;
 }
 
+int* getErrorCurrentVersion(ErrorCorrectionLevel level,int maskIndex){
+    
+    int LevelBitSequences[]={1,0,3,2};
+    int cur=LevelBitSequences[(int)level],curMaskIndex=maskIndex;
+    int polynomial[11]={1,0,1,0,0,1,1,0,1,1,1};
+    int maskPattern[]={1,0,1,0,1,0,0,0,0,0,1,0,0,1,0};
+    int *code=new int[15];
+    memset(code, 0, sizeof(int)*15);
+    for(int i=1;i>=0;i--){
+        code[i]=cur%2;
+        cur>>=1;
+    }
+    for(int i=4;i>1;i--){
+        code[i]=curMaskIndex%2;
+        curMaskIndex>>=1;
+    }
+
+    int pos=0;
+    while(pos<5){
+        while(code[pos]==0) pos++;
+        for(int i=pos;i<15;i++){
+            int temp=polynomial[i-pos];
+            if(i-pos>10) temp=0;
+            code[i]=code[i]^temp;
+        }
+        while(code[pos]==0) pos++;
+    }
+    
+    cur=LevelBitSequences[(int)level],curMaskIndex=maskIndex;
+    for(int i=1;i>=0;i--){
+        code[i]=cur%2;
+        cur>>=1;
+    }
+    for(int i=4;i>1;i--){
+        code[i]=curMaskIndex%2;
+        curMaskIndex>>=1;
+    }
+    for(int i=0;i<15;i++){
+        code[i]=code[i]^maskPattern[i];
+    }
+    return code;
+}
+
 //获取纠错码字
 vector<int> getErrorCurrentWords(int* coefficient,int cofLen,int ErrorCurrentTableIndex){
     int polynomialLen=ErrorCurrentTable[ErrorCurrentTableIndex][1]+1;
@@ -448,19 +491,19 @@ void QREncode::errorCurrentEncoding(string& code){
 
 vector<vector<int>> FinderPatterns={
     {1,1,1,1,1,1,1},
-    {1,0,0,0,0,0,1},
-    {1,0,1,1,1,0,1},
-    {1,0,1,1,1,0,1},
-    {1,0,1,1,1,0,1},
-    {1,0,0,0,0,0,1},
+    {1,2,2,2,2,2,1},
+    {1,2,1,1,1,2,1},
+    {1,2,1,1,1,2,1},
+    {1,2,1,1,1,2,1},
+    {1,2,2,2,2,2,1},
     {1,1,1,1,1,1,1}
 };
 
 vector<vector<int>> AlignmentPatterns={
     {1,1,1,1,1},
-    {1,0,0,0,1},
-    {1,0,1,0,1},
-    {1,0,0,0,1},
+    {1,2,2,2,1},
+    {1,2,1,2,1},
+    {1,2,2,2,1},
     {1,1,1,1,1}
 };
 
@@ -468,13 +511,13 @@ Matrix<int> QREncode::MatrixCode(const string& code){
     Matrix<int> res(getSideLen(),getSideLen(),-1);
     Matrix<int> finder(7,7,FinderPatterns),
                 alignment(5,5,AlignmentPatterns);
-    vector<int> val{1};//默认是白色，1为黑色
+    vector<int> val{1,0};//默认是白色，1为黑色
     int ReserveArea=1;
 
     // Step 1: Add the Finder Patterns
     res.setValByArray(finder, val, 0, 0);
-    res.setValByArray(finder, val, 0, getSideLen()-7-1);
-    res.setValByArray(finder, val, getSideLen()-7-1, 0);
+    res.setValByArray(finder, val, 0, getSideLen()-7);
+    res.setValByArray(finder, val, getSideLen()-7, 0);
 
     // Step 2: Add the Separators
     for(int i=0;i<8;i++){
@@ -516,23 +559,26 @@ Matrix<int> QREncode::MatrixCode(const string& code){
     // Step 5: Add the Dark Module and Reserved Areas
     // Dark Module
     res.setValue(4*version+9, 8, 1);
-    // Reserve the Format Information Area  set value 2
-    for(int i=0;i<9;i++){
-        //左上
-        if(res.getValue(8, i)==-1) res.setValue(8, i, 2);
-        if(res.getValue(i, 8)==-1) res.setValue(i, 8, 2);
-        //左下
-        if(res.getValue(getSideLen()-1-i, 8)==-1&&i<7) res.setValue(getSideLen()-1-i, 8, 2);
-        //右上
-        if(res.getValue(8, getSideLen()-1-i)==-1&&i<8) res.setValue(8, getSideLen()-1-i, 2);
-    }
-    // QR codes versions 7 and larger must contain two areas where version information bits are placed. Each of area 6×3. set value 3
-    for(int i=0;i<3&&version>=7;i++){
-        for(int j=0;j<6;j++){
-            res.setValue(getSideLen()-9-i, j, 3);
-            res.setValue(j, getSideLen()-9-i, 3);
-        }
-    }
+    // // Reserve the Format Information Area  set value 2
+    // for(int i=0;i<9;i++){
+    //     //左上
+    //     if(res.getValue(8, i)==-1) res.setValue(8, i, 2);
+    //     if(res.getValue(i, 8)==-1) res.setValue(i, 8, 2);
+    //     //左下
+    //     if(res.getValue(getSideLen()-1-i, 8)==-1&&i<7) res.setValue(getSideLen()-1-i, 8, 2);
+    //     //右上
+    //     if(res.getValue(8, getSideLen()-1-i)==-1&&i<8) res.setValue(8, getSideLen()-1-i, 2);
+    // }
+    // // QR codes versions 7 and larger must contain two areas where version information bits are placed. Each of area 6×3. set value 3
+    // for(int i=0;i<3&&version>=7;i++){
+    //     for(int j=0;j<6;j++){
+    //         res.setValue(getSideLen()-9-i, j, 3);
+    //         res.setValue(j, getSideLen()-9-i, 3);
+    //     }
+    // }
+    //设置保留位
+    FormatAndVersionInfo(res);
+    cout<<res<<endl;
 
     // Step 6: Place the Data Bits
     int r=getSideLen()-1,c=getSideLen()-1,codePos=0;
@@ -572,33 +618,34 @@ Matrix<int> QREncode::MatrixCode(const string& code){
 
 void QREncode::FormatAndVersionInfo(Matrix<int>& matrix){
     // Format String
-    int LevelBitSequences[]={1,0,3,2};
-    int cur=LevelBitSequences[(int)level],curMaskIndex=maskIndex;
-    int code[15]={0};
-    int polynomial[11]={1,0,1,0,0,1,1,0,1,1,1};
-    int maskPattern[]={1,0,1,0,1,0,0,0,0,0,1,0,0,1,0};
-    for(int i=1;i>=0;i--){
-        code[i]=cur%2;
-        cur>>=1;
+    // int *CurrentCode=getErrorCurrentVersion(level, maskIndex);
+    string CurrentCode=FormatInfoList[(int)level*7+maskIndex];
+    for(int i=0;i<7;i++){
+        int t=0;
+        if(i>=6) t=1;
+        matrix.setValue(8, i+t, CurrentCode[i]-'0');
+        // left down
+        matrix.setValue(getSideLen()-1-i, 8, CurrentCode[i]-'0');
     }
-    for(int i=4;i>1;i--){
-        code[i]=curMaskIndex%2;
-        curMaskIndex>>=1;
+    for(int i=0;i<8;i++){
+        // right up
+        matrix.setValue(8, getSideLen()-1-i, CurrentCode[14-i]-'0');
+        int t=0;
+        if(i>=6) t=1;
+        matrix.setValue(i+t, 8, CurrentCode[14-i]-'0');
     }
-
-    int pos=0;
-    while(pos<5){
-        while(code[pos]==0) pos++;
-        for(int i=pos;i<15;i++){
-            int temp=polynomial[i-pos];
-            if(i-pos>10) temp=0;
-            code[i]=code[i]^temp;
+    // delete [] CurrentCode;
+    // Version Information
+    if(version>=7){
+        string CurrentInfo=VersionInfoList[version-7];
+        int pos=0;
+        for(int i=0;i<3;i++){
+            for(int j=0;j<6;j++){
+                matrix.setValue(getSideLen()-11+i, j, CurrentInfo[pos]);
+                matrix.setValue(j, getSideLen()-11+i, CurrentInfo[pos++]);
+            }
         }
     }
-    for(int i=0;i<15;i++){
-        code[i]=code[i]^maskPattern[i];
-    }
-    // Version Information
 }
 
 NAME_SPACE_END()
