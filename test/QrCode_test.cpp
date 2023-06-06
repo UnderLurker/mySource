@@ -2,6 +2,7 @@
 #include "QrEncode.h"
 #include <cstdint>
 #include <fstream>
+#include <list>
 #include <string>
 #define _CRT_SECURE_NO_WARNINGS
 #include <iostream>
@@ -74,11 +75,42 @@ int main(){
     //     cout<<hex<<file.get()<<endl;
     // }
     // cout<<endl;
-    int arr[]={67,85,70,134,87,38,85,194,119,50,6,18,6,103,38};
-    auto res = getErrorCurrentWords(arr, 15, 18);
-    for(int item : res){
-        cout<<item<<" ";
+
+    // int arr[]={0,1,1,0,0,0,0,0,0,0,0,0,0,0,0};
+    // auto res = getErrorCurrentWords(arr, 15, 24);
+    // for(int item : res){
+    //     cout<<item<<" ";
+    // }
+    // cout<<endl;
+
+    int LevelBitSequences[]={1,0,3,2};
+    int cur=1,curMaskIndex=4;
+    int code[15]={0};
+    int polynomial[11]={1,0,1,0,0,1,1,0,1,1,1};
+    int maskPattern[]={1,0,1,0,1,0,0,0,0,0,1,0,0,1,0};
+    for(int i=1;i>=0;i--){
+        code[i]=cur%2;
+        cur>>=1;
     }
-    cout<<endl;
+    for(int i=4;i>1;i--){
+        code[i]=curMaskIndex%2;
+        curMaskIndex>>=1;
+    }
+
+    int pos=0;
+    while(pos<5){
+        while(code[pos]==0) pos++;
+        for(int i=pos;i<15;i++){
+            int temp=polynomial[i-pos];
+            if(i-pos>10) temp=0;
+            code[i]=code[i]^temp;
+        }
+        
+        for(int i=0;i<15;i++){
+            code[i]=code[i]^maskPattern[i];
+            cout<<code[i];
+        }
+        cout<<endl;
+    }
     return 0;
 }
