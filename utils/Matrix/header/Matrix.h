@@ -57,7 +57,7 @@ public:
     Matrix(int,int,vector<vector<T>>&);
     Matrix(int _row, int _col, const T** val, int val_row, int val_col);
     Matrix(const Matrix<T>&);
-    T getValue(int row,int col);
+    T getValue(int row,int col) const;
     void setValue(int row,int col,const T& value);
     void setValByArray(Matrix<int>& visit,const vector<T>& lists,int rPos,int cPos);
     Matrix<T>& operator+(const Matrix&);
@@ -175,7 +175,7 @@ Matrix<T>::Matrix(const Matrix<T>& obj){
 }
 
 template<typename T>
-T Matrix<T>::getValue(int row,int col){
+T Matrix<T>::getValue(int row,int col) const{
     if(row<0||row>=this->row||col<0||col>=this->col){
         return T();
     }
