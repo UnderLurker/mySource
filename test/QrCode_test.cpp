@@ -84,7 +84,7 @@ int main(){
     // cout<<endl;
 
     QREncode qr;
-    Matrix<RGB> rgb=qr.encoding("HELLO WORD");
+    Matrix<RGB> rgb=qr.encoding("HELLO WORLD NI HAO 1HAI1");
     BMPData bmp(AmplifyMatrix<RGB>(rgb,4),rgb.col*4,rgb.row*4,true);
     bmp.GrayEncoder();
     bmp.saveBMP("qr.bmp");
