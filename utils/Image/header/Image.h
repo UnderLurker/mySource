@@ -453,7 +453,7 @@ public:
 						int flag=0);
 	//边缘检测,只对灰度图像
 	void EdgeDetect(double matrix1[3][3],double matrix2[3][3],int row,uint8_t (*algorithm)(double,double)); 
-	void saveBMP(const char *fileName);
+	void saveBMP(const string& filename);
 protected:
 	void Init();
 	// RGB getRGB(int mcu_height,int mcu_width,int row,int col);
