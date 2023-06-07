@@ -1179,7 +1179,7 @@ void BMPData::EdgeDetect(double matrix1[3][3],double matrix2[3][3],int row,uint8
     grayBuf=temp;
 }
 
-void BMPData::saveBMP(const char *fileName){
+void BMPData::saveBMP(const string& filename){
     if(gray){
         // fill the data area
         for (int i = 0; i < height; i++)
@@ -1218,7 +1218,7 @@ void BMPData::saveBMP(const char *fileName){
             }
         }
     }
-	FILE *fp = fopen(fileName, "wb+");
+	FILE *fp = fopen(filename.c_str(), "wb+");
 	fwrite(bitmap, 1, dataSize, fp);
 	fclose(fp);
 }
