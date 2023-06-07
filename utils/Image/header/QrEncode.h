@@ -450,7 +450,7 @@ protected:
     void errorCurrentEncoding(string& code);
     //得到编码的二维矩阵
     Matrix<int> MatrixCode(const string& code);
-    void FormatAndVersionInfo(Matrix<int>& matrix);
+    void FormatAndVersionInfo(Matrix<int>& matrix, int maskIndex);
 private:
     string encodeData;
     wstring encodeWData;
@@ -459,7 +459,6 @@ private:
     DataType type{KanjiMode};
     int version{0}; //matrix sideLen: 21+4*(version-1)
     int charCount{0};
-    int maskIndex{0};
     Matrix<RGB> *imgData{nullptr};
 };
 
