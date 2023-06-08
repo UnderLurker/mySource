@@ -311,11 +311,12 @@ bool QREncode::init(){
     int NumMode=0,AlpNumMode=0,ByteMode=0;
     for_each(encodeData.begin(), encodeData.end(), [&](char ch){
         if(ch<='9'&&ch>='0') NumMode++;
-        else if((ch<='z'&&ch>='a')||(ch<='Z'&&ch>='A')) ByteMode++;
+        else if((ch<='z'&&ch>='a')) ByteMode++;
+        else if(ch<='Z'&&ch>='A') AlpNumMode++;
     });
-    if(NumMode!=0||ByteMode!=0) type=DataType::AlpNumMode;
+    if(ByteMode!=0) type=DataType::ByteMode;
+    else if(AlpNumMode!=0) type=DataType::AlpNumMode;
     else if(NumMode!=0) type=DataType::NumMode;
-    else if(ByteMode!=0) type=DataType::ByteMode;
     else type=DataType::KanjiMode;
     int len=encodeData.size();
     if (len > 7089 && type == DataType::NumMode ||
@@ -650,16 +651,16 @@ Matrix<int> QREncode::MatrixCode(const string& code){
         rgb.setValByArray(dataMatrix[i], vector<RGB>{RGB_BLACK}, 4, 4);
         BMPData bmp(AmplifyMatrix<RGB>(rgb,AMPLIFY_LEVEL),rgb.col*AMPLIFY_LEVEL,rgb.row*AMPLIFY_LEVEL,true);
         bmp.GrayEncoder();
-        bmp.saveBMP("qr"+string(1,'1')+".bmp");
+        bmp.saveBMP("qr"+string(1,'1'+i)+".bmp");
         // cout<<dataMatrix[i]<<endl;
         int t=Evaluate(dataMatrix[i]);
         if(t<minScore){
             minScore=t;
             minScorePos=i;
         }
-        cout<<t<<" ";
+        // cout<<t<<" ";
     }
-    cout<<endl;
+    // cout<<endl;
     res=dataMatrix[minScorePos];
 
     return res;
