@@ -26,6 +26,7 @@ using namespace std;
 #define VERSION_COUNT 40
 #define MODE_INDICATOR_BIT_LENGTH 4
 #define AMPLIFY_LEVEL 4
+// #define DEBUG
 //对应第几行
 enum ErrorCorrectionLevel{
     L = 0,  // Recovers 7% of data

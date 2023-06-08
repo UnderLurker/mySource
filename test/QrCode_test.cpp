@@ -35,7 +35,15 @@ string string_to_hex(const string &str) // transfer string to hex-string
     }
     return result;
 }
-int main(){
+int main(int argc,char * argv[]){
+    if(argc>3){
+        cout<<"param error\n";
+        return 0;
+    }
+    if(string(argv[1])=="--help"){
+        cout<<"[content] [resultName] out resultName.bmp QRcode\n\n";
+        return 0;
+    }
     // QREncode q("../bin/CMakeFiles/Image_static.dir");
     // Logger::Init("../config.ini");
     // Logger::LogStart(L"aaa%saaa",L"main");
@@ -84,10 +92,11 @@ int main(){
     // cout<<endl;
 
     QREncode qr;
-    Matrix<RGB> rgb=qr.encoding("01234567890123456789012345678901234567890");
+    Matrix<RGB> rgb=qr.encoding(argv[1]);
+    // Matrix<RGB> rgb=qr.encoding("01234567890123456789012345678901234567890");
     // Matrix<RGB> rgb=qr.encoding("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
     BMPData bmp(AmplifyMatrix<RGB>(rgb,AMPLIFY_LEVEL),rgb.col*AMPLIFY_LEVEL,rgb.row*AMPLIFY_LEVEL,true);
     bmp.GrayEncoder();
-    bmp.saveBMP("qr.bmp");
+    bmp.saveBMP(string(argv[2])+".bmp");
     return 0;
 }

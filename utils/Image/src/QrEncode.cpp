@@ -647,11 +647,13 @@ Matrix<int> QREncode::MatrixCode(const string& code){
     for(int i=0;i<dataMatrix.size();i++){
         //设置保留位
         FormatAndVersionInfo(dataMatrix[i],i);
+#ifdef DEBUG
         Matrix<RGB> rgb(getSideLen()+8,getSideLen()+8,BACKGROUND_COLOR);
         rgb.setValByArray(dataMatrix[i], vector<RGB>{RGB_BLACK}, 4, 4);
         BMPData bmp(AmplifyMatrix<RGB>(rgb,AMPLIFY_LEVEL),rgb.col*AMPLIFY_LEVEL,rgb.row*AMPLIFY_LEVEL,true);
         bmp.GrayEncoder();
         bmp.saveBMP("qr"+string(1,'1'+i)+".bmp");
+#endif
         // cout<<dataMatrix[i]<<endl;
         int t=Evaluate(dataMatrix[i]);
         if(t<minScore){
