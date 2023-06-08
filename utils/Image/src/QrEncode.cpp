@@ -4,6 +4,7 @@
 #include "Util.h"
 #include <algorithm>
 #include <bitset>
+#include <iostream>
 #include <list>
 #include <stack>
 #include <cstdlib>
@@ -15,6 +16,13 @@ NAME_SPACE_START(myUtil)
 
 #define BACKGROUND_COLOR RGB_WHITE
 
+void print(string& code){
+    for(int i=0;i<code.size();i++){
+        if(i%8==0) cout<<" ";
+        cout<<code[i];
+    }
+    cout<<endl;
+}
 
 vector<function<bool(int,int)>> MaskFunctions={
     [](int row,int column)->int{
@@ -281,9 +289,10 @@ Matrix<RGB> QREncode::encoding(const string &encodeData){
     else if(type==DataType::ByteMode) code.append(ByteModeEncoding());
     else if(type==DataType::KanjiMode) code.append(KanjiModeEncoding());
     fillEncodeData(code);
-    // cout<<code<<endl;
+    // print(code);
     errorCurrentEncoding(code);
     // cout<<code<<endl;
+    // print(code);
     Matrix<int> source = MatrixCode(code);
     imgData->setValByArray(source, vector<RGB>{RGB_BLACK}, 0, 0);
     return imgData==nullptr?Matrix<RGB>():*imgData;
@@ -358,7 +367,8 @@ string QREncode::AlpNumModeEncoding(){
     //两位转11位二进制 一位转6位二进制
     for(int i=0;i<encodeData.size();i+=2){
         int t=0, bitCount=6;
-        if(i<encodeData.size()) t = AlpValMappingTable[encodeData[i]];
+        if(i<encodeData.size()) 
+            t = AlpValMappingTable[encodeData[i]];
         if(i+1<encodeData.size()){
             t = t*45 + AlpValMappingTable[encodeData[i+1]];
             bitCount=11;
@@ -460,8 +470,8 @@ void QREncode::errorCurrentEncoding(string& code){
                     t+=code[codePos+k]-'0';
                 }
                 group[i][blockOfGroup][blocks]=t;
-                // cout<<t<<" ";
                 codePos+=8;
+                // cout<<t<<" ";
             }
             // cout<<endl;
             vector<int> CurrentCodeWords = getErrorCurrentWords(group[i][blockOfGroup], ErrorCurrentTable[row][codeWordsCol],row);
@@ -469,6 +479,15 @@ void QREncode::errorCurrentEncoding(string& code){
             maxCurrentCodeWordsLen=max(maxCurrentCodeWordsLen,(int)CurrentCodeWords.size());
         }
     }
+    // cout<<endl;
+    // for(auto items : currentWords){
+    //     for(int item : items){
+    //         cout<<item<<" ";
+    //     }
+    //     cout<<endl;
+    // }
+    // cout<<endl;
+
     //Structure Final Message
     code = "";
     //Interleave the Blocks
@@ -487,7 +506,7 @@ void QREncode::errorCurrentEncoding(string& code){
             }
         }
     }
-    cout<<endl;
+    // cout<<endl<<endl;
     //Interleave the Error Correction Codewords
     for(int i=0;i<maxCurrentCodeWordsLen;i++){
         for(int j=0;j<currentWords.size();j++){
@@ -496,8 +515,8 @@ void QREncode::errorCurrentEncoding(string& code){
             code.append(bitset<8>(currentWords[j][i]).to_string());
             // cout<<currentWords[j][i]<<" ";
         }
-        // cout<<endl;
     }
+    // cout<<endl;
     //Add Remainder Bits
     code.append(string(RemainderBits[version-1],'0'));
 }
@@ -548,15 +567,16 @@ Matrix<int> QREncode::MatrixCode(const string& code){
     // Step 3: Add the Alignment Patterns
     for(int i=0;i<7&&version!=1;i++){
         for(int j=0;j<7;j++){
-            if(AlignmentPatterns[version][i]==0||
-                AlignmentPatterns[version][j]==0) continue;
-            int row=AlignmentPatterns[version][i],
-                col=AlignmentPatterns[version][j];
+            if(AlignmentPatternLocal[version][i]==0||
+                AlignmentPatternLocal[version][j]==0) continue;
+            int row=AlignmentPatternLocal[version][i],
+                col=AlignmentPatternLocal[version][j];
             //判断是否与finder重合
             if((row-2<8&&col-2<8)||
                 (row-2<8&&col+2>getSideLen()-9)||
                 (row+2>getSideLen()-9&&col-2<8)) continue;
             res.setValByArray(alignment, val, row-2, col-2);
+            // cout<<res<<endl;
         }
     }
     
@@ -593,11 +613,10 @@ Matrix<int> QREncode::MatrixCode(const string& code){
     // Step 6: Place the Data Bits
     int r=getSideLen()-1,c=getSideLen()-1,codePos=0;
     bool upWard=true,right=true;
-    while(r>=0&&r<getSideLen()&&c>=0&&c<getSideLen()){
+    while(r>=0&&r<getSideLen()&&c>=0&&c<getSideLen()&&codePos<code.size()){
         // cout<<"("<<r<<","<<c<<") ";
         if(res.getValue(r, c)==-1){
-            if(codePos<code.size())
-                res.setValue(r, c, code[codePos++]-'0'+5);//此处赋值将数据值赋值为5和6，目的是使后面mask方便
+            res.setValue(r, c, code[codePos++]-'0'+5);//此处赋值将数据值赋值为5和6，目的是使后面mask方便
             // else
             //     res.setValue(r, c, 5);
         }
@@ -605,8 +624,7 @@ Matrix<int> QREncode::MatrixCode(const string& code){
             if(right) {right=!right; c-=1;}
             else {
                 right=!right;
-                if (r-1<0) 
-                {c-=1;r=0;right=true; upWard=!upWard;}
+                if (r-1<0) {c-=1;r=0;right=true; upWard=!upWard;}
                 else{ c+=1; r-=1;}
             }
         }
@@ -620,19 +638,19 @@ Matrix<int> QREncode::MatrixCode(const string& code){
             }
         }
     }
-    // cout<<res<<endl;
+    int a=code.size();
+
     // mask evaluate
     auto dataMatrix=getMaskList(res);
     int minScore=INT_MAX, minScorePos=0;
     for(int i=0;i<dataMatrix.size();i++){
         //设置保留位
         FormatAndVersionInfo(dataMatrix[i],i);
-        Matrix<RGB> rgb(getSideLen(),getSideLen(),BACKGROUND_COLOR);
-        rgb.setValByArray(dataMatrix[i], vector<RGB>{RGB_BLACK}, 0, 0);
-        BMPData bmp(AmplifyMatrix<RGB>(rgb,4),rgb.col*4,rgb.row*4,true);
+        Matrix<RGB> rgb(getSideLen()+8,getSideLen()+8,BACKGROUND_COLOR);
+        rgb.setValByArray(dataMatrix[i], vector<RGB>{RGB_BLACK}, 4, 4);
+        BMPData bmp(AmplifyMatrix<RGB>(rgb,AMPLIFY_LEVEL),rgb.col*AMPLIFY_LEVEL,rgb.row*AMPLIFY_LEVEL,true);
         bmp.GrayEncoder();
-        string str(1,'1'+i);
-        bmp.saveBMP("qr"+str+".bmp");
+        bmp.saveBMP("qr"+string(1,'1')+".bmp");
         // cout<<dataMatrix[i]<<endl;
         int t=Evaluate(dataMatrix[i]);
         if(t<minScore){
@@ -650,7 +668,7 @@ Matrix<int> QREncode::MatrixCode(const string& code){
 void QREncode::FormatAndVersionInfo(Matrix<int>& matrix, int maskIndex){
     // Format String
     // int *CurrentCode=getErrorCurrentVersion(level, maskIndex);
-    string CurrentCode=FormatInfoList[(int)level*7+maskIndex];
+    string CurrentCode=FormatInfoList[((int)level)*8+maskIndex];
     for(int i=0;i<7;i++){
         int t=0;
         if(i>=6) t=1;
@@ -665,7 +683,7 @@ void QREncode::FormatAndVersionInfo(Matrix<int>& matrix, int maskIndex){
         if(i>=6) t=1;
         matrix.setValue(i+t, 8, CurrentCode[14-i]-'0');
     }
-    // delete [] CurrentCode;
+    
     // Version Information
     if(version>=7){
         string CurrentInfo=VersionInfoList[version-7];
