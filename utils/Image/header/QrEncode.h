@@ -25,6 +25,7 @@ using namespace std;
 
 #define VERSION_COUNT 40
 #define MODE_INDICATOR_BIT_LENGTH 4
+#define AMPLIFY_LEVEL 4
 //对应第几行
 enum ErrorCorrectionLevel{
     L = 0,  // Recovers 7% of data
@@ -105,7 +106,7 @@ const static int CharCapTable[40][4][4]={
     {{7089,4296,2953,1817},{5596,3391,2331,1435},{3993,2420,1663,1024},{3057,1852,1273,784}},
 };
 
-static map<char,uint8_t> AlpValMappingTable={
+static map<uint8_t,uint8_t> AlpValMappingTable={
     {'0',0},{'1',1},{'2',2},{'3',3},{'4',4},{'5',5},{'6',6},{'7',7},{'8',8},{'9',9},
     {'A',10},{'B',11},{'C',12},{'D',13},{'E',14},{'F',15},{'G',16},{'H',17},{'I',18},
     {'J',19},{'K',20},{'L',21},{'M',22},{'N',23},{'O',24},{'P',25},{'Q',26},{'R',27},
