@@ -145,6 +145,18 @@ public:
   static string encodeStr(const string& str);
 };
 
+// class Base64{
+//   static string encoding(string str){
+//     for(int i=0;i<str.size();i+=3){
+//       // string t=
+//     }
+//     return "";
+//   }
+//   static string decoding(string str){
+//     return "";
+//   }
+// };
+
 NAME_SPACE_END()
 
 #endif //!_UTIL_

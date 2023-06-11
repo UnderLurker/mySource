@@ -1,28 +1,33 @@
-#ifndef _THREAD__
-#define _THREAD_
+#ifndef _MY_THREAD__
+#define _MY_THREAD_
 
 #include "Util.h"
-#include "Singleton.h"
 #include <deque>
 #include <functional>
-
+#include <list>
+#include <mutex>
+using namespace std;
 NAME_SPACE_START(myUtil)
 
+typedef void(*ThreadPoolFunction)();
 
-class MethodThreadPool{
-    SINGLETON_DECLARE(MethodThreadPool)
-    typedef void(*NoArgsFunc)();
+class ThreadPool{
 public:
-
+    ThreadPool(){}
+    ThreadPool(int PoolSize):_poolSize(PoolSize){}
+    ~ThreadPool(){}
+protected:
+    void join(ThreadPoolFunction func){
+        // lock_guard<mutex> lock(_threadPoolMutex);
+        func();
+    }
 private:
-    deque<NoArgsFunc> list;
-};
-
-class MemberMethodThreadPool{
-    SINGLETON_DECLARE(MemberMethodThreadPool)
-    typedef function<void()> ;
+    list<ThreadPoolFunction> _pool;
+    // mutex _threadPoolMutex;
+    int _curSize{0};
+    int _poolSize{0};
 };
 
 NAME_SPACE_END()
 
-#endif //!_THREAD_
+#endif //!_MY_THREAD_

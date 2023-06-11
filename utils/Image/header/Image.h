@@ -434,13 +434,13 @@ public:
 		:buf(_buf),width(_width),height(_height),gray(_gray){
 			Init();
 			isEncode=true;
-			grayBuf=new Matrix<uint8_t>(height,width,0);
+			if(_gray) grayBuf=new Matrix<uint8_t>(height,width,0);
 		}
 	~BMPData(){
 		if(isEncode){
 			if (bitmap) delete[] bitmap;
-			if (grayBuf) delete grayBuf;
 			if (rgb) delete rgb;
+			if (grayBuf) delete grayBuf;
 		}
 	}
 	void readBMP(const string& filePath);
@@ -454,6 +454,8 @@ public:
 	//边缘检测,只对灰度图像
 	void EdgeDetect(double matrix1[3][3],double matrix2[3][3],int row,uint8_t (*algorithm)(double,double)); 
 	void saveBMP(const string& filename);
+
+	Matrix<uint8_t> getGray(){return *grayBuf;}
 protected:
 	void Init();
 	// RGB getRGB(int mcu_height,int mcu_width,int row,int col);

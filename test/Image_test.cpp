@@ -20,20 +20,34 @@ void print(double** input,int n){
         cout<<endl;
 }
 
+string dataSet="@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'";
+
 int main(){
-	string str="../img/Image/2.jpg";
+	string str="../img/Image/4.jpg";
 	JPEGData data;
 	clock_t startTime=clock();
 	data.readJPEG(str.c_str());
-	int input[3][2]={
-		{2,2},
-		{1,1},
-		{1,1}
-	};
-	data.writeJPEG("../img/Image/9.jpg",input, 99);
+	fstream file("draw.txt",ios::out);
 
-	// BMPData bmp(data.getRGBMatrix(),data.getWidth(),data.getHeight(),false);
-	// bmp.GrayEncoder();
+	// int input[3][2]={
+	// 	{2,2},
+	// 	{1,1},
+	// 	{1,1}
+	// };
+	// data.writeJPEG("../img/Image/9.jpg",input, 99);
+
+	BMPData bmp(data.getRGBMatrix(),data.getWidth(),data.getHeight(),true);
+	bmp.GrayEncoder();
+	auto temp = bmp.getGray();
+	double a=(dataSet.size()*1.0/255);
+	for(int i=0;i<temp.row;i+=2){
+		for(int j=0;j<temp.col;j++){
+			auto t=temp.getValue(i, j);
+			int index=(int)(a*(int)t);
+			file<<dataSet[index];
+		}
+		file<<endl;
+	}
 	// bmp.GaussianHandle(false,[](double in){
 	// 	return in>THRESHOLD?255.0:0.0;
 	// 	// return in;

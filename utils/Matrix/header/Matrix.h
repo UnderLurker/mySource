@@ -256,9 +256,11 @@ Matrix<T>& Matrix<T>::operator=(const Matrix<T>& obj){
 template<typename T>
 Matrix<T>::~Matrix<T>(){
     for(int i=0;i<row;i++){
-        delete [] matrix[i];
+        if(matrix[i])
+            delete [] matrix[i];
     }
-    delete [] matrix;
+    if(matrix)
+        delete [] matrix;
 }
 
 
