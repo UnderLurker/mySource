@@ -1,4 +1,5 @@
 #pragma once
+#include <bitset>
 #include <cstddef>
 #include <cstdint>
 #include <ios>
@@ -145,17 +146,54 @@ public:
   static string encodeStr(const string& str);
 };
 
-// class Base64{
-//   static string encoding(string str){
-//     for(int i=0;i<str.size();i+=3){
-//       // string t=
-//     }
-//     return "";
-//   }
-//   static string decoding(string str){
-//     return "";
-//   }
-// };
+const static char BaseTable[]={
+  'A','B','C','D','E','F','G','H','I','J','K',
+  'L','M','N','O','P','Q','R','S','T','U',
+  'V','W','X','Y','Z','a','b','c','d','e',
+  'f','g','h','i','j','k','l','m','n','o',
+  'p','q','r','s','t','u','v','w','x','y',
+  'z','0','1','2','3','4','5','6','7','8',
+  '9','+','/'
+};
+
+class Base64{
+public:
+  static string encoding(string str){
+    string res="";
+    for(int i=0;i<str.size();i+=3){
+      string t="";
+      for(int j=0;j<3&&i+j<str.size();j++){
+        t.append(bitset<8>(str[i+j]).to_string());
+      }
+      int pos=0,count=0;
+      while(t.size()-pos>=6){
+        int index=0;
+        for(int j=pos;j<pos+6;j++){
+          index=index*2+t[j]-'0';
+        }
+        res.append(string(1,BaseTable[index]));
+        pos+=6;
+        count++;
+      }
+      int zeroCount=6-t.size()+pos,index=0;
+      if(zeroCount<6){
+        for(int j=pos;j<t.size();j++){
+          index=index*2+t[j]-'0';
+        }
+        index<<=zeroCount;
+        res.append(string(1,BaseTable[index]));
+        count++;
+      }
+      if(count!=4){
+        res.append(string(4-count,'='));
+      }
+    }
+    return res;
+  }
+  static string decoding(string str){
+    return "";
+  }
+};
 
 NAME_SPACE_END()
 
