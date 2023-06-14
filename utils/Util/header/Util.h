@@ -191,6 +191,24 @@ public:
     return res;
   }
   static string decoding(string str){
+    string res="";
+    for(int i=0;i<str.size();i+=3){
+      string t="";
+      for(int j=0;j<4;j++){
+        t.append(bitset<6>(str[i+j]).to_string());
+      }
+      int pos=0,count=0;
+      while(t.size()-pos>=8){
+        int index=0;
+        for(int j=pos;j<pos+8;j++){
+          index=index*2+t[j]-'0';
+        }
+        res.append(string(1,(char)index));
+        pos+=8;
+        count++;
+      }
+      
+    }
     return "";
   }
 };

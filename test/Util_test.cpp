@@ -17,6 +17,6 @@ int main(){
     // }
     // cout<<endl;
 
-    cout<<Base64::encoding("BC")<<endl;
+    cout<<Base64::encoding("C")<<endl;
     return 0;
 }

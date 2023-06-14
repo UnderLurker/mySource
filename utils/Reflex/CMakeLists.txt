@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.5.0)
 project(Reflex VERSION 0.1.0)
 # set(LIB "F:/Visual Studio practice/vscode/newdemo/build")
 set(CMAKE_INSTALL_PREFIX "F:/Visual-Studio-practice/vscode/mySource/build")

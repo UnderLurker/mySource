@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.5.0)
 project(Thread CXX)
 set(UTIL_PATH "..")
 file(GLOB SOURCE_FILE ./src/*.cpp)

@@ -1,8 +1,8 @@
-#include "Thread.h"
+// #include "Thread.h"
 #include <iostream>
 #include <thread>
 using namespace std;
-using namespace myUtil;
+// using namespace myUtil;
 void print(){
     cout<<"abdfsf"<<endl;
 }
