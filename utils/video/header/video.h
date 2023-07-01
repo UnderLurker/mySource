@@ -270,6 +270,35 @@ public:
         :FullBoxHeader<T>("stsd","stbl",_version,0){}
 };
 
+template<typename T = Bit32>
+class DegradationPriorityBox : public FullBoxHeader<T>{
+public:
+    uint32_t sample_count{0};//priorityList size
+    uint16_t *priorityList{nullptr};
+    DegradationPriorityBox(const uint32_t _priorityListSize)
+        :FullBoxHeader<T>("stdp","stbl",0,0),sample_count(_priorityListSize){
+        priorityList=new uint16_t[_priorityListSize];
+        for(int i=0;i<_priorityListSize;i++){
+            // do something
+        }
+    }
+    ~DegradationPriorityBox(){
+        if(priorityList!=nullptr) delete [] priorityList;
+    }
+};
+
+template<typename T = Bit32>
+class DecodingTimeToSampleBox : public FullBoxHeader<T>{
+
+public:
+    //DT(n+1)=DT(n)+STTS(n)
+    //STTS为ISO/IEC 14496-12:2015(E) P36 Table2中的Decode delta
+    uint32_t entry_count;
+    uint32_t sample_count;//此项见ISO/IEC 14496-12:2015(E) P36 Table2
+    uint32_t sample_delta;//此项见ISO/IEC 14496-12:2015(E) P36 Table2
+    DecodingTimeToSampleBox():FullBoxHeader<T>("stts","stbl",0,0){}
+};
+
 //mp4文件的组成部分
 class Box{
 public:

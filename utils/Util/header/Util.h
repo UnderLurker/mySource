@@ -3,17 +3,21 @@
 #include <cstddef>
 #include <cstdint>
 #include <ios>
+#include <iostream>
+#include <mutex>
 #include <stdint.h>
+#include <thread>
+#include <condition_variable>
 #include <time.h>
-#include <vadefs.h>
+#include <string>
+#include <vector>
+#include <map>
+#include <Windows.h>
 #define NAME_SPACE_START(name) namespace name {
 #define NAME_SPACE_END() }
 
 #define OFFSET(className,fieldName) (size_t)&(((className*)0)->fieldName)
 
-#include <string>
-#include <vector>
-#include <map>
 using namespace std;
 #ifndef _UTIL_
 #define _UTIL_
@@ -156,61 +160,123 @@ const static char BaseTable[]={
   '9','+','/'
 };
 
-class Base64{
+static map<char,int> AntiBaseTable={
+	{'A',0},{'B',1},{'C',2},{'D',3},{'E',4},{'F',5},{'G',6},{'H',7},
+	{'I',8},{'J',9},{'K',10},{'L',11},{'M',12},{'N',13},{'O',14},{'P',15},
+	{'Q',16},{'R',17},{'S',18},{'T',19},{'U',20},{'V',21},{'W',22},{'X',23},
+	{'Y',24},{'Z',25},{'a',26},{'b',27},{'c',28},{'d',29},{'e',30},{'f',31},
+	{'g',32},{'h',33},{'i',34},{'j',35},{'k',36},{'l',37},{'m',38},{'n',39},
+	{'o',40},{'p',41},{'q',42},{'r',43},{'s',44},{'t',45},{'u',46},{'v',47},
+	{'w',48},{'x',49},{'y',50},{'z',51},{'0',52},{'1',53},{'2',54},{'3',55},
+	{'4',56},{'5',57},{'6',58},{'7',59},{'8',60},{'9',61},{'+',62},{'/',63}
+};
+
+class Base64 {
 public:
-  static string encoding(string str){
-    string res="";
-    for(int i=0;i<str.size();i+=3){
-      string t="";
-      for(int j=0;j<3&&i+j<str.size();j++){
-        t.append(bitset<8>(str[i+j]).to_string());
+  static string encoding(string str) {
+    string res = "";
+    for (int i = 0; i < str.size(); i += 3) {
+      string t = "";
+      for (int j = 0; j < 3 && i + j < str.size(); j++) {
+        t.append(bitset<8>(str[i + j]).to_string());
       }
-      int pos=0,count=0;
-      while(t.size()-pos>=6){
-        int index=0;
-        for(int j=pos;j<pos+6;j++){
-          index=index*2+t[j]-'0';
+      int pos = 0, count = 0;
+      while (t.size() - pos >= 6) {
+        int index = 0;
+        for (int j = pos; j < pos + 6; j++) {
+          index = index * 2 + t[j] - '0';
         }
-        res.append(string(1,BaseTable[index]));
-        pos+=6;
+        res.append(string(1, BaseTable[index]));
+        pos += 6;
         count++;
       }
-      int zeroCount=6-t.size()+pos,index=0;
-      if(zeroCount<6){
-        for(int j=pos;j<t.size();j++){
-          index=index*2+t[j]-'0';
+      int zeroCount = 6 - t.size() + pos, index = 0;
+      if (zeroCount < 6) {
+        for (int j = pos; j < t.size(); j++) {
+          index = index * 2 + t[j] - '0';
         }
-        index<<=zeroCount;
-        res.append(string(1,BaseTable[index]));
+        index <<= zeroCount;
+        res.append(string(1, BaseTable[index]));
         count++;
       }
-      if(count!=4){
-        res.append(string(4-count,'='));
+      if (count != 4) {
+        res.append(string(4 - count, '='));
       }
     }
     return res;
   }
-  static string decoding(string str){
-    string res="";
-    for(int i=0;i<str.size();i+=3){
-      string t="";
-      for(int j=0;j<4;j++){
-        t.append(bitset<6>(str[i+j]).to_string());
+  static string decoding(string str) {
+    string res = "";
+    for (int i = 0; i < str.size(); i += 4) {
+	  uint32_t temp=0;
+	  int len=0,zeroCount=0;
+      for (int j = 0; j < 4; j++) {
+		if(str[i+j]=='='){
+			zeroCount++;
+			continue;
+		}
+		temp<<=6;
+		temp|=AntiBaseTable[str[i+j]];
+		len+=6;
       }
-      int pos=0,count=0;
-      while(t.size()-pos>=8){
-        int index=0;
-        for(int j=pos;j<pos+8;j++){
-          index=index*2+t[j]-'0';
-        }
-        res.append(string(1,(char)index));
-        pos+=8;
-        count++;
-      }
-      
+	  if(zeroCount==1){temp>>=2;len-=2;}
+	  else if(zeroCount==2){temp>>=4;len-=4;}
+	  string str="";
+	  int y=len%8,x=y;
+	  while(len>0){
+		int a= (temp&0x000000ff);
+		char b=(char)a;
+		str = string(1,(char)(temp&0x000000ff)) + str;
+		temp>>=8;
+		len-=8;
+	  }
+	  res.append(str);
     }
-    return "";
+    return res;
   }
+};
+
+class ProgressBar{
+private:
+	class Logic{
+	public:
+		static int barLen;
+		static int curLen;
+		static string str;
+		static condition_variable _cv;
+		static char ch;
+		void operator()(){
+			unique_lock<mutex> lock(barMutex);
+			for(int i=0;i<=barLen;i++){
+				_cv.wait(lock,[]()->bool{
+					return !ProgressBar::_pause;
+				});
+				str[i]=ch;
+				cout<<"\r|"<<str<<"| "<<(int)i*100/barLen<<"%";
+				Sleep(200);
+			}
+		}
+	};
+public:
+	static void Start(const int _barLen = 100, const char _ch = '='){
+		ProgressBar::Logic::barLen=_barLen;
+		ProgressBar::Logic::ch=_ch;
+		ProgressBar::_pause=false;
+		ProgressBar::Logic::str=string(_barLen,' ');
+		ProgressBar::run = thread(Logic());
+	}
+	// static void Start(){run.join();}
+    static void Pause(){
+		ProgressBar::_pause=true;
+	}
+    static void Continue(){
+		ProgressBar::_pause=false;
+		Logic::_cv.notify_one();
+	}
+public:
+	static bool _pause;
+    static mutex barMutex;
+    static thread run;
 };
 
 NAME_SPACE_END()

@@ -1,3 +1,5 @@
+#include <condition_variable>
+#include <mutex>
 #define _CRT_SECURE_NO_WARNINGS
 #include "Util.h"
 #include <algorithm>
@@ -23,7 +25,6 @@
 #include <string>
 #include <thread>
 #include <time.h>
-#include <vadefs.h>
 
 NAME_SPACE_START(myUtil)
 IniValue::IniValue()
@@ -565,4 +566,14 @@ std::string MD5::encodeStr(const std::string& dat){
 // std::string md5sum6(std::string dat){
 // 	return md5sum6(dat.c_str(), dat.length() );
 // }
+
+int ProgressBar::Logic::barLen = 100;
+int ProgressBar::Logic::curLen = 0;
+thread ProgressBar::run;
+string ProgressBar::Logic::str = "";
+bool ProgressBar::_pause = false;
+char ProgressBar::Logic::ch = '=';
+condition_variable ProgressBar::Logic::_cv;
+mutex ProgressBar::barMutex;
+
 NAME_SPACE_END()

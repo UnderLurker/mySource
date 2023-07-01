@@ -17,6 +17,8 @@ int main(){
     // }
     // cout<<endl;
 
-    cout<<Base64::encoding("C")<<endl;
+    string a=Base64::encoding("ABasfsdfGHID");
+    cout<<a<<endl;
+    cout<<Base64::decoding(a)<<endl;
     return 0;
 }
