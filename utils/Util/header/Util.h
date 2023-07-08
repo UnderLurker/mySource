@@ -208,29 +208,32 @@ public:
   static string decoding(string str) {
     string res = "";
     for (int i = 0; i < str.size(); i += 4) {
-	  uint32_t temp=0;
-	  int len=0,zeroCount=0;
+      uint32_t temp = 0;
+      int len = 0, zeroCount = 0;
       for (int j = 0; j < 4; j++) {
-		if(str[i+j]=='='){
-			zeroCount++;
-			continue;
-		}
-		temp<<=6;
-		temp|=AntiBaseTable[str[i+j]];
-		len+=6;
+        if (str[i + j] == '=') {
+          zeroCount++;
+          continue;
+        }
+        temp <<= 6;
+        temp |= AntiBaseTable[str[i + j]];
+        len += 6;
       }
-	  if(zeroCount==1){temp>>=2;len-=2;}
-	  else if(zeroCount==2){temp>>=4;len-=4;}
-	  string str="";
-	  int y=len%8,x=y;
-	  while(len>0){
-		int a= (temp&0x000000ff);
-		char b=(char)a;
-		str = string(1,(char)(temp&0x000000ff)) + str;
-		temp>>=8;
-		len-=8;
-	  }
-	  res.append(str);
+      if (zeroCount == 1) {
+        temp >>= 2;
+        len -= 2;
+      } else if (zeroCount == 2) {
+        temp >>= 4;
+        len -= 4;
+      }
+      string str = "";
+      int y = len % 8, x = y;
+      while (len > 0) {
+        str = string(1, (char)(temp & 0x000000ff)) + str;
+        temp >>= 8;
+        len -= 8;
+      }
+      res.append(str);
     }
     return res;
   }
