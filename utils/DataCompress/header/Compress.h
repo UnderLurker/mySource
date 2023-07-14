@@ -4,6 +4,7 @@
 #include "Util.h"
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <fstream>
 #include <list>
 #include <memory>
@@ -105,24 +106,28 @@ class FileZip{
         };
     public:
         FileHeader head;
-        uint8_t* file_name{nullptr};
+        string file_name;
         uint8_t* extra_field{nullptr};
         LocalFileHeader()=default;
         LocalFileHeader(std::fstream& file){
             file.read((char*)&head,sizeof(head));
 
-            file_name=new uint8_t[head.file_name_length];
-            for(int i=0;i<head.file_name_length;i++){
-                file_name[i]=(uint8_t)file.get();
-            }
+            uint8_t* fn=new uint8_t[head.file_name_length];
+            file.read((char*)fn, head.file_name_length);
+            file_name=string((char*)fn,head.file_name_length);
+            delete [] fn;
+            // for(int i=0;i<head.file_name_length;i++){
+            //     file_name[i]=(uint8_t)file.get();
+            // }
 
+            if(head.extra_field_length<=0) return;
             extra_field = new uint8_t[head.extra_field_length];
-            for(int i=0;i<head.extra_field_length;i++){
-                extra_field[i]=(uint8_t)file.get();
-            }
+            file.read((char*)extra_field, head.extra_field_length);
+            // for(int i=0;i<head.extra_field_length;i++){
+            //     extra_field[i]=(uint8_t)file.get();
+            // }
         }
         ~LocalFileHeader(){
-            if(file_name) delete [] file_name;
             if(extra_field) delete [] extra_field;
         }
     };
@@ -133,7 +138,10 @@ public:
     FileZip() = default;
     FileZip(fstream& file){
         _local_file_header=make_shared<LocalFileHeader>(file);
-
+        uint32_t size = (_local_file_header->head.compressed_size_high<<16)+
+                                    _local_file_header->head.compressed_size_low;
+        _file_data = new uint8_t[size];
+        file.read((char*)_file_data, size);
         _data_descriptor = make_shared<DataDescriptor>(file);
     }
     ~FileZip(){
@@ -240,12 +248,28 @@ class CentralDirectory{
         }
     };
 public:
-    list<CentralDirectoryFileHeader> _file_head;
+    list<CentralDirectoryFileHeader*> _file_head;
     shared_ptr<DigitalSignature> _digital_signature{nullptr};
     CentralDirectory() = default;
     CentralDirectory(fstream& file){
-        
-        _digital_signature = make_shared<DigitalSignature>(file);
+        while(1){
+            uint32_t signature=0;
+            file.read((char*)&signature, sizeof(uint32_t));
+            file.seekg(-4,ios::cur);
+            if(signature==CentralFileHeader){
+                CentralDirectoryFileHeader* t=new CentralDirectoryFileHeader(file);
+                _file_head.emplace_back(t);
+            }
+            else{
+                _digital_signature = make_shared<DigitalSignature>(file);
+                break;
+            }
+        }
+    }
+    ~CentralDirectory(){
+        for(auto it=_file_head.begin();it!=_file_head.end();it++){
+            if((*it)) delete *it;
+        }
     }
 };
 
@@ -263,7 +287,17 @@ class Zip64EndOfCentralDirectoryRecord{
         uint64_t _offset_of_start_of_central_directory_with_respect_to_the_starting_disk_number;
     };
 public:
+    Zip64EndOfCentralDir head;
     uint8_t* _zip64_extensible_data_sector{nullptr};
+    Zip64EndOfCentralDirectoryRecord() = default;
+    Zip64EndOfCentralDirectoryRecord(fstream& file){
+        file.read((char*)&head, sizeof(head));
+        _zip64_extensible_data_sector=new uint8_t[head._size_of_zip64_end_of_central_directory_record];
+        file.read((char*)_zip64_extensible_data_sector, head._size_of_zip64_end_of_central_directory_record);
+    }
+    ~Zip64EndOfCentralDirectoryRecord(){
+        if(_zip64_extensible_data_sector) delete [] _zip64_extensible_data_sector;
+    }
 };
 
 class Zip64EndOfCentralDirectoryLocator{
@@ -697,13 +731,20 @@ public:
 };
 
 class ZIP{
+    fstream file;
+protected:
+    void ProcessStart();
 public:
-    list<FileZip> _file_zip;
-    ArchiveDecryptionHeader _archive_decryption_header;
-    ArchiveExtraDataRecord _archive_extra_data_record;
-    CentralDirectory _central_directory;
+    list<FileZip*> _file_zip;
+    ArchiveDecryptionHeader* _archive_decryption_header{nullptr};
+    ArchiveExtraDataRecord* _archive_extra_data_record{nullptr};
+    CentralDirectory* _central_directory{nullptr};
+    Zip64EndOfCentralDirectoryRecord* _zip64_end_of_central_dir_record{nullptr};
+    Zip64EndOfCentralDirectoryLocator* _zip64_end_of_central_dir_locator{nullptr};
+    EndOfCentralDirectoryRecord* _end_of_central_dir_record{nullptr};
     ZIP(const string& fileName){
-        fstream file(fileName,ios::in|ios::binary);
+        file = fstream(fileName,ios::in|ios::binary);
+        ProcessStart();
     }
     ~ZIP(){
     }
