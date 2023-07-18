@@ -1,5 +1,6 @@
 #ifndef _COMPRESS_
 #define _COMPRESS_
+#define _DEBUG_
 
 #include "Util.h"
 #include <cstddef>
@@ -70,19 +71,19 @@ enum ExtraFieldHeaderID{
 };
 
 
-class DataDescriptor{
-    struct DescriptorData{
-        uint32_t crc_32;
-        uint32_t compressed_size;
-        uint32_t uncompressed_size;
-    };
-public:
-    DescriptorData data;
-    DataDescriptor() = default;
-    DataDescriptor(fstream& file){
-        file.read((char*)&data, sizeof(data));
-    }
-};
+// class DataDescriptor{
+//     struct DescriptorData{
+//         uint32_t crc_32;
+//         uint32_t compressed_size;
+//         uint32_t uncompressed_size;
+//     };
+// public:
+//     DescriptorData data;
+//     DataDescriptor() = default;
+//     DataDescriptor(fstream& file){
+//         file.read((char*)&data, sizeof(data));
+//     }
+// };
 
 class FileZip{
     class LocalFileHeader{
@@ -134,15 +135,26 @@ class FileZip{
 public:
     shared_ptr<LocalFileHeader> _local_file_header{nullptr};
     uint8_t *_file_data{nullptr};
-    shared_ptr<DataDescriptor> _data_descriptor{nullptr};
+    // shared_ptr<DataDescriptor> _data_descriptor{nullptr};
     FileZip() = default;
     FileZip(fstream& file){
         _local_file_header=make_shared<LocalFileHeader>(file);
+        // cout<<hex<<file.tellg()<<endl;
         uint32_t size = (_local_file_header->head.compressed_size_high<<16)+
                                     _local_file_header->head.compressed_size_low;
         _file_data = new uint8_t[size];
         file.read((char*)_file_data, size);
-        _data_descriptor = make_shared<DataDescriptor>(file);
+        // cout<<hex<<"size:"<<size<<" pos:"<<file.tellg()<<endl;
+
+        // _data_descriptor = make_shared<DataDescriptor>(file);
+        if((_local_file_header->head.general_purpose_bit_flag&0x08)==0x08){
+            file.read((char*)&_local_file_header->head.crc_32_low, sizeof(uint16_t));
+            file.read((char*)&_local_file_header->head.crc_32_high, sizeof(uint16_t));
+            file.read((char*)&_local_file_header->head.compressed_size_low, sizeof(uint16_t));
+            file.read((char*)&_local_file_header->head.compressed_size_high, sizeof(uint16_t));
+            file.read((char*)&_local_file_header->head.uncompressed_size_low, sizeof(uint16_t));
+            file.read((char*)&_local_file_header->head.uncompressed_size_high, sizeof(uint16_t));
+        }
     }
     ~FileZip(){
         if(_file_data) delete [] _file_data;
@@ -260,10 +272,11 @@ public:
                 CentralDirectoryFileHeader* t=new CentralDirectoryFileHeader(file);
                 _file_head.emplace_back(t);
             }
-            else{
+            else if(signature == DigitalHeader){
                 _digital_signature = make_shared<DigitalSignature>(file);
                 break;
             }
+            else break;
         }
     }
     ~CentralDirectory(){
@@ -336,6 +349,7 @@ public:
     EndOfCentralDirectoryRecord()=default;
     EndOfCentralDirectoryRecord(fstream& file){
         file.read((char*)&dir, sizeof(dir));
+        if(dir._dot_zip_file_comment_length==0) return;
         _dot_zip_file_comment = new uint8_t[dir._dot_zip_file_comment_length];
         file.read((char*)_dot_zip_file_comment, dir._dot_zip_file_comment_length);
     }

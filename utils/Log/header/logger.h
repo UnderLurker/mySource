@@ -12,7 +12,7 @@
 NAME_SPACE_START(myUtil)
 
 #define BUFSIZE 4096//格式化后的字符串最大缓存
-
+#undef ERROR
 enum LogType{
     INFO=0,
     DEBUG,

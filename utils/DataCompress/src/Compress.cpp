@@ -7,12 +7,20 @@ NAME_SPACE_START(myUtil)
 
 void ZIP::ProcessStart(){
     try{
+        file.seekg(0,ios::end);
+        cout<<file.tellg()<<endl;
+        file.seekg(0,ios::beg);
         while(!file.eof()){
             uint32_t signature=0;
             uint16_t tagSignature=0;
             file.read((char*)&signature, sizeof(uint32_t));
             file.seekg(-4,ios::cur);
-            cout<<file.tellg()<<endl;
+#ifdef _DEBUG_
+            cout<<hex<<file.tellg()<<endl;
+#endif
+
+            if(file.tellg()<0) break;
+
             switch (signature) {
             case CentralFileHeader:{
                 _central_directory = new CentralDirectory(file);
@@ -43,7 +51,9 @@ void ZIP::ProcessStart(){
                 break;
             }
             default:
-                cout<<hex<<signature<<endl;
+#ifdef _DEBUG_
+                cout<<hex<<"signature:"<<signature<<endl;
+#endif
                 break;
             }
         }

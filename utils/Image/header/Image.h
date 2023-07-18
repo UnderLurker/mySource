@@ -173,7 +173,7 @@ enum JPEGPType{
 
 //将一维数组变为二维数组
 double** UnZigZag(int* originArray);
-
+#undef RGB
 struct RGB{
 	uint8_t red{0};
 	uint8_t green{0};

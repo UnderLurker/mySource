@@ -282,6 +282,112 @@ public:
     static thread run;
 };
 
+template <typename keyType, typename valueType, typename Compare>
+class RBNode {
+    keyType k{keyType()};
+    valueType v{valueType()};
+	using Node = RBNode<keyType, valueType, Compare>;
+
+  public:
+    RBNode() {}
+    RBNode(const keyType &key, const valueType &value) : k(key), v(value) {}
+    RBNode(const pair<keyType,valueType>& val) : k(val.first), v(val.second) {}
+    RBNode(const RBNode<keyType, valueType, Compare> &node) = delete;
+    RBNode(const RBNode<keyType, valueType, Compare> &&node) = delete;
+    RBNode<keyType, valueType, Compare> &
+    operator=(const RBNode<keyType, valueType, Compare> &) = delete;
+    void setLeftChild(const RBNode<keyType, valueType, Compare> *node) {
+		this->lchild = node;
+    }
+	void getLeftChild() const {return lchild;}
+	void getRightChild() const {return rchild;}
+    void setRightChild(const RBNode<keyType, valueType, Compare> *node) {
+		this->rchild = node;
+    }
+	//parent若不为空则this有父节点，否则为根节点，direct若为false则为父节点左孩子，否则为右孩子
+    bool leftRotate(RBNode<keyType, valueType, Compare>* parent = nullptr, bool direct = false) {
+		if (this->rchild == nullptr ||
+			this->rchild->lchild == nullptr ||
+			this->rchild->rchild == nullptr) {
+			return false;
+		}
+		RBNode<keyType, valueType, Compare> *nextRoot=this->rchild;
+		this->rchild=nextRoot->lchild;
+		nextRoot->lchild=this;
+		if(parent!=nullptr){
+			if(direct) parent->lchild=this;
+			else parent->rchild=this;
+		}
+		return true;
+    }
+	//parent若不为空则this有父节点，否则为根节点，direct若为false则为父节点左孩子，否则为右孩子
+    bool rightRotate(RBNode<keyType, valueType, Compare>* parent = nullptr, bool direct = false) {
+		if (this->lchild == nullptr ||
+			this->lchild->lchild == nullptr ||
+			this->lchild->rchild == nullptr) {
+			return false;
+		}
+		RBNode<keyType, valueType, Compare> *nextRoot=this->lchild;
+		this->lchild=nextRoot->rchild;
+		nextRoot->rchild=this;
+		if(parent!=nullptr){
+			if(direct) parent->lchild=this;
+			else parent->rchild=this;
+		}
+		return true;
+    }
+	void setValue(const valueType& val) { v=val; }
+	void getValue() const { return v; }
+	void getKey() const { return k;}
+    ~RBNode() {
+		if (lchild)
+			delete lchild;
+		if (rchild)
+			delete rchild;
+    }
+public:
+    Node *lchild{nullptr};
+    Node *rchild{nullptr};
+};
+
+template <typename keyType, typename valueType, typename Compare>
+class RBTree {
+	using Node = RBNode<keyType, valueType, Compare>;
+    Node *root{nullptr};
+	
+public:
+	~RBTree() {
+		if (root)
+			delete root;
+	}
+	Node* find(const keyType& key){
+		if(root==nullptr) return root;
+		Node* t=root;
+		while(t!=nullptr){
+			if(t->getKey()==key) return t;
+			else if(Compare(t->getKey(),key)){
+				t=t->lchild;
+			}
+			else{
+				t=t->rchild;
+			}
+		}
+		return nullptr;
+	}
+	void insert(const keyType& key,const valueType& value){
+		if(root==nullptr){
+			root=new Node(key,value);
+			return;
+		}
+	}
+	void insert(const pair<keyType,valueType>& pair){
+		if(root==nullptr){
+			root=new Node(pair);
+			return;
+		}
+	}
+
+};
 NAME_SPACE_END()
 
 #endif //!_UTIL_
