@@ -2,9 +2,12 @@
 #include <bitset>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <ios>
 #include <iostream>
 #include <mutex>
+#include <queue>
+#include <stack>
 #include <stdint.h>
 #include <thread>
 #include <condition_variable>
@@ -282,7 +285,19 @@ public:
     static thread run;
 };
 
-template <typename keyType, typename valueType, typename Compare>
+// template<typename T = void>
+// struct myLess{
+// 	bool operator()(const T& l,const T& r){
+// 		return l<r;
+// 	}
+// };
+
+enum NodeColor{
+	RED=0,
+	BLACK
+};
+
+template <typename keyType, typename valueType, typename Compare = less<keyType>>
 class RBNode {
     keyType k{keyType()};
     valueType v{valueType()};
@@ -292,65 +307,125 @@ class RBNode {
     RBNode() {}
     RBNode(const keyType &key, const valueType &value) : k(key), v(value) {}
     RBNode(const pair<keyType,valueType>& val) : k(val.first), v(val.second) {}
-    RBNode(const RBNode<keyType, valueType, Compare> &node) = delete;
-    RBNode(const RBNode<keyType, valueType, Compare> &&node) = delete;
-    RBNode<keyType, valueType, Compare> &
-    operator=(const RBNode<keyType, valueType, Compare> &) = delete;
-    void setLeftChild(const RBNode<keyType, valueType, Compare> *node) {
-		this->lchild = node;
+    RBNode(const Node &node) = delete;
+    RBNode(const Node &&node) = delete;
+    Node& operator=(const Node &) = delete;
+    void setLeftChild(const Node *node) {this->lchild = node;}
+	Node* getLeftChild() const {return lchild;}
+	Node* getRightChild() const {return rchild;}
+    void setRightChild(const Node *node) {this->rchild = node;}
+    Node* leftRotate() {
+		if (this->rchild == nullptr) return nullptr;
+		else if(this->rchild->rchild == nullptr){
+			Node* next=this->rchild;
+			next->parent=this->parent;
+			this->parent=next;
+			this->rchild=next->lchild;
+			next->lchild=this;
+			return nullptr;
+		}
+		else{
+			Node *nextRoot=this->rchild;
+			if(nextRoot->lchild!=nullptr)
+				nextRoot->lchild->parent=this;
+			nextRoot->parent=this->parent;
+			this->parent=nextRoot;
+			this->rchild=nextRoot->lchild;
+			nextRoot->lchild=this;
+			if(nextRoot->parent==nullptr) return nextRoot;
+			if(nextRoot->parent->lchild==this) nextRoot->parent->lchild=nextRoot;
+			else nextRoot->parent->rchild=nextRoot;
+			return nullptr;
+		}
     }
-	void getLeftChild() const {return lchild;}
-	void getRightChild() const {return rchild;}
-    void setRightChild(const RBNode<keyType, valueType, Compare> *node) {
-		this->rchild = node;
-    }
-	//parent若不为空则this有父节点，否则为根节点，direct若为false则为父节点左孩子，否则为右孩子
-    bool leftRotate(RBNode<keyType, valueType, Compare>* parent = nullptr, bool direct = false) {
-		if (this->rchild == nullptr ||
-			this->rchild->lchild == nullptr ||
-			this->rchild->rchild == nullptr) {
-			return false;
+    Node* rightRotate() {
+		if (this->lchild == nullptr)  return nullptr;
+		else if(this->lchild->lchild == nullptr){
+			Node* next=this->lchild;
+			next->parent=this->parent;
+			this->parent=next;
+			this->lchild=next->rchild;
+			next->rchild=this;
+			return nullptr;
 		}
-		RBNode<keyType, valueType, Compare> *nextRoot=this->rchild;
-		this->rchild=nextRoot->lchild;
-		nextRoot->lchild=this;
-		if(parent!=nullptr){
-			if(direct) parent->lchild=this;
-			else parent->rchild=this;
+		else{
+			Node *nextRoot=this->lchild;
+			if(nextRoot->rchild!=nullptr)
+				nextRoot->rchild->parent=this;
+			nextRoot->parent=this->parent;
+			this->parent=nextRoot;
+			this->lchild=nextRoot->rchild;
+			nextRoot->rchild=this;
+			if(nextRoot->parent==nullptr) return nextRoot;
+			if(nextRoot->parent->lchild==this) nextRoot->parent->lchild=nextRoot;
+			else nextRoot->parent->rchild=nextRoot;
+			return nullptr;
 		}
-		return true;
-    }
-	//parent若不为空则this有父节点，否则为根节点，direct若为false则为父节点左孩子，否则为右孩子
-    bool rightRotate(RBNode<keyType, valueType, Compare>* parent = nullptr, bool direct = false) {
-		if (this->lchild == nullptr ||
-			this->lchild->lchild == nullptr ||
-			this->lchild->rchild == nullptr) {
-			return false;
-		}
-		RBNode<keyType, valueType, Compare> *nextRoot=this->lchild;
-		this->lchild=nextRoot->rchild;
-		nextRoot->rchild=this;
-		if(parent!=nullptr){
-			if(direct) parent->lchild=this;
-			else parent->rchild=this;
-		}
-		return true;
     }
 	void setValue(const valueType& val) { v=val; }
-	void getValue() const { return v; }
-	void getKey() const { return k;}
+	valueType getValue() const { return v; }
+	const keyType& getKey() const { return k;}
+	void reversalColor() { color=color==RED?BLACK:RED; }
+	//true为左孩子，否则为右孩子
+	bool getLeftOrRight(){ return (void*)(parent->lchild)==(void*)this;}
+	Node* balance(){
+		//共三种情况
+		Node* res=nullptr;
+		Node* grandFather=this->parent->parent;
+		Node* uncle=grandFather->lchild!=this?grandFather->rchild:grandFather->lchild;
+		if(grandFather->lchild==nullptr||grandFather->rchild==nullptr)
+			uncle=nullptr;
+		if(grandFather->color==BLACK&&uncle!=nullptr&&uncle->color==RED){
+			grandFather->reversalColor();
+			this->parent->reversalColor();
+			uncle->reversalColor();
+			if(grandFather->parent==nullptr)
+				grandFather->reversalColor();
+			else if(grandFather->parent->color==RED)
+				return grandFather->balance();
+		}
+		else if(getLeftOrRight()==parent->getLeftOrRight()){
+			if(getLeftOrRight()){
+				res=grandFather->rightRotate();
+				grandFather->reversalColor();
+				grandFather->parent->reversalColor();
+			}
+			else{
+				res=grandFather->leftRotate();
+				grandFather->reversalColor();
+				grandFather->parent->reversalColor();
+			}
+		}
+		else{
+			if(getLeftOrRight()&&!parent->getLeftOrRight()){
+				this->parent->rightRotate();
+				res=this->parent->leftRotate();
+				this->reversalColor();
+				this->lchild->reversalColor();
+			}
+			else if(!getLeftOrRight()&&parent->getLeftOrRight()){
+				this->parent->leftRotate();
+				res=this->parent->rightRotate();
+				this->reversalColor();
+				this->rchild->reversalColor();
+			}
+		}
+		return res;
+	}
     ~RBNode() {
-		if (lchild)
+		if (lchild!=nullptr)
 			delete lchild;
-		if (rchild)
+		if (rchild!=nullptr)
 			delete rchild;
     }
 public:
+	Node *parent{nullptr};
     Node *lchild{nullptr};
     Node *rchild{nullptr};
+	NodeColor color{RED};
 };
 
-template <typename keyType, typename valueType, typename Compare>
+template <typename keyType, typename valueType, typename Compare = less<keyType>>
 class RBTree {
 	using Node = RBNode<keyType, valueType, Compare>;
     Node *root{nullptr};
@@ -365,7 +440,7 @@ public:
 		Node* t=root;
 		while(t!=nullptr){
 			if(t->getKey()==key) return t;
-			else if(Compare(t->getKey(),key)){
+			else if(Compare{}(t->getKey(),key)){
 				t=t->lchild;
 			}
 			else{
@@ -377,16 +452,51 @@ public:
 	void insert(const keyType& key,const valueType& value){
 		if(root==nullptr){
 			root=new Node(key,value);
+			root->color=BLACK;
 			return;
+		}
+		Node *node=new Node(key,value);
+		Node *t=root,*pre=nullptr;
+		while(t!=nullptr){
+			pre=t;
+			if(t->getKey()==key){
+				t->setValue(value);
+				return;
+			}
+			else if(Compare{}(t->getKey(),key)) t=t->lchild;
+			else t=t->rchild;
+		}
+		if(Compare{}(pre->getKey(),key)) pre->lchild=node;
+		else pre->rchild=node;
+		node->parent=pre;
+		if(pre->color==BLACK) return;
+		else if(node->parent->parent!=nullptr){
+			Node* temp=node->balance();
+			if(temp!=nullptr){
+				root=temp;
+			}
 		}
 	}
 	void insert(const pair<keyType,valueType>& pair){
-		if(root==nullptr){
-			root=new Node(pair);
-			return;
-		}
+		insert(pair.first,pair.second);
 	}
-
+	void print(){
+		Node* t=root;
+		queue<Node*> s;
+		s.push(t);
+		while(!s.empty()){
+			int size=s.size();
+			for(int i=0;i<size;i++){
+				Node* a=s.front();
+				s.pop();
+				cout<<(a->color==RED?"red":"black")<<" key:"<<a->getKey()<<" value:"<<a->getValue()<<"\t";
+				if(a->lchild!=nullptr) s.push(a->lchild);
+				if(a->rchild!=nullptr) s.push(a->rchild);
+			}
+			cout<<endl;
+		}
+		cout<<endl;
+	}
 };
 NAME_SPACE_END()
 

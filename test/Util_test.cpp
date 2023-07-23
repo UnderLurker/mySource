@@ -1,10 +1,14 @@
 #include "Util.h"
 #include <algorithm>
+#include <functional>
 #include <iostream>
 #include <locale>
+#include <map>
 #include <string.h>
+#include <utility>
 using namespace std;
 using namespace myUtil;
+
 
 int main(){
     // wstring str1=L"";
@@ -16,9 +20,23 @@ int main(){
     //     cout<<str[i]<<" ";
     // }
     // cout<<endl;
+    // map<int, int> p;
 
-    string a=Base64::encoding("ABasfsdfGHID");
-    cout<<a<<endl;
-    cout<<Base64::decoding(a)<<endl;
+    RBTree<int, int,less<int>> p;
+    // p.insert(1,1);
+    // p.insert(2,1);
+    // p.insert(3,1);
+    // p.insert(4,1);
+    // p.insert(5,1);
+    // p.insert(6,1);
+    // p.insert(7,1);
+    p.insert(pair<int, int>(1,1));
+    p.insert(pair<int, int>(2,1));
+    p.insert(pair<int, int>(3,1));
+    p.insert(pair<int, int>(4,1));
+    p.insert(pair<int, int>(5,1));
+    p.insert(pair<int, int>(6,1));
+    p.insert(pair<int, int>(7,1));
+    p.print();
     return 0;
 }
