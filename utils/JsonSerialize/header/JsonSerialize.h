@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <map>
+using namespace std;
 
 NAME_SPACE_START(Json)
 
@@ -21,15 +22,15 @@ enum JsonType {
 
 class JNull {
 public:
-    JNull() {}
-    ~JNull() {}
+    JNull() = default;
+    ~JNull() = default;
 };
 
 template<typename T>
 class JBaseObject {
 public:
-    JBaseObject() {}
-    virtual ~JBaseObject() {}
+    JBaseObject() = default;
+    virtual ~JBaseObject() = default;
     virtual JBaseObject* clone() = 0;
 };
 
@@ -38,8 +39,8 @@ class JHolderObject :public JBaseObject<T> {
 private:
 public:
     T value;
-    JHolderObject(const T& val) :value(val) {}
-    ~JHolderObject() {}
+    explicit JHolderObject(const T& val) :value(val) {}
+    ~JHolderObject() = default;
     JBaseObject<T>* clone() override;
 };
 
@@ -48,8 +49,8 @@ class JObject {
 private:
     JBaseObject<ValueType>* _value = nullptr;
 public:
-    JObject() {}
-    JObject(const ValueType& value);
+    JObject() = default;
+    explicit JObject(const ValueType& value);
     JObject(const JObject& obj) :_value(obj._value->clone()) {}
     ~JObject();
     JObject<ValueType>& operator=(const ValueType& value);
@@ -65,9 +66,8 @@ public:
 template<typename T>
 class JsonItemBase {
 public:
-    JsonItemBase() {}
-    virtual ~JsonItemBase() {}
-    virtual void f() {}
+    JsonItemBase() = default;
+    virtual ~JsonItemBase() = default;
 };
 
 template<typename T>
@@ -76,11 +76,10 @@ private:
     // JObject<T> _value;
     T _value;
 public:
-    JsonItem() {}
-    JsonItem(const JsonItem&);
-    JsonItem(const JObject<T>& obj);
-    JsonItem(const T& obj);
-    ~JsonItem() {};
+    JsonItem() = default;
+    JsonItem(const JsonItem&) = default;
+    explicit JsonItem(const T& obj);
+    ~JsonItem() = default;
     T& GetItemRefValue() {
         return this->_value;
     }
@@ -89,11 +88,29 @@ public:
     }
 };
 
+template<typename T>
+class JsonItem<T*>{
+private:
+    T* _value{nullptr};
+public:
+    JsonItem(const JsonItem&) = delete;
+    explicit JsonItem(T* obj) : _value(obj){}
+    ~JsonItem(){
+        if(_value!= nullptr) delete _value;
+    }
+    T& GetItemRefValue() {
+        return *(this->_value);
+    }
+    T* GetItemLpValue() {
+        return this->_value;
+    }
+};
+
 class JsonKey {
 public:
     JsonType _type{ JsonType::None };
     std::wstring _key{ L"" };
-    JsonKey() {}
+    JsonKey() = default;
     JsonKey(const JsonType& type, const std::wstring& key) :_type(type), _key(key) {}
     bool operator<(const JsonKey&) const;
 };
@@ -102,20 +119,26 @@ class JsonValue {
 public:
     void* _value{ nullptr };
     size_t _size{ 0 };
-    JsonValue() {}
+    JsonType _type{JsonType::None};
+    JsonValue() = default;
     JsonValue(void* value, const int& size) :_value(value), _size(size) {}
+    ~JsonValue(){
+//        if(_value!=nullptr){
+//            if(Json)
+//        }
+    }
 };
 
 class JsonSerialize {
-    using string = std::string;
 private:
     std::vector<std::pair<JsonKey, JsonValue>> content;
     string _filePath;
 public:
-    JsonSerialize() {}
-    JsonSerialize(const string filePath);
-    ~JsonSerialize() {};
-    bool Load(const string filePath = "");
+    JsonSerialize() = default;
+    explicit JsonSerialize(const string& filePath);
+    ~JsonSerialize() = default;
+    bool Load(const string& filePath = "");
+
     template<typename T>
     JsonItem<T>* GetValueByKey(const std::wstring& key);
     std::vector<std::pair<JsonKey, JsonValue>>& GetContent();
@@ -137,7 +160,7 @@ JObject<ValueType>::JObject(const ValueType& value) {
 
 template<typename ValueType>
 JObject<ValueType>::~JObject() {
-    if (_value) delete _value;
+    if (_value != nullptr) delete _value;
 }
 
 template<typename ValueType>
@@ -167,4 +190,7 @@ JsonItem<T>* JsonSerialize::GetValueByKey(const std::wstring& key)
 }
 
 NAME_SPACE_END()
+
+#include "../src/JsonSerialize.cpp"
+
 #endif //!_JSON_SERIALIZE_

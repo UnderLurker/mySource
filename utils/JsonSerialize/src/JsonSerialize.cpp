@@ -14,41 +14,6 @@
 
 NAME_SPACE_START(Json)
 
-
-// template<typename T>
-// T& JHolderObject<T>::GetValue(){
-//     return value;
-// }
-
-
-// template<typename ValueType>
-// ValueType* JObject<ValueType>::Cast(){
-//     JHolderObject<ValueType>* temp=dynamic_cast<JHolderObject<ValueType>*>(_value);
-//     return temp?&temp->GetValue():NULL;
-// }
-
-// template<typename ValueType>
-// ValueType& JObject<ValueType>::RefCast(){
-//     return (dynamic_cast<JHolderObject<ValueType>&>(_value)).GetValue();
-// }
-
-// template<typename T>
-// JsonItem<T>::JsonItem(const JObject<T>& value)
-//     :JsonItemBase<T>(){
-//     this->_value=value;
-// }
-
-// //获取值
-// template<typename T>
-// T& JsonItem<T>::GetItemRefValue(){
-//     return this->_value.RefCast();
-// }
-
-// template<typename T>
-// T* JsonItem<T>::GetItemLpValue(){
-//     return this->_value.Cast();
-// }
-
 std::wifstream _file;
 void OpenFile(const std::string filePath) {
     _file.open(filePath, std::ios::in);
@@ -64,7 +29,7 @@ bool JsonKey::operator<(const JsonKey& j_key) const {
     return false;
 }
 
-JsonSerialize::JsonSerialize(const std::string filePath) {
+JsonSerialize::JsonSerialize(const string& filePath) {
     this->_filePath = filePath;
 }
 
@@ -112,18 +77,18 @@ bool Analysis(const wchar_t* buffer, std::vector<std::pair<JsonKey, JsonValue>>&
             objListDeep++;
             curType = JsonType::Object;
             if (objListDeep >= 2) {
-                bool flag = (cer.empty() || cer.top() == JsonType::Object) ? false : true;
+                bool flag = !(cer.empty() || cer.top() == JsonType::Object);
                 objList.push_back(std::pair<bool, JsonItem<JsonSerialize>*>(flag, new JsonItem<JsonSerialize>()));
                 isObj = true;
                 isObjEnd = false;
                 //if (!isArrEnd) cer.push(JsonType::Array);
                 cer.push(JsonType::Object);
-                if (isKey) arrKey.push(L"");
+                if (isKey) arrKey.emplace(L"");
             }
         }
         else if (ch == '}' && !isQuote) {
-            if (objListDeep == 1 && isFirst == true) isFirst = false;
-            else if (objListDeep == 1 && isFirst == false) return false;
+            if (objListDeep == 1 && isFirst) isFirst = false;
+            else if (objListDeep == 1 && !isFirst) return false;
             objListDeep--;
             isObjEnd = true;
             curType = JsonType::Object;
@@ -131,7 +96,7 @@ bool Analysis(const wchar_t* buffer, std::vector<std::pair<JsonKey, JsonValue>>&
                 goto addArray;
         }
         else if (ch == '[' && !isQuote) {
-            bool flag = (cer.empty() || cer.top() == JsonType::Object) ? false : true;
+            bool flag = !(cer.empty() || cer.top() == JsonType::Object);
             curType = JsonType::Array;
             arrDeep++;
             arrValueList.push_back(std::pair<bool, JsonItem<std::vector<JsonValue>>*>(flag,new JsonItem<std::vector<JsonValue>>()));
@@ -143,6 +108,11 @@ bool Analysis(const wchar_t* buffer, std::vector<std::pair<JsonKey, JsonValue>>&
             arrDeep--;
             curType = JsonType::Array;
             if (arrDeep == 0) isArrEnd = true;
+            if(!key.empty()){
+                arrKey.push(key);
+                key=L"";
+                isKey=true;
+            }
             goto addArray;
         }
         else if (ch == ' ' && !isQuote) continue;
@@ -196,7 +166,7 @@ addArray:   std::wstring inputKey = key == L"" ? L"" : key.replace(0, 1, L"");
                 j_key._type = JsonType::Number;
             }
             else if (arrValueList.size() != 0 && objList.size() != 0) {//Array Add or Object Add
-                if (!isObjEnd) {
+                if (!isObjEnd&&!isQuote&&ch!=L']') {
                     arrKey.push(inputKey);
                     key = L"";
                     isKey = true;
@@ -287,15 +257,15 @@ addArray:   std::wstring inputKey = key == L"" ? L"" : key.replace(0, 1, L"");
     return true;
 }
 
-bool JsonSerialize::Load(const string filePath) {
+bool JsonSerialize::Load(const string& filePath) {
     try {
-        if (filePath != "") {
+        if (!filePath.empty()) {
             this->_filePath = filePath;
         }
         OpenFile(this->_filePath);
         while (!_file.eof()) {
             wchar_t buffer[0x4000] = L"";
-            size_t length = sizeof(buffer) / sizeof(char);
+            ssize_t length = sizeof(buffer) / sizeof(wchar_t );
             _file.read(buffer, length);
             if (!Analysis(buffer, content, length)) {
                 CloseFile();
@@ -324,8 +294,8 @@ void coutTab(int count) {
 void JsonSerialize::printAll(int tab) {
     auto res = this->content;
     coutTab(tab);
-    std::cout.imbue(std::locale("chs"));
-    std::cout << "{" << std::endl;
+//    std::cout.imbue(std::locale("chs"));
+    std::wcout << "{" << std::endl;
     for (auto it = res.begin(); it != res.end(); it++) {
         JsonKey temp_key = it->first;
         if (temp_key._type == JsonType::Number) {
@@ -336,7 +306,7 @@ void JsonSerialize::printAll(int tab) {
         else if (temp_key._type == JsonType::String) {
             JsonItem<std::wstring*>* temp_value = (JsonItem<std::wstring*>*)(it->second._value);
             coutTab(tab + 1);
-            std::wcout << temp_key._key << " : " << *temp_value->GetItemRefValue() << "" << std::endl;
+            std::wcout << temp_key._key << " : " << temp_value->GetItemRefValue() << "" << std::endl;
         }
         else if (temp_key._type == JsonType::Null) {
             JsonItem<JNull>* temp_value = (JsonItem<JNull>*)(it->second._value);
@@ -362,11 +332,11 @@ void JsonSerialize::printAll(int tab) {
                 tt_value->GetItemLpValue()->printAll(tab + 2);
             }
             coutTab(tab + 1);
-            std::cout << "]" << std::endl;
+            std::wcout << "]" << std::endl;
         }
     }
     coutTab(tab);
-    std::cout << "}" << std::endl;
+    std::wcout << "}" << std::endl;
 }
 
 
