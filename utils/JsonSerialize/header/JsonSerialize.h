@@ -39,6 +39,7 @@ NAME_SPACE_START(myUtil)
         ~JNull() = default;
     };
 
+    wchar_t* str2lp(const wstring& input);
 
     template<typename T>
     struct JsonItem_traits{};

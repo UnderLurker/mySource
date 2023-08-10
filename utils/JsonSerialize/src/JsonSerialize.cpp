@@ -24,30 +24,40 @@ NAME_SPACE_START(myUtil)
         _file.close();
     }
 
+    wchar_t* str2lp(const wstring& input){
+        wchar_t *res= nullptr;
+        res=new wchar_t[input.size()+1];
+        memset(res,0,sizeof(wchar_t)*input.size());
+        memcpy(res,input.c_str(),sizeof(wchar_t)*input.size());
+        res[input.size()]=L'\0';
+        return res;
+    }
+
+
     void removeValue(const JsonType& type, void* lpValue){
         switch (type) {
             case Number:{
-                delete (JsonItem_t<JNumber>*)lpValue;
+                delete (JsonItem_t<JNumber>)lpValue;
                 break;
             }
             case String:{
-                delete (JsonItem_t<JString>*)lpValue;
+                delete (JsonItem_t<JString>)lpValue;
                 break;
             }
             case Array:{
-                delete (JsonItem_t<JArray>*)lpValue;
+                delete (JsonItem_t<JArray>)lpValue;
                 break;
             }
             case Bool:{
-                delete (JsonItem_t<JBool>*)lpValue;
+                delete (JsonItem_t<JBool>)lpValue;
                 break;
             }
             case Null:{
-                delete (JsonItem_t<JNull>*)lpValue;
+                delete (JsonItem_t<JNull>)lpValue;
                 break;
             }
             case Object:{
-                delete (JsonItem_t<JObj>*)lpValue;
+                delete (JsonItem_t<JObj>)lpValue;
                 break;
             }
             default:
@@ -68,7 +78,7 @@ NAME_SPACE_START(myUtil)
     }
 
     JsonSerialize::~JsonSerialize(){
-        for(auto item : content){
+        for(auto& item : content){
             removeValue(item.first._type,item.second);
         }
     }

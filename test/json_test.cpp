@@ -9,18 +9,18 @@ using namespace std;
 using namespace myUtil;
 
 int main() {
-    JsonSerialize json(R"(F:\Visual-Studio-practice\CC++\mySource\sample\test.json)");
+    JsonSerialize json(R"(D:\code\sample\test.json)");
     json.Load();
     wcout<<json.GetValueByKey<JArray>(L"configurations")->at(0)->GetValueByKey<JString>(L"name")<<endl;
     wcout<<json.GetValueByKey<JString>(L"version")<<endl;
-    // wchar_t str[]=L"\"abcd\"";
-    // double b=456;
-    // json.setValueByKey<JString>(L"version",str);
-    // wcout<<json.GetValueByKey<JString>(L"version")<<endl;
-    // vector<JsonSerialize*> *v=new vector<JsonSerialize*>();
-    // json.insert(String,L"abcd",str);
-    json.printAll();
 
+    json.setValueByKey<JString>(L"version", str2lp(L"\"abcd\""));
+
+    wcout<<json.GetValueByKey<JString>(L"version")<<endl;
+    vector<JsonSerialize*> *v=new vector<JsonSerialize*>();
+    json.insert(Number,L"abcd",new double(20));
+    json.insert(Array,L"insertArray",v);
+    json.printAll();
 
      //wchar_t test
 //    wstring str=L"\"0.2.0\"";
