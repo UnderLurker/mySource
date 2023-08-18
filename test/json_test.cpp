@@ -9,27 +9,28 @@ using namespace std;
 using namespace myUtil;
 
 int main() {
-    JsonSerialize json(R"(D:\code\sample\test.json)");
+    JsonSerialize json(R"(F:\C++\clion\mySource\sample\test.json)");
     json.Load();
-    wcout<<json.GetValueByKey<JArray>(L"configurations")->at(0)->GetValueByKey<JString>(L"name")<<endl;
-    wcout<<json.GetValueByKey<JString>(L"version")<<endl;
+//    auto ret = json.GetValueByKey<JArray>(L"configurations");
+//    auto res = json.GetValueByKey<JArray>(L"configurations")[0].GetValueByKey<JArray>(L"setupCommands")[0];
+////    wcout<<res<<endl;
+//    wcout<<json.GetValueByKey<JString>(L"version")<<endl;
 
-    json.setValueByKey<JString>(L"version", str2lp(L"\"abcd\""));
+//    JsonValue* ins=new JsonString(L"abcd");
+//    json.setValueByKey(L"version", ins);
+//    wcout<<json.GetValueByKey<JString>(L"version")<<endl;
 
-    wcout<<json.GetValueByKey<JString>(L"version")<<endl;
-    vector<JsonSerialize*> *v=new vector<JsonSerialize*>();
-    json.insert(Number,L"abcd",new double(20));
-    json.insert(Array,L"insertArray",v);
+//    JsonValue* number=new JsonNumber(20);
+//    json.GetValueByKey<JArray>(L"configurations")[0].insert(Number,L"number",number);
+
+//    JsonValue* array=new JsonArray(json.GetValueByKey<JArray>(L"configurations"));
+//    json.insert(Array,L"array",array);
+
+
     json.printAll();
-
-     //wchar_t test
-//    wstring str=L"\"0.2.0\"";
-//    int size=sizeof(wchar_t)*str.size();
-//    wchar_t *temp = new wchar_t[size+1];
-//    memset(temp,0,sizeof(wchar_t)*str.size());
-//    memcpy(temp,str.c_str(),size);
-//    temp[str.size()]=L'\0';
-//    wcout<<temp<<L"|"<<endl;
+//    wcout<<json.toString()<<endl;
+    json.saveJson(R"(F:\C++\clion\mySource\sample\test1.json)");
+//    json.saveJson(R"(F:\C++\clion\mySource\sample\test1.json)");
 
     return 0;
 } 

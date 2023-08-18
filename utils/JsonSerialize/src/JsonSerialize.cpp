@@ -34,6 +34,7 @@ NAME_SPACE_START(myUtil)
     }
 
 
+
     void removeValue(const JsonType& type, void* lpValue){
         switch (type) {
             case Number:{
@@ -73,6 +74,35 @@ NAME_SPACE_START(myUtil)
         return key1>key2;
     }
 
+    JsonSerialize::JsonSerialize(const JsonSerialize &val) {
+        for(auto& item : content){
+            removeValue(item.first._type,item.second);
+        }
+        auto res = val.content;
+        for (auto it = res.begin(); it != res.end(); it++) {
+            JsonKey temp_key = it->first;
+            if (temp_key._type == JsonType::Number) {
+                auto *temp=new JsonNumber(*JsonItem_t<JNumber>(it->second));
+                this->insert(temp_key._type,temp_key._key,temp);
+            } else if (temp_key._type == JsonType::String) {
+                auto *temp=new JsonString(*JsonItem_t<JString>(it->second));
+                this->insert(temp_key._type,temp_key._key,temp);
+            } else if (temp_key._type == JsonType::Null) {
+                auto *temp=new JsonNull(*JsonItem_t<JNull>(it->second));
+                this->insert(temp_key._type,temp_key._key,temp);
+            } else if (temp_key._type == JsonType::Bool) {
+                auto *temp=new JsonBool(*JsonItem_t<JBool>(it->second));
+                this->insert(temp_key._type,temp_key._key,temp);
+            } else if (temp_key._type == JsonType::Object) {
+                auto *temp=new JsonObj(*JsonItem_t<JObj>(it->second));
+                this->insert(temp_key._type,temp_key._key,temp);
+            } else if (temp_key._type == JsonType::Array) {
+                auto *temp = new JsonArray(*JsonItem_t<JArray>(it->second));
+                this->insert(temp_key._type,temp_key._key,temp);
+            }
+        }
+    }
+
     JsonSerialize::JsonSerialize(const string& filePath) {
         this->_filePath = filePath;
     }
@@ -96,15 +126,15 @@ NAME_SPACE_START(myUtil)
     std::wstring value = L"";
     std::stack<std::wstring> arrKey;
     std::stack<JsonType> cer;
-    std::vector<std::pair<bool,std::vector<JsonSerialize*>*>> *arrValueList =
-            new std::vector<std::pair<bool,std::vector<JsonSerialize*>*>>(); //false直接放到对象中 true 放到objList中
-    std::vector<std::pair<bool,JsonSerialize*>> *objList =
-            new std::vector<std::pair<bool,JsonSerialize*>>();               //false直接放到对象中 true 放到arrValueList中
+    std::vector<std::pair<bool,JsonArray*>> *arrValueList =
+            new std::vector<std::pair<bool,JsonArray*>>(); //false直接放到对象中 true 放到objList中
+    std::vector<std::pair<bool,JsonObj*>> *objList =
+            new std::vector<std::pair<bool,JsonObj*>>();               //false直接放到对象中 true 放到arrValueList中
 
     void freeAll() {
-        for (std::pair<bool, std::vector<JsonSerialize*>*> item : *arrValueList)
+        for (std::pair<bool, JsonArray*> item : *arrValueList)
             if (item.second!= nullptr) delete item.second;
-        for (std::pair<bool, JsonSerialize*> item : *objList)
+        for (std::pair<bool, JsonObj*> item : *objList)
             if (item.second!= nullptr) delete item.second;
     }
 
@@ -121,7 +151,7 @@ NAME_SPACE_START(myUtil)
         return true;
     }
 
-    bool Analysis(const wchar_t* buffer, std::map<JsonKey, void*>& content, const size_t length) {
+    bool Analysis(const wchar_t* buffer, std::map<JsonKey, JsonValue*>& content, const size_t length) {
         size_t charLength = wcslen(buffer) < length ? wcslen(buffer) : length;
         for (size_t i = 0; i < charLength; i++) {
             wchar_t ch = buffer[i];
@@ -130,7 +160,7 @@ NAME_SPACE_START(myUtil)
                 curType = JsonType::Object;
                 if (objListDeep >= 2) {
                     bool flag = !(cer.empty() || cer.top() == JsonType::Object);
-                    objList->push_back(std::pair<bool, JsonSerialize*>(flag, new JsonSerialize()));
+                    objList->push_back(std::pair<bool, JsonObj*>(flag, new JsonObj()));
                     isObj = true;
                     isObjEnd = false;
                     //if (!isArrEnd) cer.push(JsonType::Array);
@@ -151,7 +181,7 @@ NAME_SPACE_START(myUtil)
                 bool flag = !(cer.empty() || cer.top() == JsonType::Object);
                 curType = JsonType::Array;
                 arrDeep++;
-                arrValueList->push_back(std::pair<bool, std::vector<JsonSerialize*>*>(flag,new std::vector<JsonSerialize*>()));
+                arrValueList->push_back(std::pair<bool, JsonArray*>(flag,new JsonArray()));
                 isArrEnd = false;
                 //if (!isObjEnd) cer.push(JsonType::Object);
                 cer.push(JsonType::Array);
@@ -184,34 +214,32 @@ NAME_SPACE_START(myUtil)
                 if ((key == L"" && value == L"" && objList->size() == 0 && arrValueList->size() == 0)
                     || (key == L"" && value == L"" && !isArrEnd)) continue;
 
-                addArray:   std::wstring inputKey = key == L"" ? L"" : key.replace(0, 1, L"");
-                inputKey = inputKey == L"" ? L"" : inputKey.replace(inputKey.find_last_of(L"\""), 1, L"");
+                addArray:
+                wstring inputKey=key;
+//                std::wstring inputKey = key == L"" ? L"" : key.replace(0, 1, L"");
+//                inputKey = inputKey == L"" ? L"" : inputKey.replace(inputKey.find_last_of(L"\""), 1, L"");
 
                 JsonKey j_key;
-                void* j_value;
+                JsonValue* j_value;
                 JsonType insertType = JsonType::Null;
                 j_key._key = inputKey;
 
                 if (value == L"true" || value == L"false") {                  //Bool
-                    bool* temp=new bool(isBool(value));
+                    JsonValue *temp=new JsonBool(isBool(value));
                     j_value = temp;
                     j_key._type = JsonType::Bool;
                 }
                 else if (value.find(L"\"") == 0 && value.find_last_of(L"\"") == value.size() - 1) { //String
-                    size_t n = value.size();
-                    int size = sizeof(wchar_t)*n;
-                    wchar_t* temp=new wchar_t[n+1];
-                    memset(temp,0,size);
-                    memcpy(temp, value.c_str(), size);
-                    temp[n]=L'\0';
+                    JsonValue *temp=new JsonString(wstring(value));
                     j_value=temp;
                     j_key._type = JsonType::String;
                 }
                 else if (isNumber(value)) {                                          //Number
-                    double *result = new double(0);
+                    double result = 0;
                     std::wstringstream ss(value);
-                    ss >> *result;
-                    j_value=result;
+                    ss >> result;
+                    JsonValue *temp=new JsonNumber(result);
+                    j_value=temp;
                     j_key._type = JsonType::Number;
                 }
                 else if (arrValueList->size() != 0 && objList->size() != 0) {//Array Add or Object Add
@@ -221,11 +249,13 @@ NAME_SPACE_START(myUtil)
                         isKey = true;
                         continue;
                     }
-                    void* _val = curType == JsonType::Object ? (void*)objList->back().second : (void*)arrValueList->back().second;
+                    if(curType==JsonType::Object)
+                        j_value = new JsonObj(*objList->back().second);
+                    else
+                        j_value = new JsonArray(*arrValueList->back().second);
                     size_t _si = curType == JsonType::Object ? objList->back().second->GetContent().size() : arrValueList->back().second->size();
                     j_key._key = arrKey.top();
                     j_key._type = curType;
-                    j_value = _val;
                     if (curType == JsonType::Object) objList->pop_back();
                     else arrValueList->pop_back();
                     //接下来确认是放到obj 还是 arrvalue 通过cer栈顶元素判断
@@ -233,9 +263,9 @@ NAME_SPACE_START(myUtil)
                     JsonType upType = cer.top();
                     arrKey.pop();
                     if (upType == JsonType::Object)
-                        objList->back().second->GetContent().insert(std::pair<JsonKey, void*>(j_key, j_value));
+                        objList->back().second->GetContent().insert(std::pair<JsonKey, JsonValue*>(j_key, j_value));
                     else
-                        arrValueList->back().second->push_back((JsonSerialize*)j_value);
+                        arrValueList->back().second->push_back(*(JsonObj*)j_value);
                     continue;
                 }
                 else if (objList->size() != 0) {//Object
@@ -251,7 +281,7 @@ NAME_SPACE_START(myUtil)
                     j_key._type = JsonType::Object;
                     objList->pop_back();
                     if (objList->size() != 0) {
-                        objList->back().second->GetContent().insert(std::pair<JsonKey, void*>(j_key, j_value));
+                        objList->back().second->GetContent().insert(std::pair<JsonKey, JsonValue*>(j_key, j_value));
                         continue;
                     }
                 }
@@ -265,19 +295,19 @@ NAME_SPACE_START(myUtil)
                     cer.pop();
                     j_key._key = arrKey.empty()?inputKey:arrKey.top();
                     if (!arrKey.empty()) arrKey.pop();
-                    j_value = arrValueList->back().second;
+                    j_value = new JsonArray(*(arrValueList->back().second));
                     j_key._type = JsonType::Array;
                     arrValueList->pop_back();
                     if (arrValueList->size() != 0) {
-                        arrValueList->back().second->push_back((JsonSerialize*)j_value);
+                        arrValueList->back().second->push_back(*(JsonObj*)j_value);
                         continue;
                     }
                 }
                 else if (value == L"") {                               //Null
-                    j_value = new JNull();
+                    j_value = new JsonNull();
                     j_key._type = JsonType::Null;
                 }
-                std::pair<JsonKey, void*> pair(j_key, j_value);
+                std::pair<JsonKey, JsonValue*> pair(j_key, j_value);
                 if (!isObjEnd) {
                     objList->back().second->GetContent().insert(pair);
                 }
@@ -324,13 +354,15 @@ NAME_SPACE_START(myUtil)
         }
     }
 
-    map<JsonKey, void*>& JsonSerialize::GetContent() {
-        return this->content;
-    }
-
     void coutTab(int count) {
         while (count--) {
             std::cout << '\t';
+        }
+    }
+
+    void coutWTab(int count) {
+        while (count--) {
+            std::wcout << L'\t';
         }
     }
 
@@ -342,37 +374,36 @@ NAME_SPACE_START(myUtil)
         for (auto it = res.begin(); it != res.end(); it++) {
             JsonKey temp_key = it->first;
             if (temp_key._type == JsonType::Number) {
-                JsonItem_t<JNumber> temp_value = JsonItem_t<JNumber>(it->second);
+                auto temp_value = JsonItem_t<JNumber>(it->second);
                 coutTab(tab + 1);
-                std::wcout << temp_key._key << " : " << *temp_value << std::endl;
+                std::wcout << temp_key._key << L" : " << (double)(*temp_value) << std::endl;
             }
             else if (temp_key._type == JsonType::String) {
-                JsonItem_t<JString> temp_value = JsonItem_t<JString>(it->second);
+                auto temp_value = JsonItem_t<JString>(it->second);
                 // JsonItem<wchar_t*>* temp_value = (JsonItem<wchar_t*>*)(it->second._value);
                 coutTab(tab + 1);
-                std::wcout << temp_key._key << " : " << temp_value << "" << std::endl;
+                std::wcout << temp_key._key << L" : " << (wstring)(*temp_value) << L"" << std::endl;
             }
             else if (temp_key._type == JsonType::Null) {
-                JsonItem_t<JNull> temp_value = JsonItem_t<JNull>(it->second);
+                auto temp_value = JsonItem_t<JNull>(it->second);
                 coutTab(tab + 1);
-                std::wcout << temp_key._key << " : " << "NULL" << std::endl;
+                std::wcout << temp_key._key << L" : " << L"NULL" << std::endl;
             }
             else if (temp_key._type == JsonType::Bool) {
-                JsonItem_t<JBool> temp_value = JsonItem_t<JBool>(it->second);
+                auto temp_value = JsonItem_t<JBool>(it->second);
                 coutTab(tab + 1);
-                std::wcout << temp_key._key << " : " << (*temp_value ? "true" : "false") << std::endl;
+                std::wcout << temp_key._key << L" : " << ((bool)(*temp_value) ? L"true" : L"false") << std::endl;
             }
             else if (temp_key._type == JsonType::Object) {
-                JsonItem_t<JObj> temp_value = JsonItem_t<JObj>(it->second);
+                auto temp_value = JsonItem_t<JObj>(it->second);
                 temp_value->printAll(tab + 1);
             }
             else if (temp_key._type == JsonType::Array) {
-                JsonItem_t<JArray> temp_value = JsonItem_t<JArray>(it->second);
+                auto temp_value = JsonItem_t<JArray>(it->second);
                 coutTab(tab + 1);
-                std::wcout << temp_key._key << ":[" << std::endl;
-                for (auto item : *temp_value) {
-                    JsonItem_t<JObj> tt_value = JsonItem_t<JObj>(item);
-                    tt_value->printAll(tab + 2);
+                std::wcout << temp_key._key << L":[" << std::endl;
+                for (auto tt_it=temp_value->begin();tt_it!=temp_value->end();tt_it++) {
+                    tt_it->printAll(tab + 2);
                 }
                 coutTab(tab + 1);
                 std::wcout << "]" << std::endl;
@@ -383,22 +414,21 @@ NAME_SPACE_START(myUtil)
     }
 
     template<typename T>
-    JsonItem_t<T> JsonSerialize::GetValueByKey(const std::wstring& key) const
+    JsonItem_t_type<T> JsonSerialize::GetValueByKey(const std::wstring& key) const
     {
         // static_assert(!is_same<JsonItem_t<T>, JsonItem_t<JNull>>(), "type is JNull");
-        JsonItem_t<T> res=nullptr;
-        for(pair<JsonKey, void*> it : content){
+        JsonItem_t_type<T> res = JsonItem_t_type<T>();
+        for(pair<JsonKey, JsonValue*> it : content){
             if(it.first._key==key){
-                res=(JsonItem_t<T>)it.second;
+                res=(JsonItem_t_type<T>)*(JsonItem_t<T>)it.second;
                 break;
             }
         }
         return res;
     }
 
-    template<typename T>
-    bool JsonSerialize::setValueByKey(const std::wstring& key, JsonItem_t<T> value){
-        for(pair<JsonKey, void*> it : content){
+    bool JsonSerialize::setValueByKey(const std::wstring& key, JsonValue* value){
+        for(pair<JsonKey, JsonValue*> it : content){
             if(it.first._key==key){
                 JsonKey t(it.first._type,it.first._key);
                 void* pos=content.at(t);
@@ -410,11 +440,140 @@ NAME_SPACE_START(myUtil)
         return false;
     }
 
-    bool JsonSerialize::insert(const JsonType& type, const wstring& key, void* value){
+    bool JsonSerialize::insert(const JsonType& type, const wstring& key, JsonValue* value){
         JsonKey j_key(type, key);
-        auto ret = content.insert(pair<JsonKey,void*>(j_key,value));
+        auto ret = content.insert(std::pair<JsonKey,JsonValue*>(j_key,value));
         return ret.second;
     }
 
+    bool JsonSerialize::operator==(const JsonSerialize& val){
+        if(content.size()!=val.content.size()||_filePath!=val._filePath) return false;
+        auto item1=content.begin();
+        auto item2=val.content.begin();
+        for(;item1!=content.end()&&item2!=val.content.end();item1++,item2++){
+            if(item1->first!=item2->first) return false;
+            switch (item1->first._type) {
+                case Number:{
+                    auto *temp_value1=(JsonItem_t<JNumber>)item1->second;
+                    auto *temp_value2=(JsonItem_t<JNumber>)item2->second;
+                    if(*temp_value1==*temp_value2) continue;
+                    else return false;
+                    break;
+                }
+                case String:{
+                    auto *temp_value1=(JsonItem_t<JString>)item1->second;
+                    auto *temp_value2=(JsonItem_t<JString>)item2->second;
+                    if(*temp_value1==*temp_value2) continue;
+                    else return false;
+                    break;
+                }
+                case Null:{
+                    auto *temp_value1=(JsonItem_t<JNull>)item1->second;
+                    auto *temp_value2=(JsonItem_t<JNull>)item2->second;
+                    if(*temp_value1==*temp_value2) continue;
+                    else return false;
+                    break;
+                }
+                case Object:{
+                    auto *temp_value1=(JsonItem_t<JObj>)item1->second;
+                    auto *temp_value2=(JsonItem_t<JObj>)item2->second;
+                    if(*temp_value1==*temp_value2) continue;
+                    else return false;
+                    break;
+                }
+                case Array:{
+                    auto *temp_value1=(JsonItem_t<JArray>)item1->second;
+                    auto *temp_value2=(JsonItem_t<JArray>)item2->second;
+                    if(*temp_value1==*temp_value2) continue;
+                    else return false;
+                    break;
+                }
+                case Bool:{
+                    auto *temp_value1=(JsonItem_t<JBool>)item1->second;
+                    auto *temp_value2=(JsonItem_t<JBool>)item2->second;
+                    if(*temp_value1==*temp_value2) continue;
+                    else return false;
+                    break;
+                }
+                default:
+                    break;
+            }
+        }
+        return true;
+    }
+
+    wstring JsonSerialize::toString() {
+        wstring res=L"{";
+        for(auto item : content){
+            res+=item.first._key+L":"+item.second->toString()+L",\n";
+        }
+        return res.substr(0,res.size()-2)+L"}";
+    }
+
+    JsonSerialize& JsonSerialize::operator=(const JsonSerialize& val){
+        for(auto& item : content){
+            removeValue(item.first._type,item.second);
+        }
+        for(auto& item : val.content) {
+            JsonKey temp_key=item.first;
+            if (temp_key._type == JsonType::Number) {
+                auto *temp = new JsonNumber(*JsonItem_t<JNumber>(item.second));
+                this->insert(temp_key._type, temp_key._key, temp);
+            } else if (temp_key._type == JsonType::String) {
+                auto *temp = new JsonString(*JsonItem_t<JString>(item.second));
+                this->insert(temp_key._type, temp_key._key, temp);
+            } else if (temp_key._type == JsonType::Null) {
+                auto *temp = new JsonNull(*JsonItem_t<JNull>(item.second));
+                this->insert(temp_key._type, temp_key._key, temp);
+            } else if (temp_key._type == JsonType::Bool) {
+                auto *temp = new JsonBool(*JsonItem_t<JBool>(item.second));
+                this->insert(temp_key._type, temp_key._key, temp);
+            } else if (temp_key._type == JsonType::Object) {
+                auto *temp = new JsonObj(*JsonItem_t<JObj>(item.second));
+                this->insert(temp_key._type, temp_key._key, temp);
+            } else if (temp_key._type == JsonType::Array) {
+                auto *temp = new JsonArray(*JsonItem_t<JArray>(item.second));
+                this->insert(temp_key._type,temp_key._key,temp);
+            }
+        }
+        return *this;
+    }
+
+    JsonArray::JsonArray(const JsonArray& obj){
+        value.clear();
+//        value.resize(obj.size());
+        for(auto item = obj.cbegin();item!=obj.cend();item++){
+            value.emplace_back(*item);
+        }
+    }
+
+    bool JsonArray::operator==(const JsonArray& val){
+        if(value.size()!=val.value.size()) return false;
+        auto it1=value.begin();
+        auto it2=val.value.begin();
+        for(;it1!=value.end()&&it2!=val.value.end();it1++,it2++){
+            if(*it1==*it2) continue;
+            else
+                return false;
+        }
+        return true;
+    }
+
+    JsonArray& JsonArray::operator=(const JsonArray& val){
+        value.clear();
+        for(auto item = val.cbegin();item!=val.cend();item++){
+            value.emplace_back(*item);
+        }
+        return *this;
+    }
+
+
+    bool JsonSerialize::saveJson(const string& filePath){
+        wofstream file(filePath,ios::out);
+        if(!file.is_open()) return false;
+        file<<toString();
+        file.close();
+        return true;
+    }
 
 NAME_SPACE_END()
