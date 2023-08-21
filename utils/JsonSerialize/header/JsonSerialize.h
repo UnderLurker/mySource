@@ -5,6 +5,7 @@
 #ifndef _JSON_SERIALIZE_
 #define _JSON_SERIALIZE_
 #include "Util.h"
+#include "Reflex.h"
 #include <fstream>
 #include <string>
 #include <vector>
@@ -202,6 +203,9 @@ NAME_SPACE_START(myUtil)
 
         bool insert(const JsonType& type, const wstring& key, JsonValue* value);
 
+        template<typename T = RObject>
+        T* toRObject(const string& className);
+
         void printAll(int tab = 0);
 
         bool operator==(const JsonSerialize& val);
@@ -233,6 +237,9 @@ NAME_SPACE_START(myUtil)
         map<JsonKey, JsonValue*>& GetContent() { return value.GetContent(); }
 
         bool insert(const JsonType& type, const wstring& key, JsonValue* valueLp){ return value.insert(type,key,valueLp);}
+
+        template<typename T = RObject>
+        T* toRObject(const string& className){return value.toRObject<T>(className);}
 
         template<typename T>
         JsonItem_t_type<T> GetValueByKey(const std::wstring& key) const{ return value.GetValueByKey<T>(key); }

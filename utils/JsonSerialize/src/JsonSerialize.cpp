@@ -9,7 +9,9 @@
 #include <vector>
 #include <stack>
 #include <algorithm>
+#include <codecvt>
 #include "JsonSerialize.h"
+#include "Singleton.h"
 
 NAME_SPACE_START(myUtil)
 
@@ -33,7 +35,35 @@ NAME_SPACE_START(myUtil)
         return res;
     }
 
+    // wstring=>string
+    std::string WString2String(const std::wstring &ws)
+    {
+        std::string strLocale = setlocale(LC_ALL, "");
+        const wchar_t *wchSrc = ws.c_str();
+        size_t nDestSize = wcstombs(NULL, wchSrc, 0) + 1;
+        char *chDest = new char[nDestSize];
+        memset(chDest, 0, nDestSize);
+        wcstombs(chDest, wchSrc, nDestSize);
+        std::string strResult = chDest;
+        delete[] chDest;
+        setlocale(LC_ALL, strLocale.c_str());
+        return strResult;
+    }
 
+    // string => wstring
+    std::wstring String2WString(const std::string &s)
+    {
+        std::string strLocale = setlocale(LC_ALL, "");
+        const char *chSrc = s.c_str();
+        size_t nDestSize = mbstowcs(NULL, chSrc, 0) + 1;
+        wchar_t *wchDest = new wchar_t[nDestSize];
+        wmemset(wchDest, 0, nDestSize);
+        mbstowcs(wchDest, chSrc, nDestSize);
+        std::wstring wstrResult = wchDest;
+        delete[] wchDest;
+        setlocale(LC_ALL, strLocale.c_str());
+        return wstrResult;
+    }
 
     void removeValue(const JsonType& type, void* lpValue){
         switch (type) {
@@ -191,7 +221,9 @@ NAME_SPACE_START(myUtil)
                 curType = JsonType::Array;
                 if (arrDeep == 0) isArrEnd = true;
                 if(!key.empty()){
-                    arrKey.push(key);
+                    std::wstring inputKey = key == L"" ? L"" : key.replace(0, 1, L"");
+                    inputKey = inputKey == L"" ? L"" : inputKey.replace(inputKey.find_last_of(L"\""), 1, L"");
+                    arrKey.push(inputKey);
                     key=L"";
                     isKey=true;
                 }
@@ -215,9 +247,8 @@ NAME_SPACE_START(myUtil)
                     || (key == L"" && value == L"" && !isArrEnd)) continue;
 
                 addArray:
-                wstring inputKey=key;
-//                std::wstring inputKey = key == L"" ? L"" : key.replace(0, 1, L"");
-//                inputKey = inputKey == L"" ? L"" : inputKey.replace(inputKey.find_last_of(L"\""), 1, L"");
+                std::wstring inputKey = key == L"" ? L"" : key.replace(0, 1, L"");
+                inputKey = inputKey == L"" ? L"" : inputKey.replace(inputKey.find_last_of(L"\""), 1, L"");
 
                 JsonKey j_key;
                 JsonValue* j_value;
@@ -230,7 +261,7 @@ NAME_SPACE_START(myUtil)
                     j_key._type = JsonType::Bool;
                 }
                 else if (value.find(L"\"") == 0 && value.find_last_of(L"\"") == value.size() - 1) { //String
-                    JsonValue *temp=new JsonString(wstring(value));
+                    JsonValue *temp=new JsonString(wstring(value.substr(1,value.size()-2)));
                     j_value=temp;
                     j_key._type = JsonType::String;
                 }
@@ -382,7 +413,7 @@ NAME_SPACE_START(myUtil)
                 auto temp_value = JsonItem_t<JString>(it->second);
                 // JsonItem<wchar_t*>* temp_value = (JsonItem<wchar_t*>*)(it->second._value);
                 coutTab(tab + 1);
-                std::wcout << temp_key._key << L" : " << (wstring)(*temp_value) << L"" << std::endl;
+                std::wcout << temp_key._key << L" : \"" << (wstring)(*temp_value) << L"\"" << std::endl;
             }
             else if (temp_key._type == JsonType::Null) {
                 auto temp_value = JsonItem_t<JNull>(it->second);
@@ -444,6 +475,43 @@ NAME_SPACE_START(myUtil)
         JsonKey j_key(type, key);
         auto ret = content.insert(std::pair<JsonKey,JsonValue*>(j_key,value));
         return ret.second;
+    }
+
+    template<typename T>
+    T* JsonSerialize::toRObject(const string& className) {
+        Reflex* factory=Singleton<Reflex>::Instance();
+        RObject* res = (RObject*)factory->createClass(className);
+        for(const auto& item : content){
+            string itemKey = WString2String(item.first._key.substr(1,item.first._key.size()-2));
+            switch(item.first._type){
+                case Number:{
+                    res->set<double>(itemKey,(double)*JsonItem_t<JNumber>(item.second));
+                    break;
+                }
+                case String:{
+                    res->set<wstring>(itemKey,(wstring)*JsonItem_t<JString>(item.second));
+                    break;
+                }
+//                case Array:{
+//                    res->set<double>(itemKey,(double)*JsonItem_t<JNumber>(item.second));
+//                    break;
+//                }
+                case Bool:{
+                    res->set<bool>(itemKey,(bool)*JsonItem_t<JBool>(item.second));
+                    break;
+                }
+//                case Null:{
+//                    break;
+//                }
+//                case Object:{
+//                    res->set<RObject*>(itemKey,(RObject*)(*JsonItem_t<JObj>(item.second)).toRObject<RObject*>());
+//                    break;
+//                }
+                default:
+                    break;
+            }
+        }
+        return (T*)res;
     }
 
     bool JsonSerialize::operator==(const JsonSerialize& val){
