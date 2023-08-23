@@ -482,7 +482,7 @@ NAME_SPACE_START(myUtil)
         Reflex* factory=Singleton<Reflex>::Instance();
         RObject* res = (RObject*)factory->createClass(className);
         for(const auto& item : content){
-            string itemKey = WString2String(item.first._key.substr(1,item.first._key.size()-2));
+            string itemKey = WString2String(item.first._key);
             switch(item.first._type){
                 case Number:{
                     res->set<double>(itemKey,(double)*JsonItem_t<JNumber>(item.second));
