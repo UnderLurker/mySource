@@ -382,6 +382,20 @@ NAME_SPACE_START(myUtil)
         }
         catch (std::exception ex) {
             throw ex;
+            return false;
+        }
+    }
+    bool JsonSerialize::Load(const wstring& buffer){
+        try {
+            if (!Analysis(buffer.c_str(), content, buffer.size())) {
+                CloseFile();
+                return false;
+            }
+            return objListDeep == 0 && arrDeep == 0;
+        }
+        catch (std::exception ex) {
+            throw ex;
+            return false;
         }
     }
 

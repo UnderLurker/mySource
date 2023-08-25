@@ -194,6 +194,7 @@ NAME_SPACE_START(myUtil)
         explicit JsonSerialize(const string& filePath);
         ~JsonSerialize();
         bool Load(const string& filePath = "");
+        bool Load(const wstring& buffer);
         map<JsonKey, JsonValue*>& GetContent() { return content; }
 
         template<typename T>
