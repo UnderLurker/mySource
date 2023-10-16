@@ -51,11 +51,11 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${UTILS_PATH}/DataCompress/header)
 
 
-target_link_libraries(MAIN Matrix_static logger_static Util_static)
-target_link_libraries(MAIN Singleton_static)
-target_link_libraries(MAIN Reflex_static)
-target_link_libraries(MAIN JsonSerialize_static)
-target_link_libraries(MAIN Server_static)
+#target_link_libraries(MAIN Matrix_static logger_static Util_static)
+#target_link_libraries(MAIN Singleton_static)
+#target_link_libraries(MAIN Reflex_static)
+#target_link_libraries(MAIN JsonSerialize_static)
+#target_link_libraries(MAIN Server_static)
 
 target_link_libraries(ImageTest Image_static)
 target_link_libraries(ServerTest Server_static)

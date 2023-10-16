@@ -23,13 +23,27 @@ NAME_SPACE_START(myUtil)
             }                   \
             ptr = JSON_NULL;    \
         }
+#define JSON_FREE_LINKLIST(_firstChild,isArray) \
+        auto ptr = _firstChild;                 \
+        while(ptr != JSON_NULL){                \
+            auto temp = ptr->_nextPair;         \
+            JSON_FREE(ptr,isArray)              \
+            ptr = temp;                         \
+        }                                       \
+        ptr = JSON_NULL;                        \
+        _firstChild = JSON_NULL;
 #define JSON_ASSERT(expression) assert(expression);
+
+//-----------------------macro define start---------------
 #define JSON_MAX_BUFFER_SIZE 4096
+#define JSON_MAX_DEEP 500
+//-----------------------macro define end-----------------
 
 enum JsonException{
     JSON_SUCCESS = 0x0001,
     JSON_ERROR = 0x0002,
     JSON_MALLOC_OR_COPY_ERROR = 0x0003,
+    JSON_DESTRUCTION_ERROR = 0x0004,
 };
 
 enum JsonPairType{
@@ -41,19 +55,28 @@ enum JsonPairType{
     Object
 };
 
+// provide some basic functions
+class JsonBase{
+public:
+    // remove spaces at beginning and end(include \t, \n and \r)
+    virtual char* trim(const char* str);
+    // search target in source, return to the last one at the end of the target
+    virtual char* findSpecContext(char* source, const char* target);
+};
+
 //负责JSON中的每一对键值对，存储内容指针
-class JsonPair{
+class JsonPair : public JsonBase{
 public:
     explicit JsonPair(): _keyStart(JSON_NULL),
                          _keyEnd(JSON_NULL),
                          _valStart(JSON_NULL),
-                         _valEnd(JSON_NULL){}
+                         _valEnd(JSON_NULL),
+                         _nextPair{JSON_NULL},
+                         _firstChild(JSON_NULL),
+                         _endChild(JSON_NULL), JsonBase(){}
 
     ~JsonPair(){
-        JSON_FREE(_keyStart, true);
-        JSON_FREE(_valStart, true);
-        _keyEnd = JSON_NULL;
-        _valEnd = JSON_NULL;
+        JSON_ASSERT(reset() == JSON_SUCCESS)
     }
     JsonException reset();
 
@@ -74,9 +97,20 @@ public:
 private:
     char *_keyStart;
     char *_keyEnd;
+    // if _type equals Object or Array, _valStart equals JSON_NULL
     char *_valStart;
     char *_valEnd;
+
+    JsonPair* _nextPair;
+    JsonPair* _firstChild;
+    JsonPair* _endChild;
     JsonPairType _type;
+    size_t _deep{0};
+    size_t _numChild{0};
+
+    JsonPair(const JsonPair&);
+    JsonPair(const JsonPair&&) noexcept;
+    JsonPair& operator=(const JsonPair&);
 };
 
 class JsonParse {
