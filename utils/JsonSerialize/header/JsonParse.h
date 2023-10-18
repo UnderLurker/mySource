@@ -10,6 +10,8 @@
 #include "Util.h"
 #include <assert.h>
 
+#include <utility>
+
 NAME_SPACE_START(myUtil)
 
 #define JSON_NULL nullptr
@@ -54,6 +56,7 @@ enum JsonException{
     JSON_DESTRUCTION_ERROR,         // 析构失败
     JSON_TRIM_NULL_ERROR,           // trim字符串为空
     JSON_PARSE_ERROR,               // 解析val出错
+    JSON_READ_FILE_ERROR,           // 读取文件内容出错
 };
 
 enum JsonPairType{
@@ -125,6 +128,10 @@ public:
     // analyze semantics of value, at the same time it also set _type's value
     JsonException Parse();
 
+    JsonException addNextPair(JsonPair *pair);
+
+    JsonException addChildPair(JsonPair *pair);
+
     double parseDouble() const override;
     int parseInt() const override;
     bool parseBool() const override;
@@ -135,6 +142,7 @@ public:
     vector<T> parseList() const;
 
 private:
+
     char *_key;
     // if _type equals Object or Array, _val equals JSON_NULL
     char *_val;
@@ -152,7 +160,17 @@ private:
 };
 
 class JsonParse {
+public:
+    explicit JsonParse() : _filePath(JSON_NULL){}
+    explicit JsonParse(string filePath) : _filePath(std::move(filePath)){}
+    ~JsonParse();
 
+    JsonException load(string filePath = "");
+private:
+    // json文件路径
+    string _filePath;
+    // json数据缓存
+    char* _cache;
 };
 
 NAME_SPACE_END() //myUtil

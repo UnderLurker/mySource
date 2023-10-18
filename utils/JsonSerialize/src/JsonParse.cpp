@@ -3,6 +3,7 @@
 //
 
 #include <sstream>
+#include <fstream>
 #include "JsonParse.h"
 #include "Util.h"
 
@@ -62,7 +63,7 @@ char *JsonBase::findSpecContext(char *source, const char *target, FindRange rang
         }
         if(pos == sourceLen)
             return JSON_NULL;
-        result = source + pos + targetLen;
+        result = source + pos;
     }catch(...){
         return result;
     }
@@ -109,6 +110,8 @@ JsonException JsonPair::setValueText(const char *value) {
     try{
         JSON_ASSERT(value!=JSON_NULL)
         JSON_FREE(_val, true)
+        JSON_FREE_LINKLIST(_firstChild,false)
+        _endChild = JSON_NULL;
         JSON_ASSERT(_val == JSON_NULL)
 
         _val = trim(value);
@@ -134,12 +137,12 @@ JsonException JsonPair::setPairText(char* text){
         char* next = findSpecContext(text,":",NoQuote);
         if(next == JSON_NULL)
             throw JSON_NOT_FIND;
-        *(next - 1) = '\0';
+        *next = '\0';
         _key = trim(text);
         _val = trim(next);
         JSON_TRIM_DETERMINE(_key)
         JSON_TRIM_DETERMINE(_val)
-
+        Parse();
     }catch(JsonException exception) {
         result = exception;
     }catch(...){
@@ -155,12 +158,62 @@ JsonException JsonPair::Parse() {
     char firstValChar = *_val;
     switch (firstValChar) {
         case '\"':{
+            _type = String;
             break;
         }
-        case '[':{
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':{
+            _type = Number;
             break;
         }
+        case 'f':
+        case 't':{
+            _type = Bool;
+            break;
+        }
+        case '[':
         case '{':{
+            if(firstValChar == '[')
+                _type = Array;
+            else
+                _type = Object;
+            size_t valLen = strlen(_val);
+            _val[valLen - 1] = '\0';
+            char *start = _val + 1;
+            char *targetPos = JSON_NULL;
+            do{
+                targetPos = findSpecContext(start,",",NoQuote);
+                if(targetPos != JSON_NULL)
+                    *targetPos = '\0';
+
+                auto *pair = new JsonPair();
+                char *temp = trim(start);
+                pair->setPairText(temp);
+                addChildPair(pair);
+
+                JSON_FREE(temp, true)
+                JSON_FREE(start, true);
+                start = targetPos + strlen(",");
+            }while(targetPos != JSON_NULL);//此处传入的是一整个，没有分为一个个的pair
+            if(start != JSON_NULL){
+                auto *pair = new JsonPair();
+                char *temp = trim(start);
+                pair->setPairText(temp);
+                addChildPair(pair);
+
+                JSON_FREE(temp, true)
+                JSON_FREE(start, true)
+            }
+            start = JSON_NULL;
+            _val = JSON_NULL;
             break;
         }
         default:
@@ -168,6 +221,40 @@ JsonException JsonPair::Parse() {
             break;
     }
 
+    return result;
+}
+
+JsonException JsonPair::addNextPair(JsonPair *pair) {
+    JsonException result = JSON_SUCCESS;
+    try{
+        JSON_ASSERT(pair!=JSON_NULL)
+        JsonPair *insertPair = pair;
+        while(insertPair->_nextPair!=JSON_NULL){
+            insertPair = insertPair->_nextPair;
+        }
+        insertPair->_nextPair = _nextPair;
+        _nextPair = pair;
+    }catch(...){
+        result = JSON_ERROR;
+    }
+    return result;
+}
+
+JsonException JsonPair::addChildPair(JsonPair *pair) {
+    JsonException result = JSON_SUCCESS;
+    try{
+        JSON_ASSERT(pair!=JSON_NULL)
+        if(_firstChild == JSON_NULL){
+            _firstChild = pair;
+            _endChild = pair;
+        }
+        else{
+            _endChild->_nextPair = pair;
+            _endChild = pair;
+        }
+    }catch(...){
+        result = JSON_ERROR;
+    }
     return result;
 }
 
@@ -199,7 +286,12 @@ bool JsonPair::parseBool() const {
 
 char *JsonPair::parseString() const {
     JSON_ASSERT(_val != JSON_NULL)
-    return _val;
+    char *result = JSON_NULL;
+    size_t len = strlen(_val);
+    result = new char[len + 1];
+    strcpy(result, _val);
+    result[len] = '\0';
+    return result;
 }
 
 template<class T>
@@ -214,8 +306,34 @@ vector<T> JsonPair::parseList() const {
     return vector<T>();
 }
 
+JsonParse::~JsonParse(){
+    JSON_FREE(_cache, true);
+}
+
+std::ifstream::pos_type get_file_size(const std::string& filename)
+{
+    std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
+    return in.tellg();
+}
+
+JsonException JsonParse::load(string filePath) {
+    JsonException result = JSON_SUCCESS;
+    if(filePath.length() != 0)
+        _filePath = std::move(filePath);
+
+    size_t totalLen = get_file_size(_filePath);
+    _cache = new char[totalLen + 1];
+    ifstream file(_filePath, ios::in);
+    try{
+        file.read(_cache, totalLen);
+    }catch(...){
+        result = JSON_READ_FILE_ERROR;
+    }
+    return result;
+}
 
 NAME_SPACE_END()
+
 
 
 //myUtil
