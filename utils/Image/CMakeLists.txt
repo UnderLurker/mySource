@@ -11,7 +11,12 @@ include_directories(header)
 include_directories(${UTIL_PATH}/Util/header)
 include_directories(${UTIL_PATH}/Matrix/header)
 
-add_library(Image_static STATIC ${IMAGE_SOURCE_FILE})
+add_library(Image_static STATIC ${IMAGE_SOURCE_FILE}
+        ./header/ImageConst.h
+        ./header/ImageUtil.h
+        ./header/ImageBase.h
+        ./header/jpeg.h
+        ./src/jpeg.cpp)
 add_library(QRCode_static STATIC ${QRCODE_SOURCE_FILE})
 target_link_libraries(Image_static Util_static Matrix_static)
 target_link_libraries(QRCode_static Image_static Util_static Matrix_static)

@@ -41,6 +41,20 @@ NAME_SPACE_START(myUtil)
             throw JSON_TRIM_NULL_ERROR; \
         }
 
+#define CHECK_NULL_VOID(ptr)        \
+        do {                        \
+            if (ptr == nullptr) {   \
+                return;             \
+            }                       \
+        }while(false);
+
+#define CHECK_NULL_RETURN(ptr, value) \
+        do {                          \
+            if (ptr == nullptr) {                 \
+                return value;                                      \
+            }                                     \
+        }while(false);
+
 #define JSON_ASSERT(expression) assert(expression);
 
 //-----------------------macro define start---------------

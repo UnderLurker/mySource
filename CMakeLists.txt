@@ -6,7 +6,8 @@ set(OpenCV_DIR  F:/opencv/build/x64/vc16/lib)
 set(CMAKE_BUILD_TYPE Debug)
 set(UTILS_PATH ${PROJECT_SOURCE_DIR}/utils)
 set(UTILS_TEST_PATH ${PROJECT_SOURCE_DIR}/test)
-
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # find_package(OpenCV REQUIRED)
 
 add_subdirectory(utils/Matrix)
