@@ -1,16 +1,18 @@
 #include "QrEncode.h"
-#include "Image.h"
-#include "Matrix.h"
-#include "Util.h"
+
 #include <algorithm>
 #include <bitset>
+#include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <list>
 #include <stack>
-#include <cstdlib>
-#include <cstring>
 #include <string>
 #include <vector>
+
+#include "Matrix.h"
+#include "Util.h"
+#include "bmp.h"
 
 NAME_SPACE_START(myUtil)
 

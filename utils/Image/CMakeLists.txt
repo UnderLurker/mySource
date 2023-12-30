@@ -4,7 +4,7 @@ project(Image VERSION 0.1.0)
 set(CMAKE_INSTALL_PREFIX "F:/Visual-Studio-practice/vscode/mySource/build")
 set(UTIL_PATH "..")
 # file(GLOB SOURCE_FILE ./src/*.cpp)
-file(GLOB IMAGE_SOURCE_FILE ./src/Image.cpp)
+file(GLOB IMAGE_SOURCE_FILE src/bmp.cpp)
 file(GLOB QRCODE_SOURCE_FILE ./src/QrEncode.cpp)
 
 include_directories(header)

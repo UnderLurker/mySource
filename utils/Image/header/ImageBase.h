@@ -18,13 +18,13 @@ public:
     explicit Image() = default;
     virtual ~Image() = default;
 
-    virtual bool read(const char* filePath) = 0;
-    virtual bool write(const char* filePath) = 0;
+    virtual ImageStatus read(const char* filePath) = 0;
+    virtual ImageStatus write(const char* filePath) = 0;
 
     [[nodiscard]] virtual int32_t getWidth() const = 0;
     [[nodiscard]] virtual int32_t getHeight() const = 0;
-    [[nodiscard]] virtual vector<RGB**> getRGB() const = 0; // 获取MCU形式的RGB
-    virtual Matrix<RGB> getRGBMatrix() = 0; // 获取通用的RGB数据
+    virtual Matrix<RGB> getRGBMatrix() const = 0; // 获取通用的RGB数据
+    virtual void setRGBMatrix(const Matrix<RGB>&) = 0; // 获取通用的RGB数据
 };
 
 NAME_SPACE_END()

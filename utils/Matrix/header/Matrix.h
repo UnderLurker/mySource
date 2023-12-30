@@ -47,7 +47,7 @@ template<typename T>
 class Matrix{
     using value_type = T;
 public:
-    value_type** matrix;
+    value_type** matrix{nullptr};
     int row{0};
     int col{0};
     Matrix(){}

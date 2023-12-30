@@ -122,17 +122,18 @@ public:
         FREE_VECTOR_LP(rgb, ROW)
     }
     // 解析图片
-    bool read(const char* filePath) override;
+    ImageStatus read(const char* filePath) override;
     // 生成图片,采样因子h v
-    bool write(const char* filePath) override { return true; }
+    ImageStatus write(const char* filePath) override { return SUCCESS; }
     bool writeJPEG(const char* filePath, int32_t samp_factor[3][2], int32_t quality_scale);
 
     [[nodiscard]] int32_t getWidth() const override { return width; }
     [[nodiscard]] int32_t getHeight() const override { return height; }
     [[nodiscard]] int32_t getMaxHSampFactor() const { return max_h_samp_factor; }
     [[nodiscard]] int32_t getMaxVSampFactor() const { return max_v_samp_factor; }
-    [[nodiscard]] vector<RGB**> getRGB() const override { return rgb; } // 获取MCU形式的RGB
-    Matrix<RGB> getRGBMatrix() override; // 获取通用的RGB数据
+    [[nodiscard]] vector<RGB**> getRGB() const { return rgb; } // 获取MCU形式的RGB
+    Matrix<RGB> getRGBMatrix() const override; // 获取通用的RGB数据
+    void setRGBMatrix(const Matrix<RGB>&) override {}
 
 private:
     void writeBitToFile(fstream& file, int32_t len, int32_t realData);
@@ -140,7 +141,7 @@ private:
     double** createDCTAndIDCTArray(int32_t row);
     void DCT(double** originMatrix);
     void IDCT(double** originMatrix);
-    bool encodeProcess(fstream& file, uint16_t& pLen, uint16_t pType);
+    bool EncodeProcess(fstream& file, uint16_t& pLen, uint16_t pType);
     bool SOFProcess(fstream& file, uint16_t pLen);
     bool DHTProcess(fstream& file, uint16_t pLen);
     bool SOSProcess(fstream& file, uint16_t pLen);

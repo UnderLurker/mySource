@@ -62,6 +62,18 @@ NAME_SPACE_START(myUtil)
   }                                                                            \
   delete[] lpName;
 
+#define CHECK_NULL_VOID(ptr) \
+    do {                     \
+        if (ptr == nullptr)  \
+            return;          \
+    } while (false);
+
+#define CHECK_NULL_RETURN(ptr, value) \
+    do {                              \
+        if (ptr == nullptr)           \
+            return value;             \
+    } while (false);
+
 #define INI_FILE_PATH "config.ini"
 
 class IniValue{

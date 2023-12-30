@@ -274,11 +274,10 @@ bool JPEGComponent::Init(fstream& file, uint16_t len)
     return true;
 }
 
-bool JPEGData::read(const char* filePath)
+ImageStatus JPEGData::read(const char* filePath)
 {
     fstream file(filePath, ios::in | ios::binary);
-    if (file.fail())
-        return false;
+    if (file.fail()) return ERROR_FILE_OPERATOR;
     file.seekg(0, ios::end);
     pos = file.tellg();
     file.seekg(2, ios::beg);
@@ -299,16 +298,16 @@ bool JPEGData::read(const char* filePath)
             pLen = (pLen << 8) + file.get();
             if (pMarker != 0xFF)
                 throw exception();
-            bool flag = encodeProcess(file, pLen, pType);
+            bool flag = EncodeProcess(file, pLen, pType);
             if (!flag)
                 throw exception();
         }
     } catch (...) {
         file.close();
-        return false;
+        return ERROR_UNKNOWN;
     }
     file.close();
-    return true;
+    return SUCCESS;
 }
 
 bool JPEGData::writeJPEG(const char* filePath, int32_t samp_factor[3][2], int32_t quality_scale)
@@ -680,7 +679,7 @@ void JPEGData::RGBToYCbCr(Matrix<RGB> _rgb, fstream& file)
     }
 }
 
-Matrix<RGB> JPEGData::getRGBMatrix()
+Matrix<RGB> JPEGData::getRGBMatrix() const
 {
     Matrix<RGB> res(height, width);
     int32_t mcu_height = ROW * max_v_samp_factor, mcu_width = COL * max_h_samp_factor;
@@ -792,7 +791,7 @@ void JPEGData::IDCT(double** originMatrix)
     }
 }
 
-bool JPEGData::encodeProcess(fstream& file, uint16_t& pLen, uint16_t pType) {
+bool JPEGData::EncodeProcess(fstream& file, uint16_t& pLen, uint16_t pType) {
     bool flag = true;
     switch (pType) {
         case SOF0:

@@ -1,9 +1,10 @@
-#include "Image.h"
-#include "QrEncode.h"
 #include <cstdint>
 #include <fstream>
 #include <list>
 #include <string>
+
+#include "QrEncode.h"
+#include "bmp.h"
 #define _CRT_SECURE_NO_WARNINGS
 #include <iostream>
 // #include "QrEncode.h"

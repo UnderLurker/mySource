@@ -18,6 +18,18 @@ NAME_SPACE_START(myUtil)
 #define GAUSSIAN_RADIUS 1
 #define GAUSSIAN_TEMPLATE_RADIUS 8
 
+enum ImageStatus {
+    SUCCESS,            // 成功
+    ERROR_UNKNOWN,      // 未知错误
+    ERROR_NULLPTR,      // 空指针错误
+    ERROR_FILE_OPERATOR,// 文件操作错误
+    ERROR_WRITE,        // 文件写入失败
+    ERROR_FILE_ENCODE,  // 文件编码错误
+    ERROR_FILE_DECODE,  // 文件解码错误
+    ERROR_BMP_HEAD,     // BMP头部失败
+    ERROR_BMP_PALETTE,  // BMP调色板失败
+};
+
 #undef RGB
 struct RGB {
     uint8_t red { 0 };

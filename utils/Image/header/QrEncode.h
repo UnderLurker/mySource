@@ -8,9 +8,9 @@
 #ifndef _QR_ENCODE_
 #define _QR_ENCODE_
 
-#include "Util.h"
 #include "Matrix.h"
-#include "Image.h"
+#include "Util.h"
+#include "bmp.h"
 
 NAME_SPACE_START(myUtil)
 using namespace std;
