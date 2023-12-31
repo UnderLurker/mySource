@@ -16,7 +16,6 @@ TEST(jpeg2bmpGray)
     JPEGData data;
     clock_t startTime = clock();
     data.read(str.c_str());
-    fstream file("draw.txt", ios::out);
 
     BMPData bmp(data.getRGBMatrix(), data.getWidth(), data.getHeight(), true);
     bmp.GrayEncoder();
@@ -30,7 +29,6 @@ TEST(jpeg2bmp)
     JPEGData data;
     clock_t startTime = clock();
     data.read(str.c_str());
-    fstream file("draw.txt", ios::out);
 
     BMPData bmp(data.getRGBMatrix(), data.getWidth(), data.getHeight());
     bmp.write("jpeg2bmp.bmp");
@@ -62,20 +60,32 @@ TEST(charDraw)
     cout << dec << clock() - startTime << "ms" << endl;
 }
 
-TEST(bmp2jpegGray)
+TEST(bmp2bmpGray)
 {
     clock_t startTime = clock();
-    // string str = "../img/Image/4.jpg";
-    string str = "jpeg2bmp.bmp";
+    string str = "../img/Image/5.bmp";
     BMPData bmpData;
     bmpData.read(str.c_str());
 
     BMPData newData(bmpData.getRGBMatrix(), bmpData.getWidth(), bmpData.getHeight(), true);
     newData.GrayEncoder();
-    newData.write("bmp2jpegGray.bmp");
+    newData.write("bmp2bmpGray.bmp");
     // JPEGData data;
     // data.setRGBMatrix(bmpData.getRGBMatrix());
     // data.write("bmp2jpeg");
+
+    cout << dec << clock() - startTime << "ms" << endl;
+}
+
+TEST(bmp2bmp)
+{
+    clock_t startTime = clock();
+    string str = "../img/Image/5.bmp";
+    BMPData bmpData;
+    bmpData.read(str.c_str());
+
+    BMPData newData(bmpData.getRGBMatrix(), bmpData.getWidth(), bmpData.getHeight());
+    newData.write("bmp2bmp.bmp");
 
     cout << dec << clock() - startTime << "ms" << endl;
 }
@@ -83,25 +93,35 @@ TEST(bmp2jpegGray)
 TEST(bmp2jpeg)
 {
     clock_t startTime = clock();
-    // string str = "../img/Image/4.jpg";
-    string str = "jpeg2bmp.bmp";
+    string str = "../img/Image/5.bmp";
     BMPData bmpData;
     bmpData.read(str.c_str());
 
-    BMPData newData(bmpData.getRGBMatrix(), bmpData.getWidth(), bmpData.getHeight());
-    newData.write("bmp2jpeg.bmp");
-    // JPEGData data;
-    // data.setRGBMatrix(bmpData.getRGBMatrix());
-    // data.write("bmp2jpeg");
+    JPEGData data;
+    data.setRGBMatrix(bmpData.getRGBMatrix());
+    data.write("bmp2jpeg.jpg");
+
+    cout << dec << clock() - startTime << "ms" << endl;
+}
+
+TEST(jpeg2jpeg)
+{
+    clock_t startTime = clock();
+    string str = "bmp2jpeg.jpg";
+    JPEGData data;
+    data.read(str.c_str());
+    auto a = data.write("jpeg2jpeg.jpg");
 
     cout << dec << clock() - startTime << "ms" << endl;
 }
 
 int main()
 {
-    // jpeg2bmpGray();
-    // jpeg2bmp();
-    bmp2jpegGray();
-    // bmp2jpeg();
+    jpeg2bmp();
+    bmp2bmp();
+    jpeg2bmpGray();
+    bmp2bmpGray();
+    bmp2jpeg();
+    jpeg2jpeg();
     return 0;
 }

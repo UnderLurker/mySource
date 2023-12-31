@@ -44,46 +44,48 @@ struct BMPHeader {
 
 // 此类只编码倒立图像，即height>0
 class BMPData : public Image {
-    int32_t dataSize { 0 }; // 数据总大小
-    int32_t rowSize { 0 };  // 一行有多少个字节（是4的整数倍）
-    int32_t width { 0 };
-    int32_t height { 0 };
-    int32_t offBits { 54 };               // 文件头到位图数据的偏移量
-    int32_t flag { 0 };                   // 图像使用哪一通道，0三通道，1 blue，2 green，3 red
-    Matrix<RGB> buf;                      // rgb颜色信息
-    Matrix<uint8_t>* grayBuf { nullptr }; // 灰度图信息
-    bool gray { false };                  // false 灰度有调色板 true 彩色没有调色板
-    bool forward { true };                // true 为height>0数据表示从图像左下到右上
-    uint8_t* bitmap { nullptr };          // 最终的数据
-    bool isEncode { false };               // 是否为编码
-    vector<Palette> palettes; // 调色板信息
-    BMPHeader bmpHeader {};
+    int32_t _dataSize { 0 }; // 数据总大小
+    int32_t _rowSize { 0 };  // 一行有多少个字节（是4的整数倍）
+    int32_t _width { 0 };
+    int32_t _height { 0 };
+    int32_t _offBits { 54 };               // 文件头到位图数据的偏移量
+    int32_t _flag { 0 };                   // 图像使用哪一通道，0三通道，1 blue，2 green，3 red
+    Matrix<RGB> _buf;                      // rgb颜色信息
+    Matrix<uint8_t>* _grayBuf { nullptr }; // 灰度图信息
+    bool _gray { false };                  // false 灰度有调色板 true 彩色没有调色板
+    bool _forward { true };                // true 为height>0数据表示从图像左下到右上
+    uint8_t* _bitmap { nullptr };          // 最终的数据
+    bool _isEncode { false };               // 是否为编码
+    vector<Palette> _palettes; // 调色板信息
+    BMPHeader _bmpHeader {};
 
 public:
     BMPData() = default;
-    // 重新编码 gray false灰度 true24位彩色这个gray是决定最后生成的图像是否为灰度图像
-    BMPData(const Matrix<RGB>& _buf, int32_t _width, int32_t _height, bool _gray = false)
-        : buf(_buf), width(_width), height(_height), gray(_gray)
+    // 重新编码 _gray false灰度 true24位彩色这个gray是决定最后生成的图像是否为灰度图像
+    BMPData(const Matrix<RGB>& buf, int32_t width, int32_t height, bool gray = false)
+        : _buf(buf), _width(width), _height(height), _gray(gray)
     {
         Init();
-        isEncode = true;
+        _isEncode = true;
         if (_gray)
-            grayBuf = new Matrix<uint8_t>(height, width, 0);
+            _grayBuf = new Matrix<uint8_t>(_height, _width, 0);
     }
     ~BMPData() override
     {
-        if (bitmap)
-            delete[] bitmap;
-        if (grayBuf)
-            delete grayBuf;
+        if (_bitmap)
+            delete[] _bitmap;
+        if (_grayBuf)
+            delete _grayBuf;
     }
     ImageStatus read(const char* filePath) override;
     ImageStatus write(const char* filePath) override;
-    Matrix<uint8_t> getGray() { return *grayBuf; }
-    [[nodiscard]] int32_t getWidth() const override { return width; };
-    [[nodiscard]] int32_t getHeight() const override { return height; };
-    Matrix<RGB> getRGBMatrix() const override; // 获取通用的RGB数据
-    void setRGBMatrix(const Matrix<RGB>&) override {}
+    Matrix<uint8_t> getGray() { return *_grayBuf; }
+    [[nodiscard]] int32_t getWidth() const override { return _width; };
+    [[nodiscard]] int32_t getHeight() const override { return _height; };
+    void setWidth(int32_t width) override { _width = width; }
+    void setHeight(int32_t height) override { _height = height; }
+    [[nodiscard]] Matrix<RGB> getRGBMatrix() const override; // 获取通用的RGB数据
+    void setRGBMatrix(const Matrix<RGB>& rgb) override { _buf = rgb; }
 
     // 灰度化,对还没有转成位图数据的
     void GrayEncoder(

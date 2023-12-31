@@ -28,6 +28,12 @@ enum ImageStatus {
     ERROR_FILE_DECODE,  // 文件解码错误
     ERROR_BMP_HEAD,     // BMP头部失败
     ERROR_BMP_PALETTE,  // BMP调色板失败
+    ERROR_JPEG_SOI,
+    ERROR_JPEG_APP,
+    ERROR_JPEG_SOF,
+    ERROR_JPEG_DRI,
+    ERROR_JPEG_SOS,
+    ERROR_JPEG_EOI,
 };
 
 #undef RGB
