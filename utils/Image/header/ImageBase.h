@@ -26,7 +26,7 @@ public:
     virtual void setWidth(int32_t width) = 0;
     virtual void setHeight(int32_t height) = 0;
     [[nodiscard]] virtual Matrix<RGB> getRGBMatrix() const = 0; // 获取通用的RGB数据
-    virtual void setRGBMatrix(const Matrix<RGB>&) = 0; // 获取通用的RGB数据
+    virtual void setRGBMatrix(const Matrix<RGB>&) = 0; // 设置通用的RGB数据
 };
 
 NAME_SPACE_END()

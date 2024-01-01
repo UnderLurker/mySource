@@ -5,6 +5,7 @@
 
 #include "bmp.h"
 #include "jpeg.h"
+#include "png.h"
 #define TEST(methodName) void methodName()
 
 using namespace std;
@@ -115,13 +116,20 @@ TEST(jpeg2jpeg)
     cout << dec << clock() - startTime << "ms" << endl;
 }
 
+TEST(png)
+{
+    PNGData pngData;
+    pngData.read("../img/Image/6.png");
+}
+
 int main()
 {
-    jpeg2bmp();
-    bmp2bmp();
-    jpeg2bmpGray();
-    bmp2bmpGray();
-    bmp2jpeg();
-    jpeg2jpeg();
+     jpeg2bmp();
+     bmp2bmp();
+     jpeg2bmpGray();
+     bmp2bmpGray();
+     bmp2jpeg();
+     jpeg2jpeg();
+//    png();
     return 0;
 }

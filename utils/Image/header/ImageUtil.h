@@ -22,10 +22,13 @@ enum ImageStatus {
     SUCCESS,            // 成功
     ERROR_UNKNOWN,      // 未知错误
     ERROR_NULLPTR,      // 空指针错误
+    ERROR_LIMIT,        // 数值范围错误
+    ERROR_FILE_FORMAT,  // 文件格式错误
     ERROR_FILE_OPERATOR,// 文件操作错误
     ERROR_WRITE,        // 文件写入失败
     ERROR_FILE_ENCODE,  // 文件编码错误
     ERROR_FILE_DECODE,  // 文件解码错误
+    ERROR_ENUM,         // 错误枚举
     ERROR_BMP_HEAD,     // BMP头部失败
     ERROR_BMP_PALETTE,  // BMP调色板失败
     ERROR_JPEG_SOI,
