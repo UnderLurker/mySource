@@ -512,8 +512,88 @@ void sPLTChunk::paletteEntryProcess(fstream& file, PaletteEntry& entry)
     entry.alpha = color;
 }
 
+ImageStatus eXIfChunk::decode(fstream& file, uint32_t length)
+{
+    try{
+        file.seekg(length, ios::cur);
+        file.read((char*)&crc, sizeof(crc));
+        convertSmall32(crc.crc);
+    }catch(...){
+        return ERROR_UNKNOWN;
+    }
+    return SUCCESS;
+}
 
+ImageStatus tIMEChunk::decode(fstream& file, uint32_t length)
+{
+    try{
+        file.read((char*)&year, sizeof(year));
+        file.read((char*)&month, sizeof(month));
+        file.read((char*)&day, sizeof(day));
+        file.read((char*)&hour, sizeof(hour));
+        file.read((char*)&minute, sizeof(minute));
+        file.read((char*)&second, sizeof(second));
+        file.read((char*)&crc, sizeof(crc));
+        convertSmall16(year);
+        convertSmall32(crc.crc);
+    }catch(...){
+        return ERROR_UNKNOWN;
+    }
+    return SUCCESS;
+}
 
+ImageStatus acTLChunk::decode(fstream& file, uint32_t length)
+{
+    try{
+        file.read((char*)&_data, sizeof(_data));
+        file.read((char*)&crc, sizeof(crc));
+        convertSmall32(_data.numFrames);
+        convertSmall32(_data.numPlays);
+        convertSmall32(crc.crc);
+    }catch(...){
+        return ERROR_UNKNOWN;
+    }
+    return SUCCESS;
+}
+
+ImageStatus fcTLChunk::decode(fstream& file, uint32_t length)
+{
+    try{
+        file.read((char*)&_data, sizeof(_data));
+        file.read((char*)&disposeOp, sizeof(disposeOp));
+        file.read((char*)&blendOp, sizeof(blendOp));
+        file.read((char*)&crc, sizeof(crc));
+        convertSmall32(_data.sequenceNumber);
+        convertSmall32(_data.width);
+        convertSmall32(_data.height);
+        convertSmall32(_data.offsetX);
+        convertSmall32(_data.offsetY);
+        convertSmall16(_data.delayNum);
+        convertSmall16(_data.delayDen);
+        convertSmall32(crc.crc);
+    }catch(...){
+        return ERROR_UNKNOWN;
+    }
+    return SUCCESS;
+}
+
+ImageStatus fdATChunk::decode(fstream& file, uint32_t length)
+{
+    try{
+        file.read((char*)&sequenceNumber, sizeof(sequenceNumber));
+        uint32_t len = length - sizeof(sequenceNumber);
+        frameData = make_unique<uint8_t[]>(len);
+        for (uint32_t i = 0; i < len; i++) {
+            frameData[i] = file.get();
+        }
+        file.read((char*)&crc, sizeof(crc));
+        convertSmall32(sequenceNumber);
+        convertSmall32(crc.crc);
+    }catch(...){
+        return ERROR_UNKNOWN;
+    }
+    return SUCCESS;
+}
 
 
 
@@ -606,6 +686,21 @@ ImageStatus PNGData::decodeProcess(fstream& file, const ChunkHead& head)
 			break;
         case sPLT:
             status = _sPLT.decode(file, head.length);
+            break;
+        case eXIf:
+            status = _eXIf.decode(file, head.length);
+            break;
+        case tIME:
+            status = _tIME.decode(file, head.length);
+            break;
+        case acTL:
+            status = _acTL.decode(file, head.length);
+            break;
+        case fcTL:
+            status = _fcTL.decode(file, head.length);
+            break;
+        case fdAT:
+            status = _fdAT.decode(file, head.length);
             break;
 		case IEND:
 		case IDAT:

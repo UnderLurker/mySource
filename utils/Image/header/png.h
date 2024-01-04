@@ -18,11 +18,15 @@ enum ChunkType {
 	IEND = 0x49454E44,
 	IHDR = 0x49484452,
 	PLTE = 0x504C5445,
+    acTL = 0x6163544C,
 	bKGD = 0x624B4744,
 	cHRM = 0x6348524D,
 	cICP = 0x63494350,
 	cLLi = 0x634C4C69,
-	gAMA = 0x67414D41,
+    eXIf = 0x65584966,
+    fcTL = 0x6663544C,
+    fdAT = 0x66644154,
+    gAMA = 0x67414D41,
 	hIST = 0x68495354,
 	iCCP = 0x69434350,
 	iTXt = 0x69545874,
@@ -32,6 +36,7 @@ enum ChunkType {
     sPLT = 0x73504C54,
     sRGB = 0x73524742,
 	tEXt = 0x74455874,
+    tIME = 0x74494D45,
 	tRNS = 0x74524E53,
 	zTXt = 0x7A545874,
 };
@@ -311,9 +316,55 @@ private:
     static void paletteEntryProcess(fstream& file, PaletteEntry& entry);
 };
 
+class eXIfChunk : public Chunk {
+public:
+    ImageStatus decode(fstream& file, uint32_t length) override;
+};
 
+class tIMEChunk : public Chunk {
+public:
+    uint16_t year;
+    uint8_t month;
+    uint8_t day;
+    uint8_t hour;
+    uint8_t minute;
+    uint8_t second;
+    ImageStatus decode(fstream& file, uint32_t length) override;
+};
 
+class acTLChunk : public Chunk {
+    struct acTLData {
+        uint32_t numFrames;
+        uint32_t numPlays;
+    };
+public:
+    acTLData _data;
+    ImageStatus decode(fstream& file, uint32_t length) override;
+};
 
+class fcTLChunk : public Chunk {
+    struct fcTLData {
+        uint32_t sequenceNumber;
+        uint32_t width;
+        uint32_t height;
+        uint32_t offsetX;
+        uint32_t offsetY;
+        uint16_t delayNum;
+        uint16_t delayDen;
+    };
+public:
+    uint8_t disposeOp;
+    uint8_t blendOp;
+    fcTLData _data;
+    ImageStatus decode(fstream& file, uint32_t length) override;
+};
+
+class fdATChunk : public Chunk {
+public:
+    uint32_t sequenceNumber;
+    unique_ptr<uint8_t[]> frameData;
+    ImageStatus decode(fstream& file, uint32_t length) override;
+};
 
 
 
@@ -340,6 +391,11 @@ class PNGData : public Image {
 	hISTChunk _hIST;
 	pHYsChunk _pHYs;
     sPLTChunk _sPLT;
+    eXIfChunk _eXIf;
+    tIMEChunk _tIME;
+    acTLChunk _acTL;
+    fcTLChunk _fcTL;
+    fdATChunk _fdAT;
 public:
 	explicit PNGData() = default;
 	~PNGData() override {
