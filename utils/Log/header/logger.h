@@ -38,5 +38,9 @@ public:
     static LogType LogLevel;
 };
 
+
+
+
+
 NAME_SPACE_END()
 #endif //!_LOGGER_
