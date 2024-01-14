@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <fstream>
+#include <list>
 #include <vector>
 
 #include "ImageBase.h"
@@ -13,6 +14,20 @@
 // https://www.w3.org/TR/png-3
 
 NAME_SPACE_START(myUtil)
+#define _DEBUG_
+#define TEMP_LOG(fmt, ...) printf(fmt, ##__VA_ARGS__);
+
+static map<uint32_t, string> typeMap {
+    { 0x49444154, "IDAT" }, { 0x49454E44, "IEND" }, { 0x49484452, "IHDR" },
+    { 0x504C5445, "PLTE" }, { 0x6163544C, "acTL" }, { 0x624B4744, "bKGD" },
+    { 0x6348524D, "cHRM" }, { 0x63494350, "cICP" }, { 0x634C4C69, "cLLi" },
+    { 0x65584966, "eXIf" }, { 0x6663544C, "fcTL" }, { 0x66644154, "fdAT" },
+    { 0x67414D41, "gAMA" }, { 0x68495354, "hIST" }, { 0x69434350, "iCCP" },
+    { 0x69545874, "iTXt" }, { 0x6D444376, "mDCv" }, { 0x70485973, "pHYs" },
+    { 0x73424954, "sBIT" }, { 0x73504C54, "sPLT" }, { 0x73524742, "sRGB" },
+    { 0x74455874, "tEXt" }, { 0x74494D45, "tIME" }, { 0x74524E53, "tRNS" },
+    { 0x7A545874, "zTXt" },
+};
 
 enum ChunkType {
     IDAT = 0x49444154,
@@ -407,12 +422,25 @@ public:
     ImageStatus decode(fstream& file, uint32_t length) override;
 };
 
+class IDATChunk : public Chunk {
+public:
+    unique_ptr<uint8_t[]> _data { nullptr };
+    ImageStatus decode(fstream& file, uint32_t length) override;
+};
+
+class IENDChunk : public Chunk {
+public:
+    ImageStatus decode(fstream& file, uint32_t length) override;
+};
+
 class PNGData : public Image {
     int32_t _width { 0 };
     int32_t _height { 0 };
     Matrix<RGB>* _rgb { nullptr };
     IHDRChunk _IHDR;
     PLETChunk _PLTE;
+    IENDChunk _IEND;
+    list<IDATChunk> _IDAT;
     tRNSChunk _tRNS;
     cHRMChunk _cHRM;
     gAMAChunk _gAMA;
@@ -434,7 +462,6 @@ class PNGData : public Image {
     acTLChunk _acTL;
     fcTLChunk _fcTL;
     fdATChunk _fdAT;
-
 public:
     explicit PNGData() = default;
     ~PNGData() override

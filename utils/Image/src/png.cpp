@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <fstream>
+#include <sstream>
 #include <windef.h>
 
 #include "ImageUtil.h"
@@ -610,6 +611,32 @@ ImageStatus fdATChunk::decode(fstream& file, uint32_t length)
     return SUCCESS;
 }
 
+ImageStatus IDATChunk::decode(fstream& file, uint32_t length)
+{
+    try {
+        _data = make_unique<uint8_t[]>(length);
+        for (uint32_t i = 0; i < length; i++) {
+            _data[i] = file.get();
+        }
+        file.read((char*)&crc, sizeof(crc));
+        convertSmall32(crc.crc);
+    } catch (...) {
+        return ERROR_UNKNOWN;
+    }
+    return SUCCESS;
+}
+
+ImageStatus IENDChunk::decode(fstream& file, uint32_t length)
+{
+    try {
+        file.read((char*)&crc, sizeof(crc));
+        convertSmall32(crc.crc);
+    } catch (...) {
+        return ERROR_UNKNOWN;
+    }
+    return SUCCESS;
+}
+
 ImageStatus PNGData::read(const char* filePath)
 {
     CHECK_NULL_RETURN(filePath, ERROR_NULLPTR)
@@ -624,6 +651,7 @@ ImageStatus PNGData::read(const char* filePath)
             file.read((char*)&head, sizeof(head));
             convertSmall32(head.length);
             convertSmall32(head.chunkType);
+            TEMP_LOG("chunkType:%s, length:%d\n", typeMap[head.chunkType].c_str(), head.length)
             if (decodeProcess(file, head) != SUCCESS)
                 return ERROR_FILE_DECODE;
         } while (head.chunkType != IEND && !file.eof());
@@ -710,11 +738,15 @@ ImageStatus PNGData::decodeProcess(fstream& file, const ChunkHead& head)
                 status = _fdAT.decode(file, head.length);
                 break;
             case IEND:
-            case IDAT:
-            default:
-                file.seekg(head.length + 4, ios::cur);
-                auto a = file.tellg();
+                status = _IEND.decode(file, head.length);
                 break;
+            case IDAT: {
+                _IDAT.emplace_back(IDATChunk());
+                status = _IDAT.back().decode(file, head.length);
+                break;
+            }
+            default:
+                return ERROR_UNKNOWN;
         }
     } catch (...) {
         return ERROR_UNKNOWN;

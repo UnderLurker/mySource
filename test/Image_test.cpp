@@ -124,12 +124,12 @@ TEST(png)
 
 int main()
 {
-     jpeg2bmp();
-     bmp2bmp();
-     jpeg2bmpGray();
-     bmp2bmpGray();
-     bmp2jpeg();
-     jpeg2jpeg();
-//    png();
+//     jpeg2bmp();
+//     bmp2bmp();
+//     jpeg2bmpGray();
+//     bmp2bmpGray();
+//     bmp2jpeg();
+//     jpeg2jpeg();
+    png();
     return 0;
 }
