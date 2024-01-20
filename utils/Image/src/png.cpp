@@ -252,7 +252,7 @@ ImageStatus mDCvChunk::decode(fstream& file, uint32_t length)
     return SUCCESS;
 }
 
-vector<mDCvChunk::Chromaticity> mDCvChunk::chromaticity()
+vector<mDCvChunk::Chromaticity> mDCvChunk::chromaticity() const
 {
     return {
         { _data.chromaticityX1 * 0.00002f, _data.chromaticityY1 * 0.00002f },

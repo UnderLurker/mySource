@@ -269,7 +269,7 @@ public:
     };
     mDCvData _data {};
     ImageStatus decode(fstream& file, uint32_t length) override;
-    vector<Chromaticity> chromaticity();
+    vector<Chromaticity> chromaticity() const;
     Chromaticity whitePoint();
     float maxLum();
     float minLum();

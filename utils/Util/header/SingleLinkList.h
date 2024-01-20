@@ -93,6 +93,8 @@ public:
     void push(const T& value);
     void pop();
     [[nodiscard]] uint32_t length() const { return _length; }
+    [[nodiscard]] bool empty() const { return _length == 0; }
+    [[nodiscard]] bool fill() const { return _length == _maxLength; }
     [[nodiscard]] uint32_t maxLength() const { return _maxLength; }
     void resize(uint32_t size) { _maxLength = size; }
     SingleLinkNode<T>& front() const { return *_head; }

@@ -3,6 +3,7 @@
 #include <locale>
 #include <sstream>
 
+#include "logger.h"
 #include "bmp.h"
 #include "jpeg.h"
 #include "png.h"
@@ -122,6 +123,13 @@ TEST(png)
     pngData.read("../img/Image/6.png");
 }
 
+void threadTest(const string& a){
+    thread th([&](){
+        CLog::push("abc" + a);
+    });
+    th.join();
+}
+
 int main()
 {
 //     jpeg2bmp();
@@ -130,6 +138,11 @@ int main()
 //     bmp2bmpGray();
 //     bmp2jpeg();
 //     jpeg2jpeg();
-    png();
+//    png();
+//    CLog log;
+    for (int i=0;i<13;i++){
+        threadTest(string(1, '0'+i));
+    }
+    CLog::end();
     return 0;
 }
