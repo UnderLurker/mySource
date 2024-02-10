@@ -2,8 +2,8 @@
 // Created by 常笑男 on 2023/12/28.
 //
 
-#ifndef MAIN_JPEG_H
-#define MAIN_JPEG_H
+#ifndef _IMAGE_JPEG_
+#define _IMAGE_JPEG_
 
 #include "Util.h"
 #include "ImageUtil.h"
@@ -175,4 +175,4 @@ private:
 
 NAME_SPACE_END()
 
-#endif // MAIN_JPEG_H
+#endif // _IMAGE_JPEG_

@@ -28,6 +28,7 @@ enum ImageStatus {
     ERROR_WRITE,        // 文件写入失败
     ERROR_FILE_ENCODE,  // 文件编码错误
     ERROR_FILE_DECODE,  // 文件解码错误
+    ERROR_STRUCT_NOT_DEFINE, // 结构体未定义
     ERROR_ENUM,         // 错误枚举
     ERROR_BMP_HEAD,     // BMP头部失败
     ERROR_BMP_PALETTE,  // BMP调色板失败

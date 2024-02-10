@@ -8,6 +8,7 @@
 
 #include "ImageBase.h"
 #include "ImageUtil.h"
+#include "ImageConst.h"
 #include "Matrix.h"
 #include "Util.h"
 
@@ -16,18 +17,6 @@
 NAME_SPACE_START(myUtil)
 #define _DEBUG_
 #define TEMP_LOG(fmt, ...) printf(fmt, ##__VA_ARGS__);
-
-static map<uint32_t, string> typeMap {
-    { 0x49444154, "IDAT" }, { 0x49454E44, "IEND" }, { 0x49484452, "IHDR" },
-    { 0x504C5445, "PLTE" }, { 0x6163544C, "acTL" }, { 0x624B4744, "bKGD" },
-    { 0x6348524D, "cHRM" }, { 0x63494350, "cICP" }, { 0x634C4C69, "cLLi" },
-    { 0x65584966, "eXIf" }, { 0x6663544C, "fcTL" }, { 0x66644154, "fdAT" },
-    { 0x67414D41, "gAMA" }, { 0x68495354, "hIST" }, { 0x69434350, "iCCP" },
-    { 0x69545874, "iTXt" }, { 0x6D444376, "mDCv" }, { 0x70485973, "pHYs" },
-    { 0x73424954, "sBIT" }, { 0x73504C54, "sPLT" }, { 0x73524742, "sRGB" },
-    { 0x74455874, "tEXt" }, { 0x74494D45, "tIME" }, { 0x74524E53, "tRNS" },
-    { 0x7A545874, "zTXt" },
-};
 
 enum ChunkType {
     IDAT = 0x49444154,
@@ -57,6 +46,18 @@ enum ChunkType {
     zTXt = 0x7A545874,
 };
 
+static map<uint32_t, string> typeMap {
+    { IDAT, "IDAT" }, { IEND, "IEND" }, { IHDR, "IHDR" },
+    { PLTE, "PLTE" }, { acTL, "acTL" }, { bKGD, "bKGD" },
+    { cHRM, "cHRM" }, { cICP, "cICP" }, { cLLi, "cLLi" },
+    { eXIf, "eXIf" }, { fcTL, "fcTL" }, { fdAT, "fdAT" },
+    { gAMA, "gAMA" }, { hIST, "hIST" }, { iCCP, "iCCP" },
+    { iTXt, "iTXt" }, { mDCv, "mDCv" }, { pHYs, "pHYs" },
+    { sBIT, "sBIT" }, { sPLT, "sPLT" }, { sRGB, "sRGB" },
+    { tEXt, "tEXt" }, { tIME, "tIME" }, { tRNS, "tRNS" },
+    { zTXt, "zTXt" },
+};
+
 void convertSmall16(uint16_t& value);
 void convertSmall32(uint32_t& value);
 
@@ -78,8 +79,8 @@ class Chunk {
 
 public:
     CRC crc {};
-    virtual ImageStatus decode(fstream& file, uint32_t length) = 0;
-    uint32_t CRC()
+    virtual ImageStatus decode(fstream& file, uint32_t length) { return SUCCESS; }
+    uint32_t CRC() const
     {
         return crc.crc;
     }
@@ -434,6 +435,8 @@ public:
 };
 
 class PNGData : public Image {
+    string _filePath;
+    uint32_t _formatFlag;
     int32_t _width { 0 };
     int32_t _height { 0 };
     Matrix<RGB>* _rgb { nullptr };
@@ -441,67 +444,34 @@ class PNGData : public Image {
     PLETChunk _PLTE;
     IENDChunk _IEND;
     list<IDATChunk> _IDAT;
-    tRNSChunk _tRNS;
-    cHRMChunk _cHRM;
-    gAMAChunk _gAMA;
-    iCCPChunk _iCCP;
-    sBITChunk _sBIT;
-    sRGBChunk _sRGB;
-    cICPChunk _cICP;
-    mDCvChunk _mDCv;
-    cLLiChunk _cLLi;
-    tEXtChunk _tEXt;
-    zTXtChunk _zTXt;
-    iTXtChunk _iTXt;
-    bKGDChunk _bKGD;
-    hISTChunk _hIST;
-    pHYsChunk _pHYs;
-    sPLTChunk _sPLT;
-    eXIfChunk _eXIf;
-    tIMEChunk _tIME;
-    acTLChunk _acTL;
-    fcTLChunk _fcTL;
-    fdATChunk _fdAT;
+    unordered_map<uint32_t, Chunk*> _ancillaryChunk;
 public:
     explicit PNGData() = default;
     ~PNGData() override
     {
         if (_rgb)
             delete _rgb;
+        for(auto& item : _ancillaryChunk){
+            if (item.second)
+                delete item.second;
+            item.second = nullptr;
+        }
     }
+
 
     ImageStatus read(const char* filePath) override;
-    ImageStatus write(const char* filePath) override
-    {
-        return SUCCESS;
-    }
+    ImageStatus write(const char* filePath) override { return SUCCESS; }
 
-    [[nodiscard]] int32_t getWidth() const override
-    {
-        return _width;
-    }
-    [[nodiscard]] int32_t getHeight() const override
-    {
-        return _height;
-    }
-    void setWidth(int32_t width) override
-    {
-        _width = width;
-    }
-    void setHeight(int32_t height) override
-    {
-        _height = height;
-    }
-    [[nodiscard]] Matrix<RGB> getRGBMatrix() const override
-    {
-        return *_rgb;
-    } // 获取通用的RGB数据
-    void setRGBMatrix(const Matrix<RGB>& rgb) override
-    {
-        *_rgb = rgb;
-    } // 设置通用的RGB数据
+    [[nodiscard]] int32_t getWidth() const override { return _width; }
+    [[nodiscard]] int32_t getHeight() const override { return _height; }
+    void setWidth(int32_t width) override { _width = width; }
+    void setHeight(int32_t height) override { _height = height; }
+    [[nodiscard]] Matrix<RGB> getRGBMatrix() const override { return *_rgb; } // 获取通用的RGB数据
+    void setRGBMatrix(const Matrix<RGB>& rgb) override { *_rgb = rgb; } // 设置通用的RGB数据
 private:
+    [[maybe_unused]] bool checkFormat() override { return _formatFlag == PNG_FLAG; }
     ImageStatus decodeProcess(fstream& file, const ChunkHead& head);
+    ImageStatus ancillaryChunkFactory(fstream& file, const ChunkHead& head);
 };
 
 NAME_SPACE_END()

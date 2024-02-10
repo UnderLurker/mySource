@@ -2,8 +2,8 @@
 #include <cstdint>
 #include <fstream>
 #include <utility>
-#ifndef _IMAGE_
-#define _IMAGE_
+#ifndef _IMAGE_BMP_
+#define _IMAGE_BMP_
 
 #include <iostream>
 #include <string>
@@ -109,4 +109,4 @@ private:
 
 NAME_SPACE_END()
 
-#endif //!_IMAGE_
+#endif //!_IMAGE_BMP_

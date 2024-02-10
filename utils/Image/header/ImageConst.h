@@ -8,6 +8,12 @@
 #include "Util.h"
 
 NAME_SPACE_START(myUtil)
+
+#ifdef _IMAGE_PNG_
+static uint32_t PNG_FLAG = 0x474E5089;
+#endif
+
+#ifdef _IMAGE_JPEG_
 static uint8_t YQualityTable[64] = {
     16, 11, 10, 16, 24,  40,  51,  61,
     12, 12, 14, 19, 26,  58,  60,  55,
@@ -136,6 +142,7 @@ enum JPEGPType {
     COM = 0xFE,  // 注释
     FLAG = 0xFF  // 开始
 };
+#endif
 
 enum Operator{
     Sobel		=0,
@@ -145,6 +152,7 @@ enum Operator{
     Canny		=4
 };
 
+#ifdef _IMAGE_BMP_
 /* Bitmap Header, 54 Bytes  */
 static unsigned char BmpHeader[54] =
     {
@@ -153,6 +161,7 @@ static unsigned char BmpHeader[54] =
         0x00, 0x00, 0x60, 0xCD, 0x04, 0x00, 0x23, 0x2E, 0x00, 0x00, 0x23, 0x2E, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00
     };
+#endif
 
 static double Prewitt1[3][3]={{-1,-1,-1},{0,0,0},{1,1,1}};
 static double Prewitt2[3][3]={{-1,0,1},{-1,0,1},{-1,0,1}};

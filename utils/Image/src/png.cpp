@@ -10,6 +10,14 @@
 
 NAME_SPACE_START(myUtil)
 
+#define ANCILLARY_CHUNK_FACTORY(chunkName)              \
+    if (chunkName == head.chunkType) {                  \
+        Chunk* chunk = new chunkName##Chunk();          \
+        auto result = chunk->decode(file, head.length); \
+        _ancillaryChunk[chunkName] = chunk;             \
+        return result;                                  \
+    }
+
 void convertSmall16(uint16_t& value)
 {
     uint16_t value1 = value & 0x00ff;
@@ -644,7 +652,10 @@ ImageStatus PNGData::read(const char* filePath)
     if (file.fail())
         return ERROR_FILE_OPERATOR;
     try {
-        file.seekg(8, ios::beg);
+        file.read((char*)&_formatFlag, sizeof(_formatFlag));
+        if (!checkFormat())
+            return ERROR_FILE_FORMAT;
+        file.seekg(4, ios::cur); // formatFlag's CRC
         ChunkHead head {};
         do {
             head.reset();
@@ -674,69 +685,6 @@ ImageStatus PNGData::decodeProcess(fstream& file, const ChunkHead& head)
             case PLTE:
                 status = _PLTE.decode(file, head.length);
                 break;
-            case tRNS:
-                status = _tRNS.decode(file, head.length);
-                break;
-            case cHRM:
-                status = _cHRM.decode(file, head.length);
-                break;
-            case gAMA:
-                status = _gAMA.decode(file, head.length);
-                break;
-            case iCCP:
-                status = _iCCP.decode(file, head.length);
-                break;
-            case sBIT:
-                status = _sBIT.decode(file, head.length);
-                break;
-            case sRGB:
-                status = _sRGB.decode(file, head.length);
-                break;
-            case cICP:
-                status = _cICP.decode(file, head.length);
-                break;
-            case mDCv:
-                status = _mDCv.decode(file, head.length);
-                break;
-            case cLLi:
-                status = _cLLi.decode(file, head.length);
-                break;
-            case tEXt:
-                status = _tEXt.decode(file, head.length);
-                break;
-            case zTXt:
-                status = _zTXt.decode(file, head.length);
-                break;
-            case iTXt:
-                status = _iTXt.decode(file, head.length);
-                break;
-            case bKGD:
-                status = _bKGD.decode(file, head.length);
-                break;
-            case hIST:
-                status = _hIST.decode(file, head.length);
-                break;
-            case pHYs:
-                status = _pHYs.decode(file, head.length);
-                break;
-            case sPLT:
-                status = _sPLT.decode(file, head.length);
-                break;
-            case eXIf:
-                status = _eXIf.decode(file, head.length);
-                break;
-            case tIME:
-                status = _tIME.decode(file, head.length);
-                break;
-            case acTL:
-                status = _acTL.decode(file, head.length);
-                break;
-            case fcTL:
-                status = _fcTL.decode(file, head.length);
-                break;
-            case fdAT:
-                status = _fdAT.decode(file, head.length);
-                break;
             case IEND:
                 status = _IEND.decode(file, head.length);
                 break;
@@ -746,11 +694,37 @@ ImageStatus PNGData::decodeProcess(fstream& file, const ChunkHead& head)
                 break;
             }
             default:
-                return ERROR_UNKNOWN;
+                return ancillaryChunkFactory(file, head);
         }
     } catch (...) {
         return ERROR_UNKNOWN;
     }
     return status;
+}
+
+ImageStatus PNGData::ancillaryChunkFactory(fstream& file, const ChunkHead& head)
+{
+    ANCILLARY_CHUNK_FACTORY(tRNS)
+    ANCILLARY_CHUNK_FACTORY(cHRM)
+    ANCILLARY_CHUNK_FACTORY(gAMA)
+    ANCILLARY_CHUNK_FACTORY(iCCP)
+    ANCILLARY_CHUNK_FACTORY(sBIT)
+    ANCILLARY_CHUNK_FACTORY(sRGB)
+    ANCILLARY_CHUNK_FACTORY(cICP)
+    ANCILLARY_CHUNK_FACTORY(mDCv)
+    ANCILLARY_CHUNK_FACTORY(cLLi)
+    ANCILLARY_CHUNK_FACTORY(tEXt)
+    ANCILLARY_CHUNK_FACTORY(zTXt)
+    ANCILLARY_CHUNK_FACTORY(iTXt)
+    ANCILLARY_CHUNK_FACTORY(bKGD)
+    ANCILLARY_CHUNK_FACTORY(hIST)
+    ANCILLARY_CHUNK_FACTORY(pHYs)
+    ANCILLARY_CHUNK_FACTORY(sPLT)
+    ANCILLARY_CHUNK_FACTORY(eXIf)
+    ANCILLARY_CHUNK_FACTORY(tIME)
+    ANCILLARY_CHUNK_FACTORY(acTL)
+    ANCILLARY_CHUNK_FACTORY(fcTL)
+    ANCILLARY_CHUNK_FACTORY(fdAT)
+    return ERROR_STRUCT_NOT_DEFINE;
 }
 NAME_SPACE_END()
