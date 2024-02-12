@@ -1,8 +1,10 @@
-#include "Util.h"
-#include "Compress.h"
+#include "compress.h"
+
 #include <cstdint>
 #include <exception>
 #include <stdint.h>
+
+#include "Util.h"
 NAME_SPACE_START(myUtil)
 
 void ZIP::ProcessStart(){

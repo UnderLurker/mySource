@@ -1,9 +1,12 @@
 cmake_minimum_required(VERSION 3.5.0)
 project(DataCompress CXX)
 set(UTIL_PATH "..")
-file(GLOB SOURCE_FILE src/Compress.cpp)
+#file(GLOB SOURCE_FILE src/compress.cpp)
 
-add_library(dataCompress_static STATIC ${SOURCE_FILE})
+add_library(dataCompress_static STATIC src/compress.cpp
+    src/zlib.cpp
+    src/LZ77.cpp
+    src/huffman.cpp)
 
 include_directories(header)
 include_directories(${UTIL_PATH}/Util/header)
