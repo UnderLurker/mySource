@@ -10,8 +10,9 @@
 
 #include <list>
 
-#define SLIDE_WINDOW_LENGTH 8
-#define FORWARD_BUFFER_LENGTH 4
+#define SLIDE_WINDOW_LENGTH 6
+#define FORWARD_BUFFER_LENGTH 3
+//#define LZ77_DEBUG
 
 NAME_SPACE_START(myUtil)
 
@@ -22,34 +23,44 @@ struct DicCode {
     // 匹配的长度
     uint32_t _y;
     T* _valStart;
-    T* _valEnd;
 };
 
-class LZ77 : public CompressBase<uint8_t> {
+template<typename T = uint8_t>
+class LZ77 : public CompressBase<T> {
 public:
     LZ77() = default;
-    explicit LZ77(const list<DicCode<uint8_t>>& dic) : _dicQueue(dic), CompressBase<uint8_t>() {}
-    ~LZ77() {
-        reset();
-        for(auto& item : _dicQueue) {
-            if ((item._valEnd - item._valStart) > sizeof(uint8_t)) {
-                delete[] item._valStart;
-                item._valStart = item._valEnd = nullptr;
-            } else {
-                delete item._valStart;
-                item._valStart = item._valEnd = nullptr;
-            }
-        }
-    }
-    CompressStatus decode(const uint8_t* source, uint32_t sLength, uint8_t* result, uint32_t& rLength) override;
-    CompressStatus encode(const uint8_t* source, uint32_t sLength, uint8_t* result, uint32_t& rLength) override;
+    LZ77(const LZ77&) = delete;
+    LZ77(const LZ77&&) = delete;
+    explicit LZ77(const list<DicCode<T>>& dic);
+    LZ77& operator=(const LZ77&) = delete;
+    ~LZ77();
+    /**
+     * decode source code with LZ77 to result
+     * @param source unused
+     * @param sLength unused
+     * @param result
+     * @param rLength
+     * @return status of decode
+     */
+    CompressStatus decode(const T* source, uint32_t sLength, T*& result, uint32_t& rLength) override;
+    /**
+     * encode source code with LZ77 to result,
+     * @param source input
+     * @param sLength length of source
+     * @param result unused
+     * @param rLength unused
+     * @return status of encode
+     */
+    CompressStatus encode(const T* source, uint32_t sLength, T*& result, uint32_t& rLength) override;
+    CompressStatus encode(const string& filePath, T*& result, uint32_t& rLength) override;
 
-    void setDicQueue(const list<DicCode<uint8_t>>& dic) { _dicQueue = dic; }
-    list<DicCode<uint8_t>> getDicQueue() const { return _dicQueue; }
+    void setDicQueue(const list<DicCode<T>>& dic) { _dicQueue = dic; }
+    list<DicCode<T>> getDicQueue() const { return _dicQueue; }
 private:
     void reset();
+    uint32_t getDecodeLength() const;
 private:
-    list<DicCode<uint8_t>> _dicQueue;
+    list<DicCode<T>> _dicQueue;
     uint32_t _windowStart { 0 };
     uint32_t _windowEnd { 0 };
     uint32_t _bufferStart { 0 };
@@ -58,4 +69,5 @@ private:
 
 NAME_SPACE_END()
 
+#include "LZ77.inl"
 #endif // !_LZ77_H

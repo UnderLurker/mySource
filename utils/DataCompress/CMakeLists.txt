@@ -4,8 +4,6 @@ set(UTIL_PATH "..")
 #file(GLOB SOURCE_FILE src/compress.cpp)
 
 add_library(dataCompress_static STATIC src/compress.cpp
-    src/zlib.cpp
-    src/LZ77.cpp
     src/huffman.cpp)
 
 include_directories(header)

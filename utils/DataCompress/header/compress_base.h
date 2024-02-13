@@ -21,14 +21,16 @@ enum CompressStatus {
     SUCCESS = 0,
     ERROR_DECODE,
     ERROR_ENCODE,
+    ERROR_NULLPTR,
     ERROR_UNKNOW
 };
 
 template<typename T>
 class CompressBase {
 public:
-    virtual CompressStatus decode(const T* source, uint32_t sLength, T* result, uint32_t& rLength) { return SUCCESS; }
-    virtual CompressStatus encode(const T* source, uint32_t sLength, T* result, uint32_t& rLength) { return SUCCESS; }
+    virtual CompressStatus decode(const T* source, uint32_t sLength, T*& result, uint32_t& rLength) { return SUCCESS; }
+    virtual CompressStatus encode(const T* source, uint32_t sLength, T*& result, uint32_t& rLength) { return SUCCESS; }
+    virtual CompressStatus encode(const string& filePath, T*& result, uint32_t& rLength) { return SUCCESS; }
 
     /**
      * Find the longest target string in the source string
@@ -38,7 +40,7 @@ public:
      * @param tLen target length
      * @return first is match length, second is place of begin in source
      */
-    virtual MatchResult LCS(const T* source, uint32_t sLen, const T* target, uint32_t tLen)
+    static MatchResult LCS(const T* source, uint32_t sLen, const T* target, uint32_t tLen)
     {
         assert(source != nullptr && target != nullptr);
         if (sLen == 0) return MatchResult { 0, 0 };
