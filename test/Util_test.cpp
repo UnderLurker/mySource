@@ -7,6 +7,7 @@
 #include <map>
 #include <utility>
 
+#include "heap.h"
 #include "RBTree.h"
 #include "SingleLinkList.h"
 #include "base64.h"
@@ -73,9 +74,51 @@ void singleLinkList() {
     }
 }
 
+void heapTest()
+{
+    vector<int> input { 5, 3, 10, 2, 1, 0, 8, 4 };
+    heap<int> a;
+    a.print();
+    for (int i = 10; i >= -5; i--) {
+        a.push_back(i);
+    }
+    a.pop_back();
+    a.push_back(-20);
+    a.print();
+    cout << "heap.begin:";
+    for (auto it = a.begin(); it != a.end(); ++it) {
+        cout << *it << " ";
+    }
+    cout << endl;
+    cout << "heap.: :";
+    for (auto item : a) {
+        cout << item << " ";
+    }
+    cout << endl;
+    cout << "heap.rbegin:";
+    for (auto it = a.rbegin(); it != a.rend(); it++) {
+        cout << *it << " ";
+    }
+    cout << endl;
+    a.erase(1);
+    a.print("erase 1");
+    a.erase(17);
+    a.print("erase 17");
+    a.erase(14);
+    a.print("erase 14");
+    a.erase(a.begin());
+    a.print("erase begin");
+    a.erase(a.end());
+    a.print("erase end");
+    a.erase(a.rbegin());
+    a.print("erase rbegin");
+    a.erase(a.rend());
+    a.print("erase rend");
+}
+
 int main(){
 
-    singleLinkList();
-
+//    singleLinkList();
+//    heapTest();
     return 0;
 }
