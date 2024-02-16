@@ -77,7 +77,7 @@ void singleLinkList() {
 void heapTest()
 {
     vector<int> input { 5, 3, 10, 2, 1, 0, 8, 4 };
-    heap<int> a;
+    heap<int, less<>> a;// or heap<int, greater<>> a
     a.print();
     for (int i = 10; i >= -5; i--) {
         a.push_back(i);
@@ -114,6 +114,8 @@ void heapTest()
     a.print("erase rbegin");
     a.erase(a.rend());
     a.print("erase rend");
+    a.pop_front();
+    a.print("pop_front");
 }
 
 int main(){

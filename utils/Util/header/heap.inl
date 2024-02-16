@@ -85,7 +85,11 @@ void heap<T, Compare>::push_back(const T& val)
     }
     _values[_curLength] = val;
     _curLength++;
-    balanceAll();
+    int32_t pos = _curLength / 2 - 1;
+    while(pos >= 0) {
+        balance(pos);
+        pos = (pos + 1) / 2 - 1;
+    }
 }
 
 template<typename T, typename Compare>
@@ -93,6 +97,15 @@ void heap<T, Compare>::pop_back()
 {
     if (_curLength <= 0) return;
     _curLength--;
+}
+
+template<typename T, typename Compare>
+void heap<T, Compare>::pop_front()
+{
+    if (_curLength <= 0) return;
+    swap(_values[_curLength - 1], _values[0]);
+    _curLength--;
+    balance(0);
 }
 
 template<typename T, typename Compare>

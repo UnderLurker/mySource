@@ -96,6 +96,7 @@ public:
 
     void push_back(const T& val);
     void pop_back();
+    void pop_front();
     void erase(uint32_t pos);
     void erase(iterator iter);
     void erase(reverse_iterator iter);
