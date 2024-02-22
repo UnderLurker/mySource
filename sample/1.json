@@ -1,0 +1,525 @@
+[
+  [
+    "achievements",
+    {
+      "version": 2,
+      "data": {
+        "vecHighlight": [
+          {
+            "strID": "PLAY_ON_A_SPECIAL_SEED",
+            "strName": "A Rare Realm",
+            "strDescription": "Some very special seeds can lead to unique and rewarding experiences. Can you find one?",
+            "bAchieved": true,
+            "rtUnlocked": 1687519732,
+            "strImage": "https://cdn.steamstatic.com/steamcommunity/public/images/apps/105600/ee1bf7006604da48b973c5d793c9b13b68ea7b63.jpg",
+            "bHidden": false,
+            "flMinProgress": 0,
+            "flCurrentProgress": 0,
+            "flMaxProgress": 0,
+            "flAchieved": 8
+          },
+          {
+            "strID": "STICKY_SITUATION",
+            "strName": "Sticky Situation",
+            "strDescription": "Survive the slime rain, where gelatinous organisms fall from the sky in droves.",
+            "bAchieved": true,
+            "rtUnlocked": 1671081386,
+            "strImage": "https://cdn.steamstatic.com/steamcommunity/public/images/apps/105600/d033499586f55832b7ca093fc07077c6d64dfb57.jpg",
+            "bHidden": false,
+            "flMinProgress": 0,
+            "flCurrentProgress": 0,
+            "flMaxProgress": 0,
+            "flAchieved": 39
+          },
+          {
+            "strID": "CHAMPION_OF_TERRARIA",
+            "strName": "Champion of Terraria",
+            "strDescription": "Defeat the Moon Lord.",
+            "bAchieved": true,
+            "rtUnlocked": 1671081257,
+            "strImage": "https://cdn.steamstatic.com/steamcommunity/public/images/apps/105600/c91f1b034b7ce14a89a377320eddaf29f18143f1.jpg",
+            "bHidden": false,
+            "flMinProgress": 0,
+            "flCurrentProgress": 0,
+            "flMaxProgress": 0,
+            "flAchieved": 25.399999618530273
+          },
+          {
+            "strID": "SLAYER_OF_WORLDS",
+            "strName": "Slayer of Worlds",
+            "strDescription": "Defeat every boss in Terraria.",
+            "bAchieved": true,
+            "rtUnlocked": 1671081257,
+            "strImage": "https://cdn.steamstatic.com/steamcommunity/public/images/apps/105600/98a47ac6d34f74f0f4d8651a929701bd2aa4ae42.jpg",
+            "bHidden": false,
+            "flMinProgress": 0,
+            "flCurrentProgress": 14,
+            "flMaxProgress": 14,
+            "flAchieved": 21.100000381469727
+          },
+          {
+            "strID": "STAR_DESTROYER",
+            "strName": "Star Destroyer",
+            "strDescription": "Defeat the four celestial towers of the moon.",
+            "bAchieved": true,
+            "rtUnlocked": 1671080959,
+            "strImage": "https://cdn.steamstatic.com/steamcommunity/public/images/apps/105600/da3155b9d24c435c244f7c099914586bac0b9853.jpg",
+            "bHidden": false,
+            "flMinProgress": 0,
+            "flCurrentProgress": 0,
+            "flMaxProgress": 0,
+            "flAchieved": 24
+          },
+          {
+            "strID": "OBSESSIVE_DEVOTION",
+            "strName": "Obsessive Devotion",
+            "strDescription": "Defeat the Ancient Cultist, fanatical leader of the dungeon coven.",
+            "bAchieved": true,
+            "rtUnlocked": 1671079743,
+            "strImage": "https://cdn.steamstatic.com/steamcommunity/public/images/apps/105600/b9436b13653d95dd441c8a96213e6a4dfbc6b72f.jpg",
+            "bHidden": false,
+            "flMinProgress": 0,
+            "flCurrentProgress": 0,
+            "flMaxProgress": 0,
+            "flAchieved": 27.399999618530273
+          },
+          {
+            "strID": "BIG_BOOTY",
+            "strName": "Big Booty",
+            "strDescription": "Unlock one of the dungeon's large, mysterious chests with a special key.",
+            "bAchieved": true,
+            "rtUnlocked": 1671078953,
+            "strImage": "https://cdn.steamstatic.com/steamcommunity/public/images/apps/105600/c7415e2bf7cbef15558b41c70bb1e306e5682e27.jpg",
+            "bHidden": false,
+            "flMinProgress": 0,
+            "flCurrentProgress": 0,
+            "flMaxProgress": 0,
+            "flAchieved": 22.600000381469727
+          },
+          {
+            "strID": "TIN_FOIL_HATTER",
+            "strName": "Tin-Foil Hatter",
+            "strDescription": "Triumph over a martian invasion, when beings from out of this world come to scramble your brains and probe you in uncomfortable places.",
+            "bAchieved": true,
+            "rtUnlocked": 1671078649,
+            "strImage": "https://cdn.steamstatic.com/steamcommunity/public/images/apps/105600/c3e587ad5f2dea6f18e3b1dbda3ae258f70edf9c.jpg",
+            "bHidden": false,
+            "flMinProgress": 0,
+            "flCurrentProgress": 0,
+            "flMaxProgress": 0,
+            "flAchieved": 25.399999618530273
+          },
+          {
+            "strID": "LIHZAHRDIAN_IDOL",
+            "strName": "Lihzahrdian Idol",
+            "strDescription": "Defeat Golem, the stone-faced ritualistic idol of the lihzahrd tribe.",
+            "bAchieved": true,
+            "rtUnlocked": 1671077466,
+            "strImage": "https://cdn.steamstatic.com/steamcommunity/public/images/apps/105600/3d8a29010ed3e22203cb4f0d52167c88f9c91a5c.jpg",
+            "bHidden": false,
+            "flMinProgress": 0,
+            "flCurrentProgress": 0,
+            "flMaxProgress": 0,
+            "flAchieved": 29.700000762939453
+          },
+          {
+            "strID": "DO_YOU_WANT_TO_SLAY_A_SNOWMAN",
+            "strName": "Do You Want to Slay a Snowman?",
+            "strDescription": "Triumph over the frost legion, a festive family of maniacal snowman mobsters.",
+            "bAchieved": true,
+            "rtUnlocked": 1671075770,
+            "strImage": "https://cdn.steamstatic.com/steamcommunity/public/images/apps/105600/f00bc8242a3fe3ba2c682ae50eaf9c9a14fe95be.jpg",
+            "bHidden": false,
+            "flMinProgress": 0,
+            "flCurrentProgress": 0,
+            "flMaxProgress": 0,
+            "flAchieved": 15
+          },
+          {
+            "strID": "ROBBING_THE_GRAVE",
+            "strName": "Robbing the Grave",
+            "strDescription": "Obtain a rare treasure from a difficult monster in the dungeon.",
+            "bAchieved": true,
+            "rtUnlocked": 1671074871,
+            "strImage": "https://cdn.steamstatic.com/steamcommunity/public/images/apps/105600/45884dee9cec706f27db75fbe4567da42d235836.jpg",
+            "bHidden": false,
+            "flMinProgress": 0,
+            "flCurrentProgress": 0,
+            "flMaxProgress": 0,
+            "flAchieved": 33.099998474121094
+          },
+          {
+            "strID": "SWORD_OF_THE_HERO",
+            "strName": "Sword of the Hero",
+            "strDescription": "Obtain a Terra Blade, forged from the finest blades of light and darkness.",
+            "bAchieved": true,
+            "rtUnlocked": 1671067095,
+            "strImage": "https://cdn.steamstatic.com/steamcommunity/public/images/apps/105600/4256db7a8c24e4bfa312b6768d1af19873883b02.jpg",
+            "bHidden": false,
+            "flMinProgress": 0,
+            "flCurrentProgress": 0,
+            "flMaxProgress": 0,
+            "flAchieved": 25.5
+          }
+        ],
+        "vecUnachieved": [
+          {
+            "strID": "JEEPERS_CREEPERS",
+            "strName": "Jeepers Creepers",
+            "strDescription": "Stumble into a spider cavern in the underground.",
+            "strImage": "https://cdn.steamstatic.com/steamcommunity/public/images/apps/105600/0797a8d84b529fe59b46539aa41ce33c493fc791.jpg",
+            "bAchieved": false,
+            "rtUnlocked": 0,
+            "flAchieved": 50.20000076293945,
+            "flMinProgress": 0,
+            "flCurrentProgress": 0,
+            "flMaxProgress": 0
+          },
+          {
+            "strID": "LUCKY_BREAK",
+            "strName": "Lucky Break",
+            "strDescription": "Survive a long fall with just a sliver of health remaining.",
+            "strImage": "https://cdn.steamstatic.com/steamcommunity/public/images/apps/105600/443d31c8693f52f10041b43e7fa7479aff01e827.jpg",
+            "bAchieved": false,
+            "rtUnlocked": 0,
+            "flAchieved": 43.400001525878906,
+            "flMinProgress": 0,
+            "flCurrentProgress": 0,
+            "flMaxProgress": 0
+          },
+          {
+            "strID": "GET_A_LIFE",
+            "strName": "Get a Life",
+            "strDescription": "Consume a life fruit, which grows in the thick of subterranean jungle grass.",
+            "strImage": "https://cdn.steamstatic.com/steamcommunity/public/images/apps/105600/c2292cc9fd71f85cb02134ab0b1b160eb58aac44.jpg",
+            "bAchieved": false,
+            "rtUnlocked": 0,
+            "flAchieved": 34.29999923706055,
+            "flMinProgress": 0,
+            "flCurrentProgress": 0,
+            "flMaxProgress": 0
+          },
+          {
+            "strID": "FUNKYTOWN",
+            "strName": "Funkytown",
+            "strDescription": "Build or encounter a glowing mushroom field above the surface.",
+            "strImage": "https://cdn.steamstatic.com/steamcommunity/public/images/apps/105600/5b65e9808d69d30266c14092c1437990fb4e5ed2.jpg",
+            "bAchieved": false,
+            "rtUnlocked": 0,
+            "flAchieved": 29.5,
+            "flMinProgress": 0,
+            "flCurrentProgress": 0,
+            "flMaxProgress": 0
+          },
+          {
+            "strID": "ROCK_BOTTOM",
+            "strName": "Rock Bottom",
+            "strDescription": "The only way is up!",
+            "strImage": "https://cdn.steamstatic.com/steamcommunity/public/images/apps/105600/9e055f21ae568e26c5931b5a38b43db9dd5c1b9d.jpg",
+            "bAchieved": false,
+            "rtUnlocked": 0,
+            "flAchieved": 26.600000381469727,
+            "flMinProgress": 0,
+            "flCurrentProgress": 0,
+            "flMaxProgress": 0
+          },
+          {
+            "strID": "FISH_OUT_OF_WATER",
+            "strName": "Fish Out of Water",
+            "strDescription": "Defeat Duke Fishron, mutant terror of the sea.",
+            "strImage": "https://cdn.steamstatic.com/steamcommunity/public/images/apps/105600/2f7c0c5af413c687f6d2d2c85535643cc946278f.jpg",
+            "bAchieved": false,
+            "rtUnlocked": 0,
+            "flAchieved": 22.899999618530273,
+            "flMinProgress": 0,
+            "flCurrentProgress": 0,
+            "flMaxProgress": 0
+          },
+          {
+            "strID": "SICK_THROW",
+            "strName": "Sick Throw",
+            "strDescription": "Obtain the Terrarian.",
+            "strImage": "https://cdn.steamstatic.com/steamcommunity/public/images/apps/105600/36664bb1b70a54c595b133845977fc1dd2f59c5e.jpg",
+            "bAchieved": false,
+            "rtUnlocked": 0,
+            "flAchieved": 22.299999237060547,
+            "flMinProgress": 0,
+            "flCurrentProgress": 0,
+            "flMaxProgress": 0
+          },
+          {
+            "strID": "IT_CAN_TALK",
+            "strName": "It Can Talk?!",
+            "strDescription": "Build a house in a mushroom biome and have the Truffle move in.",
+            "strImage": "https://cdn.steamstatic.com/steamcommunity/public/images/apps/105600/0bb0ed6b0027acbcdaecb0e36d1d86d8cbea9969.jpg",
+            "bAchieved": false,
+            "rtUnlocked": 0,
+            "flAchieved": 21.799999237060547,
+            "flMinProgress": 0,
+            "flCurrentProgress": 0,
+            "flMaxProgress": 0
+          },
+          {
+            "strID": "ARCHAEOLOGIST",
+            "strName": "Archaeologist",
+            "strDescription": "Kill Doctor Bones.",
+            "strImage": "https://cdn.steamstatic.com/steamcommunity/public/images/apps/105600/a7561e76c30e3abc7102234be1c52c08eff35961.jpg",
+            "bAchieved": false,
+            "rtUnlocked": 0,
+            "flAchieved": 21,
+            "flMinProgress": 0,
+            "flCurrentProgress": 0,
+            "flMaxProgress": 0
+          },
+          {
+            "strID": "BALEFUL_HARVEST",
+            "strName": "Baleful Harvest",
+            "strDescription": "Reach the 15th wave of a pumpkin moon, where evil lurks among the autumn harvest.",
+            "strImage": "https://cdn.steamstatic.com/steamcommunity/public/images/apps/105600/d7a84b961390a85af46ac6cc7764d15c39f59c3a.jpg",
+            "bAchieved": false,
+            "rtUnlocked": 0,
+            "flAchieved": 19.200000762939453,
+            "flMinProgress": 0,
+            "flCurrentProgress": 0,
+            "flMaxProgress": 0
+          },
+          {
+            "strID": "DYE_HARD",
+            "strName": "Dye Hard",
+            "strDescription": "Equip a dye in every possible dye slot.",
+            "strImage": "https://cdn.steamstatic.com/steamcommunity/public/images/apps/105600/2b67334a91be3f2fd00199db5c8a12251e5fd043.jpg",
+            "bAchieved": false,
+            "rtUnlocked": 0,
+            "flAchieved": 16.899999618530273,
+            "flMinProgress": 0,
+            "flCurrentProgress": 0,
+            "flMaxProgress": 0
+          },
+          {
+            "strID": "GET_ZENITH",
+            "strName": "Infinity +1 Sword",
+            "strDescription": "Obtain the Zenith, the culmination of a journey forged into the ultimate sword.",
+            "strImage": "https://cdn.steamstatic.com/steamcommunity/public/images/apps/105600/04b28a823ec8d9313de04825c8157a7692a0328f.jpg",
+            "bAchieved": false,
+            "rtUnlocked": 0,
+            "flAchieved": 16.299999237060547,
+            "flMinProgress": 0,
+            "flCurrentProgress": 0,
+            "flMaxProgress": 0
+          }
+        ],
+        "vecAchievedHidden": [],
+        "nTotal": 115,
+        "nAchieved": 78
+      }
+    }
+  ],
+  [
+    "achievementmap",
+    {
+      "version": 4,
+      "data": "[]"
+    }
+  ],
+  [
+    "usernews",
+    {
+      "version": 4,
+      "data": [
+        "COoHENfz7qkGGclEPAAAAHABIVI8EwMBABABKYCcAQAAAAAAUUFemWoeNtIzYIDM7qkG",
+        "COoHEKzym6kGGclEPAAAAHABIVI8EwMBABABKYCcAQAAAAAAUf2dp8ZjNHYzYPnlm6kG",
+        "COoHELP426gGGclEPAAAAHABIVI8EwMBABABKYCcAQAAAAAAUUgy8v3PM3YzYInJ26gG"
+      ]
+    }
+  ],
+  [
+    "gameactivity",
+    {
+      "version": 4,
+      "data": []
+    }
+  ],
+  [
+    "badge",
+    {
+      "version": 1,
+      "data": {
+        "dtNextRetry": null,
+        "strName": "",
+        "strIconURL": "https://cdn.cloudflare.steamstatic.com/steamcommunity/public/images/items/105600/",
+        "nLevel": 0,
+        "nMaxLevel": 5,
+        "nXP": 0,
+        "bMaxed": null,
+        "strNextLevelName": "Light's Bane",
+        "nNextLevelXP": 100,
+        "rgCards": [
+          {
+            "strName": "Minishark",
+            "strTitle": "Minishark",
+            "strImgURL": "https://community.cloudflare.steamstatic.com/economy/image/IzMF03bk9WpSBq-S-ekoE33L-iLqGFHVaU25ZzQNQcXdA3g5gMEPvUZZEfSaKqhBT8kyvCOETZfYgdQOxHYKmD4QPivs0XEwSOxiMdjOwRfw5-uAHXPyNTSdKXfbHgc5TOBZZDrc-DKj4-yWQzDKRb0uQgpRKfQB8mUaOsDfahEjlNlc7We3hUB4DCkhf8RBdVLunywVMO12yyJEdshWnSajIsXZ1F82aEJsW7riB7uTaImimXwjCx9jAeBEM53TtSfrLCb4bw",
+            "strArtworkURL": "https://cdn.cloudflare.steamstatic.com/steamcommunity/public/images/items/105600/70b78061f99a42dc32867d6d470c45aa575fb626.jpg",
+            "strMarketHash": "105600-Minishark",
+            "nOwned": 1
+          },
+          {
+            "strName": "The Guide",
+            "strTitle": "The Guide",
+            "strImgURL": "https://community.cloudflare.steamstatic.com/economy/image/IzMF03bk9WpSBq-S-ekoE33L-iLqGFHVaU25ZzQNQcXdA3g5gMEPvUZZEfSaKqhBT8kyvCOETZfYgdQOxHYKmD4QPivs0XEwUe1pc-zTyQH-5-uAHXPyNWbCeHiATwk-H7sLY27e_DT34b-WFjnIE-56Rg1Qf6JQozYaOMqJOEEjlNlc7We3hUB4DCkhf8RBdVLunywVMO12yyJEdshWnSajIsXZ1F82aEJsW7riB7uTaImimXwjCx9jAeBEM53TtSeVEtAxZQ",
+            "strArtworkURL": "https://cdn.cloudflare.steamstatic.com/steamcommunity/public/images/items/105600/e9598ca9bd9e7e8c46b335148a4da66492b9f51d.jpg",
+            "strMarketHash": "105600-The Guide",
+            "nOwned": 1
+          },
+          {
+            "strName": "Eye of Cthulhu",
+            "strTitle": "Eye of Cthulhu",
+            "strImgURL": "https://community.cloudflare.steamstatic.com/economy/image/IzMF03bk9WpSBq-S-ekoE33L-iLqGFHVaU25ZzQNQcXdA3g5gMEPvUZZEfSaKqhBT8kyvCOETZfYgdQOxHYKmD4QPivs0XEwQPxpc8TAiybvqfeBFGGxYTrFKCSESQ8wSLMMZ2HR_TqjsbnCQjqcQLokRw0ML6cB9WIaOs-IOUA5hYIO_yuomUM7HBk6dsBUTwa2y3MWbOhwkCcTdZgByiLzdZDdhwxmOUY7WuznUrrDbYT0l34jVR1uTKdMYY-L-Hu77tH8aC6MyiM7",
+            "strArtworkURL": "https://cdn.cloudflare.steamstatic.com/steamcommunity/public/images/items/105600/b075f005440eebb33364c6c409fbde9d7f496499.jpg",
+            "strMarketHash": "105600-Eye of Cthulhu (Trading Card)",
+            "nOwned": 1
+          },
+          {
+            "strName": "The Hallow",
+            "strTitle": "The Hallow",
+            "strImgURL": "https://community.cloudflare.steamstatic.com/economy/image/IzMF03bk9WpSBq-S-ekoE33L-iLqGFHVaU25ZzQNQcXdA3g5gMEPvUZZEfSaKqhBT8kyvCOETZfYgdQOxHYKmD4QPivs0XEwUe1pc-PHzAn0tqSEEXXwbWqcfnncS18xHOVbYDmN9jus4-iRRz7LEOp9RAkHfqdV8DUfOM6IPhZuysdVrCO6mFZ5GwQXe8hHdwrmnyFLN7x1myIRc5gBnSDydZCIhQ5iPEZuXLnlU-3FPoatlyZ3WkxiG75aOtyD_ijun-QUQZo",
+            "strArtworkURL": "https://cdn.cloudflare.steamstatic.com/steamcommunity/public/images/items/105600/0c3d0da2437bd7374927809260e098d4a8ed1785.jpg",
+            "strMarketHash": "105600-The Hallow",
+            "nOwned": 1
+          },
+          {
+            "strName": "The Underworld",
+            "strTitle": "The Underworld",
+            "strImgURL": "https://community.cloudflare.steamstatic.com/economy/image/IzMF03bk9WpSBq-S-ekoE33L-iLqGFHVaU25ZzQNQcXdA3g5gMEPvUZZEfSaKqhBT8kyvCOETZfYgdQOxHYKmD4QPivs0XEwUe1pc_7IxADptu2fEHCxYTrFKCSEGAs4TbdbY2uP_WWm7emVRmzAQ-woFwgNf_YCoTJKb87dOUZp0dEL8yuomUM7HBk6dsBUTwa2y3MWbOhwkCcTdZgByiLzdZDdhwxmOUY7WuznUrrDbYT0l34jVR1uTKdMYY-L-Hu77tH8aOijdmxE",
+            "strArtworkURL": "https://cdn.cloudflare.steamstatic.com/steamcommunity/public/images/items/105600/7dc9991e4750ae33365cb02f5a2707ee9bae4c2e.jpg",
+            "strMarketHash": "105600-The Underworld",
+            "nOwned": 0
+          },
+          {
+            "strName": "Night's Edge",
+            "strTitle": "Night's Edge",
+            "strImgURL": "https://community.cloudflare.steamstatic.com/economy/image/IzMF03bk9WpSBq-S-ekoE33L-iLqGFHVaU25ZzQNQcXdA3g5gMEPvUZZEfSaKqhBT8kyvCOETZfYgdQOxHYKmD4QPivs0XEwS-xrMN-DklLo6seJG3GxYTrFKCSEGVppReFcMmHe_THw5eWSEGnBR7p6RwEMe_MA9W1Bb5zaOBVogtFYriuomUM7HBk6dsBUTwa2y3MWbOhwkCcTdZgByiLzdZDdhwxmOUY7WuznUrrDbYT0l34jVR1uTKdMYY-L-Hu77tH8aP5rKuUw",
+            "strArtworkURL": "https://cdn.cloudflare.steamstatic.com/steamcommunity/public/images/items/105600/a3329214133708ad7ac45fdea869fc0f3dad1e78.jpg",
+            "strMarketHash": "105600-Night's Edge",
+            "nOwned": 0
+          },
+          {
+            "strName": "Glowing Mushrooms",
+            "strTitle": "Glowing Mushrooms",
+            "strImgURL": "https://community.cloudflare.steamstatic.com/economy/image/IzMF03bk9WpSBq-S-ekoE33L-iLqGFHVaU25ZzQNQcXdA3g5gMEPvUZZEfSaKqhBT8kyvCOETZfYgdQOxHYKmD4QPivs0XEwQuljL8LIx07WtPGFDnv4ZSSCJizYG1s1RbRcYDrf_meh5eqUET_MF-AkSl0GKacGp2xMbMCBNhRu09MP_jToxAptEBFucMpUdAqp9X0eMLoglXRHfc0DmSejdZLa1ltmahVuC7i2VujCa4ekkip1WktgF6cTN4zDvSHyuMmmfLGLL6qUWdeu",
+            "strArtworkURL": "https://cdn.cloudflare.steamstatic.com/steamcommunity/public/images/items/105600/feff9e9cf9d4494851969796084cab3a6f70b143.jpg",
+            "strMarketHash": "105600-Glowing Mushrooms",
+            "nOwned": 0
+          },
+          {
+            "strName": "Living Wood",
+            "strTitle": "Living Wood",
+            "strImgURL": "https://community.cloudflare.steamstatic.com/economy/image/IzMF03bk9WpSBq-S-ekoE33L-iLqGFHVaU25ZzQNQcXdA3g5gMEPvUZZEfSaKqhBT8kyvCOETZfYgdQOxHYKmD4QPivs0XEwSex6McXBizL0rubLFXn2bzKZfHGMTltsROZZZz3d92Gj7LmXSzjOF7p_R1gCe6QA8zcdPZqObBRpgZlLpWL-lUtvGhM6TcxLcQi-lyFGabskmHIRJp1RyiD0JMfd1F8zaBJqXr7mVLmTaNCimCgtDh0xGqQEJNXCrmPh-m1DJAkp",
+            "strArtworkURL": "https://cdn.cloudflare.steamstatic.com/steamcommunity/public/images/items/105600/d981d4b60493038d842305377faaa10d33d53964.jpg",
+            "strMarketHash": "105600-Living Wood",
+            "nOwned": 0
+          },
+          {
+            "strName": "Wyvern",
+            "strTitle": "Wyvern",
+            "strImgURL": "https://community.cloudflare.steamstatic.com/economy/image/IzMF03bk9WpSBq-S-ekoE33L-iLqGFHVaU25ZzQNQcXdA3g5gMEPvUZZEfSaKqhBT8kyvCOETZfYgdQOxHYKmD4QPivs0XEwUvx6PdnIhgz2oOWIQSLyPTGWf3mPRVxpHrpdYDqL_TSt5-6REWzPQLsoRFxRdKIAo2RINcCXf0xqwtVUuWG9hXt0Excvd5gTJVe9yyRAMr5zmyJGcZkBnXXwd5SNhVtkaURvC7-2UbTFZtKixiogQ1o5SLZcaYmt2e5mbA",
+            "strArtworkURL": "https://cdn.cloudflare.steamstatic.com/steamcommunity/public/images/items/105600/f6b1d19fa686d8945f9c46165d1c448abe08a25c.jpg",
+            "strMarketHash": "105600-Wyvern",
+            "nOwned": 1
+          }
+        ]
+      }
+    }
+  ],
+  [
+    "friends",
+    {
+      "version": 1,
+      "data": {
+        "your_info": {
+          "minutes_played": 4,
+          "minutes_played_forever": 12386,
+          "owned": true
+        },
+        "in_game": [],
+        "played_recently": [],
+        "played_ever": [
+          {
+            "steamid": "76561199054618046",
+            "minutes_played_forever": 16
+          },
+          {
+            "steamid": "76561199088022331",
+            "minutes_played_forever": 1
+          }
+        ],
+        "owns": [],
+        "in_wishlist": []
+      }
+    }
+  ],
+  [
+    "socialmedia",
+    {
+      "version": 3,
+      "data": [
+        {
+          "eType": 4,
+          "strName": "Terraria Official",
+          "strURL": "https://twitter.com/Terraria_Logic"
+        },
+        {
+          "eType": 5,
+          "strName": "terrariaofficial",
+          "strURL": "https://www.twitch.tv/terrariaofficial"
+        },
+        {
+          "eType": 6,
+          "strName": "Re-Logic",
+          "strURL": "https://www.youtube.com/@relogicofficial/"
+        },
+        {
+          "eType": 7,
+          "strName": "Terraria",
+          "strURL": "https://www.facebook.com/TerrariaOfficial/"
+        }
+      ]
+    }
+  ],
+  [
+    "associations",
+    {
+      "version": 2,
+      "data": {
+        "rgDevelopers": [
+          {
+            "strName": "Re-Logic",
+            "strURL": "https://store.steampowered.com/developer/Re-Logic"
+          }
+        ],
+        "rgPublishers": [
+          {
+            "strName": "Re-Logic",
+            "strURL": "https://store.steampowered.com/publisher/Re-Logic"
+          }
+        ],
+        "rgFranchises": []
+      }
+    }
+  ],
+  [
+    "descriptions",
+    {
+      "version": 1,
+      "data": {
+        "strFullDescription": "挖掘，战斗，探索，建造！在这个动感十足的冒险游戏里没有什么是不可能的。世界是你的画布，地面是你的油漆。 \r\n拿起你的工具出发！制造武器和各种各样的敌人作战。前往地下寻找配件，金钱，以及其他有用的东西。收集资源创造你的世界所需要的一切。建造一栋房子，一个堡垒，甚至是一座城堡。人们会搬到那里居住，而或许他们还会卖给你不同的商品来协助你完成旅程。\r\n但要注意，那有很多挑战在等着你……你能完成任务吗？\r\n[b]主要特点：[/b]\r\n[list][*]沙盒游戏\r\n[*] 随机生成的世界\r\n[*]免费的内容更新\r\n[/list]",
+        "strSnippet": "挖掘，战斗，探索，建造！在这个动感十足的冒险游戏里没有什么是不可能的。四人包依然可用！"
+      }
+    }
+  ],
+  [
+    "workshop_trendy_items",
+    {
+      "version": 2
+    }
+  ]
+]

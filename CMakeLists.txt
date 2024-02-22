@@ -58,6 +58,7 @@ include_directories(${UTILS_PATH}/DataCompress/header)
 #target_link_libraries(MAIN JsonSerialize_static)
 #target_link_libraries(MAIN Server_static)
 
+target_link_libraries(JsonTest JsonSerialize_static)
 target_link_libraries(ImageTest Image_static)
 target_link_libraries(ServerTest Server_static)
 target_link_libraries(UtilTest Util_static)

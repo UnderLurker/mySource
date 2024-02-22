@@ -3,8 +3,7 @@ project(DataCompress CXX)
 set(UTIL_PATH "..")
 #file(GLOB SOURCE_FILE src/compress.cpp)
 
-add_library(dataCompress_static STATIC src/compress.cpp
-    src/huffman.cpp)
+add_library(dataCompress_static STATIC src/compress.cpp)
 
 include_directories(header)
 include_directories(${UTIL_PATH}/Util/header)

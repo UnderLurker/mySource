@@ -49,8 +49,10 @@ void heap<T, Compare>::resize(uint32_t size)
     auto* tmp = _values;
     _maxLength = size;
     _values = new T[_maxLength] { T() };;
-    memcpy_s(_values, sizeof(T) * _curLength, tmp, sizeof(T) * _curLength);
-    delete[] tmp;
+    if (_curLength != 0) {
+        memcpy_s(_values, sizeof(T) * _curLength, tmp, sizeof(T) * _curLength);
+        delete[] tmp;
+    }
 }
 
 template<typename T, typename Compare>

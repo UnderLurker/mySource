@@ -2,338 +2,221 @@
 // Created by 常笑男 on 2023/10/15.
 //
 
-#include <sstream>
-#include <fstream>
 #include "JsonParse.h"
+
+#include <fstream>
+#include <sstream>
+
 #include "Util.h"
 
 NAME_SPACE_START(myUtil)
 
-char *myUtil::JsonBase::trim(const char *str) {
-    JSON_ASSERT(str != JSON_NULL)
-    char *result = JSON_NULL;
-    try{
-        size_t left = 0, right = strlen(str) - 1;
-        while(*(str+left) == '\n' || *(str+left) == ' ' ||
-                *(str+left) == '\r' || *(str+left) == '\t'){
-            left++;
-        }
-        while(*(str+right) == '\n' || *(str+right) == ' ' ||
-              *(str+right) == '\r' || *(str+right) == '\t'){
-            right--;
-        }
-        JSON_ASSERT(left <= right)
-        size_t len = right - left + 1;
-        result = new char[len + 1];
-        strncpy(result, str + left, len);
-        result[len] = '\0';
-    }catch(...){
-        return result;
-    }
-    return result;
+////////////////////////////////////////////////////
+//               JsonDocument                     //
+////////////////////////////////////////////////////
+
+JsonDocument::JsonDocument(const char* filePath)
+{
+    Load(filePath);
 }
 
-char *JsonBase::findSpecContext(char *source, const char *target, FindRange range) {
-    JSON_ASSERT(source != JSON_NULL && target != JSON_NULL)
-    char *result = JSON_NULL;
-    try {
-        char firstChar = *target;
-        size_t quoteCount = 0;
-        size_t pos = 0, targetLen = strlen(target), sourceLen = strlen(source);
-        while(pos < sourceLen){
-            bool quoteFlag = true;
-            switch (range) {
-                case Quote:{
-                    quoteFlag = quoteCount%2;
-                    break;
-                }
-                case NoQuote:{
-                    quoteFlag = quoteCount%2 == 0;
-                    break;
-                }
-                default:
-                    break;
-            }
-            if(*(source + pos) == firstChar && quoteFlag &&
-               strncmp(source + pos, target, targetLen) == 0)
-                break;
-            if(*(source + pos) == '\"')
-                quoteCount++;
-            pos++;
-        }
-        if(pos == sourceLen)
-            return JSON_NULL;
-        result = source + pos;
-    }catch(...){
-        return result;
-    }
-    return result;
+JsonDocument::~JsonDocument()
+{
+    delete[] _cache;
+    delete[] _filePath;
+    _cache = nullptr;
+    _filePath = nullptr;
 }
 
-JsonException JsonPair::reset() {
-JsonException result = JSON_SUCCESS;
+JsonStatus JsonDocument::Load(const char* filePath)
+{
+    delete[] _filePath;
+    uint32_t length = strlen(filePath);
+    _filePath = new char[length + 1];
+    memcpy_s(_filePath, sizeof(char) * length, filePath, length);
+    _filePath[length] = '\0';
 
-try{
-    JSON_FREE(_key, true)
-    JSON_FREE(_val, true)
-    JSON_FREE_LINKLIST(_firstChild,false)
-    _endChild = JSON_NULL;
-    _deep = 0;
-    _numChild = 0;
-}catch(...){
-    result = JSON_DESTRUCTION_ERROR;
+    fstream file(filePath, ios::in | ios::binary);
+    if (file.fail())
+        return ERROR_FILE_READ;
+    file.seekg(0, fstream::end);
+    size_t endPos = file.tellg();
+    file.seekg(0, fstream::beg);
+    _cache = new char[endPos + 1];
+    _length = endPos + 1;
+    file.read(_cache, endPos);
+    _cache[endPos] = '\0';
+    return Analysis();
 }
 
-return result;
+JsonStatus JsonDocument::Analysis()
+{
+    auto tmp = _cache;
+    _node = new JsonNode(tmp, this, nullptr);
+    return _node->getStatus();
 }
 
-JsonException JsonPair::setKey(const char *key) {
-    JsonException result = JSON_SUCCESS;
-    try{
-        JSON_ASSERT(key!=JSON_NULL)
-        JSON_FREE(_key, true)
-        JSON_ASSERT(_key == JSON_NULL)
-
-        _key = trim(key);
-        JSON_TRIM_DETERMINE(_key)
-
-    }catch(JsonException exception) {
-        result = exception;
-    }catch(...){
-        result = JSON_MALLOC_OR_COPY_ERROR;
-    }
-    return result;
+////////////////////////////////////////////////////
+//               JsonStringBase                   //
+////////////////////////////////////////////////////
+void JsonStr::setValue(char* start, size_t length)
+{
+    _ptr = start;
+    _length = length;
 }
 
-JsonException JsonPair::setValueText(const char *value) {
-    JsonException result = JSON_SUCCESS;
-    try{
-        JSON_ASSERT(value!=JSON_NULL)
-        JSON_FREE(_val, true)
-        JSON_FREE_LINKLIST(_firstChild,false)
-        _endChild = JSON_NULL;
-        JSON_ASSERT(_val == JSON_NULL)
-
-        _val = trim(value);
-        JSON_TRIM_DETERMINE(_val)
-
-        result = Parse();
-    }catch(JsonException exception){
-        result = exception;
-    }catch(...){
-        result = JSON_MALLOC_OR_COPY_ERROR;
-    }
-    return result;
+const string JsonStr::getValue() const
+{
+    return string(_ptr, _length);
 }
 
-JsonException JsonPair::setPairText(char* text){
-    JsonException result = JSON_SUCCESS;
-    try{
-        JSON_ASSERT(text != JSON_NULL)
-        if((result = reset()) != JSON_SUCCESS)
-            throw result;
-        JSON_ASSERT(_key == JSON_NULL && _val == JSON_NULL)
-
-        char* next = findSpecContext(text,":",NoQuote);
-        if(next == JSON_NULL)
-            throw JSON_NOT_FIND;
-        *next = '\0';
-        _key = trim(text);
-        _val = trim(next);
-        JSON_TRIM_DETERMINE(_key)
-        JSON_TRIM_DETERMINE(_val)
-        Parse();
-    }catch(JsonException exception) {
-        result = exception;
-    }catch(...){
-        result = JSON_ERROR;
-    }
-    return result;
+////////////////////////////////////////////////////
+JsonNode::JsonNode(JsonNode&& obj) noexcept
+{
+    _key = obj._key;
+    _value = obj._value;
+    _type = obj._type;
+    _status = obj._status;
+    _children = obj._children;
+    _next = obj._next;
+    _parent = obj._parent;
+    _doc = obj._doc;
+    obj._key.setValue(nullptr, 0);
+    obj._value.setValue(nullptr, 0);
+    obj._children.clear();
+    obj._next = nullptr;
+    obj._parent = nullptr;
+    obj._doc = nullptr;
 }
 
-JsonException JsonPair::Parse() {
-    JsonException result = JSON_SUCCESS;
+JsonNode::JsonNode(char*& begin, JsonDocument* doc, JsonNode* parent) : _doc(doc), _parent(parent)
+{
+    _status = Load(begin);
+}
 
-    JSON_ASSERT(_val != JSON_NULL)
-    char firstValChar = *_val;
-    switch (firstValChar) {
-        case '\"':{
-            _type = String;
+JsonStatus JsonNode::Load(char*& begin)
+{
+    size_t len = strlen(begin);
+    char* end = begin + len;
+    bool isKey = false;
+    // 先看:前面的值，可能没有:
+    while (begin < end && (*begin == '\r' || *begin == '\n' || *begin == ' '))
+        begin++;
+    switch (*begin) {
+        case '{':
+        case '[': {
+            _type = *begin == '{' ? Object : Array;
+            _children.emplace_back(new JsonNode(++begin, _doc, this));
             break;
         }
-        case '0':
-        case '1':
-        case '2':
-        case '3':
-        case '4':
-        case '5':
-        case '6':
-        case '7':
-        case '8':
-        case '9':{
-            _type = Number;
-            break;
+        case '}':
+        case ']':{
+            begin++;
+            return SUCCESS;
         }
-        case 'f':
-        case 't':{
-            _type = Bool;
-            break;
-        }
-        case '[':
-        case '{':{
-            if(firstValChar == '[')
-                _type = Array;
-            else
-                _type = Object;
-            size_t valLen = strlen(_val);
-            _val[valLen - 1] = '\0';
-            char *start = _val + 1;
-            char *targetPos = JSON_NULL;
-            do{
-                targetPos = findSpecContext(start,",",NoQuote);
-                if(targetPos != JSON_NULL)
-                    *targetPos = '\0';
-
-                auto *pair = new JsonPair();
-                char *temp = trim(start);
-                pair->setPairText(temp);
-                addChildPair(pair);
-
-                JSON_FREE(temp, true)
-                JSON_FREE(start, true);
-                start = targetPos + strlen(",");
-            }while(targetPos != JSON_NULL);//此处传入的是一整个，没有分为一个个的pair
-            if(start != JSON_NULL){
-                auto *pair = new JsonPair();
-                char *temp = trim(start);
-                pair->setPairText(temp);
-                addChildPair(pair);
-
-                JSON_FREE(temp, true)
-                JSON_FREE(start, true)
-            }
-            start = JSON_NULL;
-            _val = JSON_NULL;
+        case '"': {
+            auto l = begin++;
+            while (begin < end && *begin != '"')
+                begin++;
+            _key.setValue(l, begin - l + 1);
+            cout << "key:" << _key.getValue() << endl;
+            isKey = true;
             break;
         }
         default:
-            result = JSON_PARSE_ERROR;
-            break;
+            return ERROR_FORMAT;
     }
-
-    return result;
+    begin++;
+    if (!isKey)
+        return Load(begin);
+    JsonStatus status = parseValue(begin, end);
+    if (status != SUCCESS)
+        return status;
+    return Load(begin);
 }
 
-JsonException JsonPair::addNextPair(JsonPair *pair) {
-    JsonException result = JSON_SUCCESS;
-    try{
-        JSON_ASSERT(pair!=JSON_NULL)
-        JsonPair *insertPair = pair;
-        while(insertPair->_nextPair!=JSON_NULL){
-            insertPair = insertPair->_nextPair;
-        }
-        insertPair->_nextPair = _nextPair;
-        _nextPair = pair;
-    }catch(...){
-        result = JSON_ERROR;
-    }
-    return result;
-}
-
-JsonException JsonPair::addChildPair(JsonPair *pair) {
-    JsonException result = JSON_SUCCESS;
-    try{
-        JSON_ASSERT(pair!=JSON_NULL)
-        if(_firstChild == JSON_NULL){
-            _firstChild = pair;
-            _endChild = pair;
-        }
-        else{
-            _endChild->_nextPair = pair;
-            _endChild = pair;
-        }
-    }catch(...){
-        result = JSON_ERROR;
-    }
-    return result;
-}
-
-double JsonPair::parseDouble() const {
-    JSON_ASSERT(_val != JSON_NULL)
-    stringstream ss(_val);
-    double result = 0;
-    ss >> result;
-    return result;
-}
-
-int JsonPair::parseInt() const {
-    JSON_ASSERT(_val != JSON_NULL)
-    stringstream ss(_val);
-    int result = 0;
-    ss >> result;
-    return result;
-}
-
-bool JsonPair::parseBool() const {
-    JSON_ASSERT(_val != JSON_NULL)
-    bool result = false;
-    if(strcmp(_val,"true") == 0)
-        result = true;
-    else
-        result = false;
-    return result;
-}
-
-char *JsonPair::parseString() const {
-    JSON_ASSERT(_val != JSON_NULL)
-    char *result = JSON_NULL;
-    size_t len = strlen(_val);
-    result = new char[len + 1];
-    strcpy(result, _val);
-    result[len] = '\0';
-    return result;
-}
-
-template<class T>
-T JsonPair::parseObject() const {
-    JSON_ASSERT(_val == JSON_NULL)
-    return T();
-}
-
-template<class T>
-vector<T> JsonPair::parseList() const {
-    JSON_ASSERT(_val == JSON_NULL)
-    return vector<T>();
-}
-
-JsonParse::~JsonParse(){
-    JSON_FREE(_cache, true);
-}
-
-std::ifstream::pos_type get_file_size(const std::string& filename)
+JsonStatus JsonNode::parseValue(char*& begin, const char* end)
 {
-    std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
-    return in.tellg();
+    CHECK_NULL_RETURN(begin, ERROR_NULLPTR)
+    CHECK_NULL_RETURN(end, ERROR_NULLPTR)
+    while (begin < end && *begin == ' ')
+        begin++;
+    if (*begin == ':')
+        begin++;
+    else if (*begin == ',')
+        return SUCCESS;
+    runSpace(begin);
+    switch (*begin) {
+        case '{':
+        case '[': {
+            _type = *begin == '{' ? Object : Array;
+            _children.emplace_back(new JsonNode(++begin, _doc, this));
+            break;
+        }
+        default: {
+            _value = JsonNode::trim(begin);
+            cout << "value:" << _value.getValue() << endl;
+            _type = determineType(_value);
+            if (_type == None)
+                return ERROR_FORMAT;
+        }
+    }
+    return SUCCESS;
 }
 
-JsonException JsonParse::load(string filePath) {
-    JsonException result = JSON_SUCCESS;
-    if(filePath.length() != 0)
-        _filePath = std::move(filePath);
-
-    size_t totalLen = get_file_size(_filePath);
-    _cache = new char[totalLen + 1];
-    ifstream file(_filePath, ios::in);
-    try{
-        file.read(_cache, totalLen);
-    }catch(...){
-        result = JSON_READ_FILE_ERROR;
-    }
+JsonStr JsonNode::trim(char*& begin)
+{
+    size_t len = strlen(begin);
+    char* end = begin + len;
+    while (begin < end && *begin == ' ')
+        begin++;
+    JsonStr result(begin, 0);
+    while (begin < end && *begin != '\n')
+        begin++;
+    auto l = begin;
+    while (*l == '\n' || *l == '\r' || *l == ' ' || *l == ',')
+        l--;
+    result.setLength(l - result.getPtr() + 1);
+    begin++;
     return result;
+}
+
+void JsonNode::runSpace(char*& begin)
+{
+    while(*begin == '\r' || *begin == '\n' || *begin == ' ')
+        begin++;
+}
+
+JsonType JsonNode::determineType(const JsonStr& input)
+{
+    string str = input.getValue();
+    if (str == "true" || str == "false")
+        return Bool;
+    else if (legalNumber(str))
+        return Number;
+    else if (str == "null")
+        return Null;
+    else if (legalString(str))
+        return String;
+    return None;
+}
+
+bool JsonNode::legalNumber(const std::string& str)
+{
+    char* pEnd = nullptr;
+    std::strtod(str.c_str(), &pEnd);
+    return pEnd != str.c_str();
+}
+
+bool JsonNode::legalString(const string& str)
+{
+    if (str.size() < 2)
+        return false;
+    if (str[0] == str[str.size() - 1] && str[0] == '\"')
+        return true;
+    return false;
 }
 
 NAME_SPACE_END()
 
-
-
-//myUtil
+// myUtil
