@@ -1,5 +1,14 @@
 
-{
-  "strID": "PLAY_ON_A_SPECIAL_SEED",
-  "strName": "A Rare Realm"
-}
+[
+  [
+    "usernews",
+    {
+      "version": 4,
+      "data": [
+        "COoHENfz7qkGGclEPAAAAHABIVI8EwMBABABKYCcAQAAAAAAUUFemWoeNtIzYIDM7qkG",
+        "COoHEKzym6kGGclEPAAAAHABIVI8EwMBABABKYCcAQAAAAAAUf2dp8ZjNHYzYPnlm6kG",
+        "COoHELP426gGGclEPAAAAHABIVI8EwMBABABKYCcAQAAAAAAUUgy8v3PM3YzYInJ26gG"
+      ]
+    }
+  ]
+]

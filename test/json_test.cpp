@@ -51,6 +51,9 @@ using namespace myUtil;
 void JsonParseTest()
 {
     JsonDocument doc("../sample/1.json");
+    cout << doc.getNode()->getStatus() << endl;
+//    doc.save("3.json");
+    doc.getNode()->getString(cout);
 }
 
 int main() {
