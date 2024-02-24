@@ -13,7 +13,7 @@ include_directories(${UTIL_PATH}/Util/header
 add_library(JsonSerialize SHARED ${SOURCE_FILE}
         header/JsonException.h)
 #add_library(JsonSerialize_static STATIC ${SOURCE_FILE})
-add_library(JsonSerialize_static STATIC src/JsonParse.cpp)
+add_library(JsonSerialize_static STATIC ${SOURCE_FILE})
 
 #target_link_libraries(JsonSerialize_static
 #        Util_static Reflex_static Singleton_static)

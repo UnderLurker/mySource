@@ -113,7 +113,7 @@ private:
 
 NAME_SPACE_END()
 
-#include "../src/Reflex.cpp"
+#include "Reflex.inl"
 
 #define REGISTER_REFLEX(className)                                      \
         myUtil::RObject* construct##className()                                 \
