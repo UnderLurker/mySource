@@ -50,7 +50,7 @@ JsonStatus JsonDocument::Load(const char* filePath) {
 }
 
 JsonNode& JsonDocument::getNode() const {
-    JsonNode result;
+    static JsonNode result;
     if (_node == nullptr) return result;
     return *_node;
 }
@@ -343,7 +343,7 @@ void JsonNode::removeChild(size_t index) {
 }
 
 JsonNode& JsonNode::at(size_t index) const {
-    JsonNode result;
+    static JsonNode result;
     if (index >= _children.size()) return result;
     if (_children.size() / 2 > index) {
         auto it = _children.begin();
@@ -354,10 +354,11 @@ JsonNode& JsonNode::at(size_t index) const {
         for (int32_t i = _children.size() - 1; i >= 0; i--, it++)
             if (i == index) return **it;
     }
+    return result;
 }
 
 JsonNode& JsonNode::at(const string& index) const {
-    JsonNode result;
+    static JsonNode result;
     for (auto& item : _children)
         if (strncmp(item->_key.getPtr(), index.c_str(), index.size()) == 0) return *item;
     return result;
