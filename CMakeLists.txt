@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.5.0)
 project(MAIN VERSION 0.1.0)
 
 # 添加opencv引用
+set(OpenGL_DIR ${PROJECT_SOURCE_DIR})
 set(OpenCV_DIR  F:/opencv/build/x64/vc16/lib)
 set(CMAKE_BUILD_TYPE Debug)
 set(UTILS_PATH ${PROJECT_SOURCE_DIR}/utils)
@@ -37,6 +38,7 @@ add_executable(QrCodeTest ${UTILS_TEST_PATH}/QrCode_test.cpp)
 add_executable(ThreadTest ${UTILS_TEST_PATH}/Thread_test.cpp)
 add_executable(VideoTest ${UTILS_TEST_PATH}/Video_test.cpp)
 add_executable(CompressTest ${UTILS_TEST_PATH}/Compress_test.cpp)
+add_executable(OpenGLTest ${UTILS_TEST_PATH}/opengl_test.cpp)
 
 include_directories(${UTILS_PATH}/Matrix/header)
 include_directories(${UTILS_PATH}/Log/header)
@@ -51,6 +53,9 @@ include_directories(${UTILS_PATH}/Thread/header)
 include_directories(${UTILS_PATH}/Video/header)
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${UTILS_PATH}/DataCompress/header)
+include_directories(${OpenGL_DIR}/include)
+
+link_directories(${OpenGL_DIR}/lib)
 
 
 #target_link_libraries(MAIN Matrix_static logger_static Util_static)
@@ -69,6 +74,7 @@ target_link_libraries(QrCodeTest QRCode_static logger_static)
 target_link_libraries(OpencvTest ${OpenCV_LIBS})
 target_link_libraries(VideoTest video_static)
 target_link_libraries(CompressTest dataCompress_static)
+target_link_libraries(OpenGLTest ${OpenGL_DIR}/lib/GLFW/libglfw3.a opengl32)
 
 enable_testing()
 
@@ -85,3 +91,4 @@ add_test(QrCode_Test QrCodeTest)
 add_test(Thread_test ThreadTest)
 add_test(Video_test VideoTest)
 add_test(Compress_test CompressTest)
+add_test(OpenGL_Test OpenGLTest)
