@@ -38,7 +38,7 @@ add_executable(QrCodeTest ${UTILS_TEST_PATH}/QrCode_test.cpp)
 add_executable(ThreadTest ${UTILS_TEST_PATH}/Thread_test.cpp)
 add_executable(VideoTest ${UTILS_TEST_PATH}/Video_test.cpp)
 add_executable(CompressTest ${UTILS_TEST_PATH}/Compress_test.cpp)
-add_executable(OpenGLTest ${UTILS_TEST_PATH}/opengl_test.cpp)
+add_executable(OpenGLTest ${UTILS_TEST_PATH}/opengl_test.cpp ${PROJECT_SOURCE_DIR}/src/glad.c)
 
 include_directories(${UTILS_PATH}/Matrix/header)
 include_directories(${UTILS_PATH}/Log/header)
