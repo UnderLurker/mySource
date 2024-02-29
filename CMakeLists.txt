@@ -53,6 +53,7 @@ include_directories(${UTILS_PATH}/Thread/header)
 include_directories(${UTILS_PATH}/Video/header)
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${UTILS_PATH}/DataCompress/header)
+include_directories(${UTILS_PATH}/Shader/include)
 include_directories(${OpenGL_DIR}/include)
 
 link_directories(${OpenGL_DIR}/lib)
@@ -74,7 +75,10 @@ target_link_libraries(QrCodeTest QRCode_static logger_static)
 target_link_libraries(OpencvTest ${OpenCV_LIBS})
 target_link_libraries(VideoTest video_static)
 target_link_libraries(CompressTest dataCompress_static)
-target_link_libraries(OpenGLTest ${OpenGL_DIR}/lib/GLFW/libglfw3.a opengl32)
+target_link_libraries(OpenGLTest
+        ${OpenGL_DIR}/lib/GLFW/libglfw3.a
+        opengl32
+        Shader_static)
 
 enable_testing()
 
