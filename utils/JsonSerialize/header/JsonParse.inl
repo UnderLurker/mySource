@@ -141,7 +141,13 @@ JsonNode::JsonNode(char*& begin, JsonDocument* doc, JsonNode* parent)
 }
 
 JsonNode::~JsonNode() {
-    for_each(_children.begin(), _children.end(), [](JsonNode* node) { node = nullptr; });
+    _next = nullptr;
+    _parent = nullptr;
+    _doc = nullptr;
+    for_each(_children.begin(), _children.end(), [](JsonNode* node) {
+        delete node;
+        node = nullptr;
+    });
     _children.clear();
 }
 
