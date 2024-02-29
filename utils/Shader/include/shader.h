@@ -10,19 +10,31 @@
 #include "Util.h"
 
 NAME_SPACE_START(myUtil)
+#define MSG_SIZE 512
+
+enum ShaderType {
+    FRAGMENT_SHADER = 0x8B30,
+    VERTEX_SHADER = 0x8B31
+};
 
 class Shader {
 public:
-    Shader() = default;
-    explicit Shader(const char* filePath);
+    Shader() = delete;
+    explicit Shader(const char* filePath, ShaderType shaderType);
+    virtual ~Shader();
 
-    static bool loadSource(char*& source, const std::string& filePath);
+    bool loadSource(const std::string& filePath);
+    void createShader(ShaderType shaderType);
+    bool compile();
 
 public:
-    bool _status {false};
+    bool _status {true};
+    uint32_t _shaderId {0};
 
 private:
+    ShaderType _type {VERTEX_SHADER};
     char* _source {nullptr};
+    char _msg[MSG_SIZE] {};
 };
 
 NAME_SPACE_END();

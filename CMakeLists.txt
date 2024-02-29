@@ -23,6 +23,7 @@ add_subdirectory(utils/Music)
 add_subdirectory(utils/Thread)
 add_subdirectory(utils/Video)
 add_subdirectory(utils/DataCompress)
+add_subdirectory(utils/Shader)
 
 add_executable(MAIN main.cpp)
 add_executable(ReflexTest ${UTILS_TEST_PATH}/reflex_test.cpp)
