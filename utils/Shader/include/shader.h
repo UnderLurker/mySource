@@ -21,11 +21,12 @@ class Shader {
 public:
     Shader() = delete;
     explicit Shader(const char* filePath, ShaderType shaderType);
-    virtual ~Shader();
+    virtual ~Shader() = default;
 
     bool loadSource(const std::string& filePath);
     void createShader(ShaderType shaderType);
     bool compile();
+    void deleteShader();
 
 public:
     bool _status {true};
@@ -33,7 +34,7 @@ public:
 
 private:
     ShaderType _type {VERTEX_SHADER};
-    char* _source {nullptr};
+    unique_ptr<char[]> _source;
     char _msg[MSG_SIZE] {};
 };
 

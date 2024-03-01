@@ -9,16 +9,6 @@ Program::Program() {
     _programId = glCreateProgram();
 }
 
-Program::~Program() {
-    int32_t success;
-    glDeleteProgram(_programId);
-    glGetProgramiv(_programId, GL_DELETE_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(_programId, MSG_SIZE, nullptr, _msg);
-        cout << "shader compiler delete failed: " << _msg << endl;
-    }
-}
-
 void Program::use() const {
     glUseProgram(_programId);
 }
@@ -43,12 +33,26 @@ bool Program::linkProgram() {
     return _status = true;
 }
 
+void Program::deleteProgram() {
+    int32_t success;
+    glDeleteProgram(_programId);
+    glGetProgramiv(_programId, GL_DELETE_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(_programId, MSG_SIZE, nullptr, _msg);
+        cout << "shader compiler delete failed: " << _msg << endl;
+    }
+}
+
 void Program::setBool(const std::string &name, bool value) const {
     glUniform1i(glGetUniformLocation(_programId, name.c_str()), (int)value);
 }
 
 void Program::setInt(const std::string &name, int value) const {
     glUniform1i(glGetUniformLocation(_programId, name.c_str()), value);
+}
+
+void Program::setUInt(const std::string& name, uint32_t value) const {
+    glUniform1ui(glGetUniformLocation(_programId, name.c_str()), value);
 }
 
 void Program::setFloat(const std::string &name, float value) const {
