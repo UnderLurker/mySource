@@ -22,20 +22,15 @@ public:
     Shader() = delete;
     explicit Shader(const char* filePath, ShaderType shaderType);
     virtual ~Shader() = default;
-
-    bool loadSource(const std::string& filePath);
-    void createShader(ShaderType shaderType);
-    bool compile();
-    void deleteShader();
+    void deleteShader() const;
+private:
+    bool loadSource(const std::string& filePath, ShaderType shaderType);
+    bool compile(const string& source);
 
 public:
     bool _status {true};
     uint32_t _shaderId {0};
-
-private:
     ShaderType _type {VERTEX_SHADER};
-    unique_ptr<char[]> _source;
-    char _msg[MSG_SIZE] {};
 };
 
 NAME_SPACE_END();

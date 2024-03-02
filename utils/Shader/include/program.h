@@ -19,7 +19,7 @@ public:
     ~Program() = default;
 
     void use() const;
-    void push_back(const Shader& shader);
+    void push_back(Shader* shader);
     bool linkProgram();
     void deleteProgram();
     // uniform工具函数
@@ -28,13 +28,14 @@ public:
     void setUInt(const std::string& name, uint32_t value) const;
     void setFloat(const std::string& name, float value) const;
     void set4Float(const std::string& name, float x, float y, float z, float w) const;
+    void setMatrix4fv(const std::string& name, float* array) const;
 
 public:
     bool _status {true};
     uint32_t _programId {0};
 
 private:
-    vector<uint32_t> _shaderList;
+    vector<Shader*> _shaderList;
     char _msg[MSG_SIZE] {};
 };
 

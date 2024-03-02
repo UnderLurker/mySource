@@ -1,11 +1,15 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #define STB_IMAGE_IMPLEMENTATION
 #include <iostream>
 #include <stb_image.h>
 
 #include "program.h"
 #include "shader.h"
+#include "texture.h"
 using namespace std;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -45,11 +49,9 @@ int main() {
     myUtil::Shader vShader("../shader/vertexShader.vs", myUtil::VERTEX_SHADER);
     myUtil::Shader fShader("../shader/fragmentShader.fs", myUtil::FRAGMENT_SHADER);
     if (!vShader._status || !fShader._status) return -1;
-    program.push_back(vShader);
-    program.push_back(fShader);
+    program.push_back(&vShader);
+    program.push_back(&fShader);
     program.linkProgram();
-    vShader.deleteShader();
-    fShader.deleteShader();
 
     float vertices[] = {
         // positions          // colors           // texture coords
@@ -78,12 +80,13 @@ int main() {
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
 
     // load and create a texture
     // -------------------------
     unsigned int texture1, texture2;
+    unsigned char* data = nullptr;
+    int width, height, nrChannels;
+    stbi_set_flip_vertically_on_load(true);
     // texture 1
     // ---------
     glGenTextures(1, &texture1);
@@ -92,9 +95,7 @@ int main() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    int width, height, nrChannels;
-    stbi_set_flip_vertically_on_load(true);
-    unsigned char* data = stbi_load("../img/Image/2.jpg", &width, &height, &nrChannels, 0);
+    data = stbi_load("../img/Image/2.jpg", &width, &height, &nrChannels, 0);
     if (data) {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
@@ -120,65 +121,50 @@ int main() {
     stbi_image_free(data);
 
     program.use();
-    program.setUInt("texture1", 0);
-    program.setUInt("texture2", 1);
-    // uncomment this call to draw in wireframe polygons.
+    program.setInt("texture1", 0);
+    program.setInt("texture2", 1);
+
     //    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    // render loop
-    // -----------
     while (!glfwWindowShouldClose(window)) {
-        // input
-        // -----
         processInput(window);
 
-        // render
-        // ------
         glClearColor(1, 1, 1, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1);
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, texture2);
+        glBindTexture(GL_TEXTURE_2D, glfwGetTime() < 8 ? texture2 : 0);
 
         program.use();
-        program.setFloat("offset", 0);
-        glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll
-                                // do so to keep things a bit more organized
-                                //        glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        glm::mat4 trans(1.0f);
+        trans = glm::translate(trans, glm::vec3(0.5f, 0.0f, 0.0f));
+        trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0, 0, 1));
+        trans = glm::scale(trans, glm::vec3(1, 1, 1));
+        program.setMatrix4fv("transform", glm::value_ptr(trans));
+
+        glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-        // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-        // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    // optional: de-allocate all resources once they've outlived their purpose:
-    // ------------------------------------------------------------------------
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glDeleteBuffers(1, &EBO);
     program.deleteProgram();
-    // glfw: terminate, clearing all previously allocated GLFW resources.
-    // ------------------------------------------------------------------
+
     glfwTerminate();
     return 0;
 }
 
-// process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
-// ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) glfwSetWindowShouldClose(window, true);
     //    else if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS)
     //        glBindVertexArray(VAO);
 }
 
-// glfw: whenever the window size changed (by OS or user resize) this callback function executes
-// ---------------------------------------------------------------------------------------------
-void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
-    // make sure the viewport matches the new window dimensions; note that width and
-    // height will be significantly larger than specified on retina displays.
-    glViewport(0, 0, width, height);
-}
+void framebuffer_size_callback(GLFWwindow* window, int width, int height) { glViewport(0, 0, width, height); }
