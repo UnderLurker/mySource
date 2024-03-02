@@ -58,6 +58,8 @@ include_directories(${UTILS_PATH}/DataCompress/header)
 include_directories(${UTILS_PATH}/Shader/include)
 include_directories(${OpenGL_DIR}/include)
 include_directories(${THIRD_PART}/glm)
+include_directories(${THIRD_PART}/std)
+include_directories(${THIRD_PART}/glfw/include)
 
 link_directories(${OpenGL_DIR}/lib)
 
