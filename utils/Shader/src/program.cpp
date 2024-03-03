@@ -62,6 +62,6 @@ void Program::set4Float(const std::string& name, float x, float y, float z, floa
 }
 
 void Program::setMatrix4fv(const std::string& name, float* array) const {
-    glUniformMatrix4fv(glGetUniformLocation(_programId, "transform"), 1, GL_FALSE, array);
+    glUniformMatrix4fv(glGetUniformLocation(_programId, name.c_str()), 1, GL_FALSE, array);
 }
 NAME_SPACE_END()
