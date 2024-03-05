@@ -7,6 +7,7 @@
 #include <iostream>
 #include <stb_image.h>
 
+#include "camera.h"
 #include "program.h"
 #include "shader.h"
 #include "texture.h"
@@ -16,16 +17,16 @@ using namespace std;
 const unsigned int SCR_WIDTH  = 800;
 const unsigned int SCR_HEIGHT = 600;
 unsigned int VAO;
-int32_t xPos = 0;
-int32_t yPos = 0;
-uint32_t v   = 12;
+
+myUtil::Camera camera;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
-glm::vec3 convertPos() {
-    //    printf("\rpos:(%f,%f,%f)", (float)xPos / SCR_WIDTH, 0, (float)yPos);
-    return {(float)xPos / SCR_WIDTH + 0.5, 0, (float)yPos};
-}
+void cursorPos_callback(GLFWwindow* window, double xpos, double ypos);
+void scrollCallBack(GLFWwindow* window, double xoffset, double yoffset);
+
+float deltaTime = 0;
+float lastTime  = 0;
 
 int main() {
     // glfw: initialize and configure
@@ -47,6 +48,8 @@ int main() {
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetCursorPosCallback(window, cursorPos_callback);
+    glfwSetScrollCallback(window, scrollCallBack);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cout << "Failed to initialize GLAD" << std::endl;
@@ -139,8 +142,8 @@ int main() {
     program.use();
     program.setInt("texture1", 0);
     program.setInt("texture2", 1);
-
     //    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glEnable(GL_DEPTH_TEST);
     vector<glm::vec3> cubePositions {glm::vec3(0.0f, 0.0f, 0.0f),    glm::vec3(2.0f, 5.0f, -15.0f),
                                      glm::vec3(-1.5f, -2.2f, -2.5f), glm::vec3(-3.8f, -2.0f, -12.3f),
@@ -154,6 +157,10 @@ int main() {
         glClearColor(1, 1, 1, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        auto currentTime = (float)glfwGetTime();
+        deltaTime        = currentTime - lastTime;
+        lastTime         = currentTime;
+
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1);
         glActiveTexture(GL_TEXTURE1);
@@ -163,8 +170,8 @@ int main() {
 
         glm::mat4 view(1.0f);
         glm::mat4 project(1.0f);
-        view    = glm::translate(view, convertPos());
-        project = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        view    = camera.getViewMat4();
+        project = glm::perspective(glm::radians(camera.getFov()), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         program.setMatrix4fv("view", glm::value_ptr(view));
         program.setMatrix4fv("project", glm::value_ptr(project));
 
@@ -193,11 +200,23 @@ int main() {
 }
 
 void processInput(GLFWwindow* window) {
+    float speed = deltaTime * 2.5f;
+    uint32_t direction = 0;
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) glfwSetWindowShouldClose(window, true);
-    else if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) yPos++;
-    else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) yPos--;
-    else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) xPos += v;
-    else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) xPos -= v;
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) direction |= myUtil::FRONT;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) direction |= myUtil::BACK;
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) direction |= myUtil::LEFT;
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) direction |= myUtil::RIGHT;
+    camera.setCameraSpeed(speed);
+    camera.moveProcess(direction);
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) { glViewport(0, 0, width, height); }
+
+void cursorPos_callback(GLFWwindow* window, double xpos, double ypos) {
+    camera.cursorProcess((float)xpos, (float)ypos);
+}
+
+void scrollCallBack(GLFWwindow* window, double xoffset, double yoffset) {
+    camera.scrollProcess((float)xoffset, (float)yoffset);
+}
