@@ -5,6 +5,7 @@
 #ifndef MAIN_PROGRAM_H
 #define MAIN_PROGRAM_H
 
+#include <glad/glad.h>
 #include <vector>
 
 #include "shader.h"
@@ -16,6 +17,10 @@ NAME_SPACE_START(myUtil)
 class Program {
 public:
     Program();
+    template<typename... Args>
+    Program(const char* filePath, Shader::ShaderType type, Args... args) {
+        create(filePath, type, args...);
+    }
     ~Program() = default;
 
     void use() const;
@@ -30,12 +35,26 @@ public:
     void set4Float(const std::string& name, float x, float y, float z, float w) const;
     void setMatrix4fv(const std::string& name, float* array) const;
 
+private:
+    void create(const char* filePath, Shader::ShaderType type);
+    template<typename... Args>
+    void create(const char* filePath, Shader::ShaderType type, Args... args) {
+        if (_programId == 0) _programId = glCreateProgram();
+        if (type == Shader::VERTEX_SHADER) {
+            _vertexShaderList.push_back(new VertexShader(filePath));
+        } else if (type == Shader::FRAGMENT_SHADER) {
+            _fragmentShaderList.push_back(new FragmentShader(filePath));
+        }
+        create(args...);
+    }
+
 public:
     bool _status {true};
     uint32_t _programId {0};
 
 private:
-    vector<Shader*> _shaderList;
+    vector<Shader*> _vertexShaderList;
+    vector<Shader*> _fragmentShaderList;
     char _msg[MSG_SIZE] {};
 };
 

@@ -30,8 +30,8 @@ void Camera::cursorProcess(float xPos, float yPos) {
     _lastCursorXPos = xPos;
     _lastCursorYPos = yPos;
 
-    xOffset *= sensitivity;
-    yOffset *= sensitivity;
+    xOffset *= _sensitivity;
+    yOffset *= _sensitivity;
     _yaw    += xOffset;
     _pitch  += yOffset;
     if (_pitch < -89.0f) _pitch = -89.0f;

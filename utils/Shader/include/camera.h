@@ -32,6 +32,7 @@ public:
     [[nodiscard]] float getPitch() const { return _pitch; }
     [[nodiscard]] float getYaw() const { return _yaw; }
     [[nodiscard]] float getFov() const { return _fov; }
+    [[nodiscard]] float getSensitivity() const { return _sensitivity; }
 
     void setCameraPos(const glm::vec3& position) { _cameraPos = position; }
     void setCameraFront(const glm::vec3& cameraFront) { _cameraFront = cameraFront; }
@@ -40,6 +41,7 @@ public:
     void setPitch(float pitch) { _pitch = pitch; }
     void setYaw(float yaw) { _yaw = yaw; }
     void setFov(float fov) { _fov = fov; }
+    void setSensitivity(float sensitivity) { _sensitivity = sensitivity; }
 
     void moveProcess(uint32_t direction);
     void scrollProcess(float offsetX, float offsetY);
@@ -53,12 +55,12 @@ private:
     glm::vec3 _cameraUp {.0f, 1.0f, .0f};
     float _cameraSpeed {0};
     float _pitch {0};
-    float _yaw {0};
+    float _yaw {-90.0f};
     float _fov {45.0f};
     float _lastCursorXPos {0};
     float _lastCursorYPos {0};
+    float _sensitivity {0.1f};
     bool _firstCursor {true};
-    float sensitivity {0.1f};
 };
 
 NAME_SPACE_END()

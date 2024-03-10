@@ -11,12 +11,13 @@
 #include "program.h"
 #include "shader.h"
 #include "texture.h"
+#include "vertex_array_obj.h"
+#include "const_vertices.h"
 using namespace std;
 
 // settings
 const unsigned int SCR_WIDTH  = 800;
 const unsigned int SCR_HEIGHT = 600;
-unsigned int VAO;
 
 myUtil::Camera camera;
 
@@ -55,50 +56,22 @@ int main() {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
-    myUtil::Program program;
-    myUtil::Shader vShader("../shader/vertexShader.vs", myUtil::VERTEX_SHADER);
-    myUtil::Shader fShader("../shader/fragmentShader.fs", myUtil::FRAGMENT_SHADER);
-    if (!vShader._status || !fShader._status) return -1;
-    program.push_back(&vShader);
-    program.push_back(&fShader);
-    program.linkProgram();
+    myUtil::Program cubeProgram("../shader/cubeVertex.vs", myUtil::Shader::VERTEX_SHADER,
+                            "../shader/cubeFragment.fs", myUtil::Shader::FRAGMENT_SHADER);
+    cubeProgram.linkProgram();
+    myUtil::Program lightProgram("../shader/lightFragment.fs", myUtil::Shader::FRAGMENT_SHADER,
+                                 "../shader/lightVertex.vs", myUtil::Shader::VERTEX_SHADER);
+    lightProgram.linkProgram();
 
-    float vertices[] = {
-        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.5f,  -0.5f, -0.5f, 1.0f, 0.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
-        0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+    myUtil::VertexArrayObj cubeVAO;
+    cubeVAO.setArrayBuffer(vertices, myUtil::VertexArrayObj::STATIC_DRAW);
+    cubeVAO.setVertexAttribPointer<float>(3, myUtil::FLOAT, 5, 0);
+    cubeVAO.setVertexAttribPointer<float>(2, myUtil::FLOAT, 5, 3);
 
-        -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, 0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 1.0f, -0.5f, 0.5f,  0.5f,  0.0f, 1.0f, -0.5f, -0.5f, 0.5f,  0.0f, 0.0f,
-
-        -0.5f, 0.5f,  0.5f,  1.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 1.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  0.5f,  1.0f, 0.0f,
-
-        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, 0.5f,  -0.5f, -0.5f, 0.0f, 1.0f,
-        0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, 0.5f,  -0.5f, 0.5f,  0.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.5f,  -0.5f, -0.5f, 1.0f, 1.0f, 0.5f,  -0.5f, 0.5f,  1.0f, 0.0f,
-        0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-
-        -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, -0.5f, 0.5f,  0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f};
-    unsigned int indices[] = {
-        0, 1, 3, // first triangle
-        1, 2, 3  // second triangle
-    };
-
-    uint32_t VBO, EBO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*)(sizeof(float) * 0));
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*)(sizeof(float) * 3));
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
+    myUtil::VertexArrayObj lightVAO;
+    lightVAO.setArrayBuffer(lightVertices, myUtil::VertexArrayObj::STATIC_DRAW);
+    lightVAO.setEleArrayBuffer(lightIndices, myUtil::VertexArrayObj::STATIC_DRAW);
+    lightVAO.setVertexAttribPointer<float>(3, myUtil::FLOAT, 3, 0);
 
     // load and create a texture
     // -------------------------
@@ -139,9 +112,9 @@ int main() {
     }
     stbi_image_free(data);
 
-    program.use();
-    program.setInt("texture1", 0);
-    program.setInt("texture2", 1);
+    cubeProgram.use();
+    cubeProgram.setInt("texture1", 0);
+    cubeProgram.setInt("texture2", 1);
     //    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glEnable(GL_DEPTH_TEST);
@@ -166,41 +139,51 @@ int main() {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
 
-        program.use();
+        cubeProgram.use();
 
         glm::mat4 view(1.0f);
         glm::mat4 project(1.0f);
         view    = camera.getViewMat4();
         project = glm::perspective(glm::radians(camera.getFov()), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-        program.setMatrix4fv("view", glm::value_ptr(view));
-        program.setMatrix4fv("project", glm::value_ptr(project));
+        cubeProgram.setMatrix4fv("view", glm::value_ptr(view));
+        cubeProgram.setMatrix4fv("project", glm::value_ptr(project));
 
-        glBindVertexArray(VAO);
+        cubeVAO.use();
         for (int i = 0; i < cubePositions.size(); i++) {
             glm::mat4 model(1.0f);
             float angle = 20.0f * i;
             model       = glm::translate(model, cubePositions[i]);
             model       = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-            program.setMatrix4fv("model", glm::value_ptr(model));
+            cubeProgram.setMatrix4fv("model", glm::value_ptr(model));
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
         //        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        lightProgram.use();
+        glm::mat4 lightView(1.0f);
+        glm::mat4 lightModel(1.0f);
+        lightView = camera.getViewMat4();
+        lightModel = glm::translate(lightModel, glm::vec3(1, 1, -1));
+        lightModel = glm::scale(lightModel, glm::vec3(0.2, 0.2, 0.2));
+        lightProgram.setMatrix4fv("view", glm::value_ptr(lightView));
+        lightProgram.setMatrix4fv("project", glm::value_ptr(project));
+        lightProgram.setMatrix4fv("model", glm::value_ptr(lightModel));
+        lightVAO.use();
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
-    program.deleteProgram();
+    cubeVAO.deleteVAO();
+    lightVAO.deleteVAO();
+    lightProgram.deleteProgram();
+    cubeProgram.deleteProgram();
 
     glfwTerminate();
     return 0;
 }
 
 void processInput(GLFWwindow* window) {
-    float speed = deltaTime * 2.5f;
+    float speed        = deltaTime * 2.5f;
     uint32_t direction = 0;
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) glfwSetWindowShouldClose(window, true);
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) direction |= myUtil::FRONT;

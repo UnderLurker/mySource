@@ -10,9 +10,16 @@ NAME_SPACE_START(myUtil)
 
 Shader::Shader(const char* filePath, ShaderType shaderType) {
     _shaderId = glCreateShader(shaderType);
-    _status = loadSource(filePath, shaderType);
-    _type   = shaderType;
-//    if (_status) deleteShader();
+    _status   = loadSource(filePath, shaderType);
+    _type     = shaderType;
+    //    if (_status) deleteShader();
+}
+
+Shader::Shader(Shader&& obj) noexcept {
+    _status       = obj._status;
+    _shaderId     = obj._shaderId;
+    _type         = obj._type;
+    obj._shaderId = 0;
 }
 
 bool Shader::loadSource(const std::string& filePath, ShaderType shaderType) {
@@ -47,6 +54,7 @@ bool Shader::compile(const string& source) {
 }
 
 void Shader::deleteShader() const {
+    if (_shaderId == 0 || !_status) return;
     int32_t success;
     char _msg[MSG_SIZE];
     glDeleteShader(_shaderId);
