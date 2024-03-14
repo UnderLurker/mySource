@@ -1,8 +1,9 @@
 #pragma once
 #include <cmath>
 #include <functional>
-#include <stdint.h>
+#include <cstdint>
 #include <string>
+#include <utility>
 #include <vector>
 #include <map>
 #ifndef _QR_ENCODE_
@@ -432,16 +433,16 @@ vector<int> getErrorCurrentWords(int* coefficient,int cofLen,int ErrorCurrentTab
 
 class QREncode{
 public:
-    QREncode(){}
-    QREncode(const string& imageFilePath):_imageFilePath(imageFilePath){}
-    ~QREncode(){}
+    QREncode()= default;
+    QREncode(string  imageFilePath):_imageFilePath(std::move(imageFilePath)){}
+    ~QREncode()= default;
     //编码单字节
     Matrix<RGB> encoding(const string& encodeData);
     //编码双字节
     Matrix<RGB> encoding(const wstring& encodeWData);
     string decoding(const string& outputPath);
 
-    int getSideLen() { return 21 + 4 * (version - 1); }
+    [[nodiscard]] int getSideLen() const { return 21 + 4 * (version - 1); }
 protected:
     bool init();
     string NumModeEncoding();

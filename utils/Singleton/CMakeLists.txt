@@ -1,11 +1,10 @@
 cmake_minimum_required(VERSION 3.5.0)
 project(Singleton VERSION 0.1.0)
 set(CMAKE_INSTALL_PREFIX "F:/Visual-Studio-practice/vscode/mySource/build")
-set(UTIL_PATH "..")
 file(GLOB SOURCE_FILE ./src/*.cpp)
 
-include_directories(header)
-include_directories(${UTIL_PATH}/Util/header)
+include_directories(include)
+include_directories(${UTILS_PATH}/Util/include)
 add_library(Singleton SHARED ${SOURCE_FILE})
 add_library(Singleton_static STATIC ${SOURCE_FILE})
 # install(TARGETS Singleton LIBRARY DESTINATION lib)

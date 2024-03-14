@@ -3,6 +3,8 @@
 //
 #include "MD5.h"
 
+#include <cstring>
+
 NAME_SPACE_START(myUtil)
 
 #define F(x, y, z)   ((z) ^ ((x) & ((y) ^ (z))))

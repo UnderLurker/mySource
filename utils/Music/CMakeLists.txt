@@ -1,16 +1,13 @@
 cmake_minimum_required(VERSION 3.5.0)
 project(Music VERSION 0.1.0)
-# set(LIB "F:/Visual Studio practice/vscode/newdemo/build")
-set(CMAKE_INSTALL_PREFIX "F:/Visual-Studio-practice/vscode/mySource/build")
-set(UTIL_PATH "..")
 file(GLOB SOURCE_FILE ./src/*.cpp)
 
-include_directories(header)
-include_directories(${UTIL_PATH}/Util/header)
-# include_directories(${UTIL_PATH}/Matrix/header)
-
 add_library(Music_static STATIC ${SOURCE_FILE})
+target_include_directories(Music_static
+        PUBLIC include
+        PUBLIC ${UTILS_PATH}/Util/include)
 target_link_libraries(Music_static Util_static)
-# target_link_libraries(Music_static Matrix_static)
-# install(TARGETS Util_static ARCHIVE DESTINATION lib)
-# install(FILES include/*.h DESTINATION lib)
+
+add_executable(MusicTest test/Music_test.cpp)
+target_link_libraries(MusicTest Util_static)
+add_test(Music_Test MusicTest)

@@ -654,7 +654,8 @@ Matrix<int> QREncode::MatrixCode(const string& code){
         rgb.setValByArray(dataMatrix[i], vector<RGB>{RGB_BLACK}, 4, 4);
         BMPData bmp(AmplifyMatrix<RGB>(rgb,AMPLIFY_LEVEL),rgb.col*AMPLIFY_LEVEL,rgb.row*AMPLIFY_LEVEL,true);
         bmp.GrayEncoder();
-        bmp.saveBMP("qr"+string(1,'1'+i)+".bmp");
+        string path = "qr"+string(1,'1'+i)+".bmp";
+        bmp.saveBMP(path.c_str());
 #endif
         // cout<<dataMatrix[i]<<endl;
         int t=Evaluate(dataMatrix[i]);

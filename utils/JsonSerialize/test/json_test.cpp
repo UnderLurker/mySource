@@ -71,7 +71,7 @@ REGISTER_REFLEX_FIELD(A, C, bcd)
 // }
 
 void JsonParseTest1() {
-    JsonDocument doc("../sample/test.json");
+    JsonDocument doc("../../../sample/test.json");
     cout << doc.getNode().getStatus() << endl;
     auto node = doc.CreateNode(String);
     node->setKey("abc", 3);
@@ -82,13 +82,13 @@ void JsonParseTest1() {
 }
 
 void JsonParseTest2() {
-    JsonDocument doc("../sample/test.json");
+    JsonDocument doc("../../../sample/test.json");
     cout << doc.getNode().getStatus() << endl;
     doc.save("3.json");
 }
 
 void JsonParseTest3() {
-    JsonDocument doc("../sample/test.json");
+    JsonDocument doc("../../../sample/test.json");
     cout << doc.getNode().getStatus() << endl;
     auto b = doc.getNode()[0];
     b.getString(cout);
@@ -98,7 +98,7 @@ void JsonParseTest3() {
 }
 
 void JsonParseTest4() {
-    JsonDocument doc("../sample/3.json");
+    JsonDocument doc("../../../sample/3.json");
     cout << doc.getNode().getStatus() << endl;
     auto a = (A*)doc.getNode().toRObject("A", "B", "C");
     cout << a->type << endl;
@@ -111,7 +111,7 @@ void JsonParseTest4() {
 }
 
 void JsonParseTest5() {
-    JsonDocument doc("../sample/3.json");
+    JsonDocument doc("../../../sample/3.json");
     cout << doc.getNode().getStatus() << endl;
     auto a = (A*)doc.getNode().toRObject("A", {"B", "C"}, "C");
     cout << a->type << endl;

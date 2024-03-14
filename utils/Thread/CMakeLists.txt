@@ -1,13 +1,15 @@
 cmake_minimum_required(VERSION 3.5.0)
 project(Thread CXX)
-set(UTIL_PATH "..")
 file(GLOB SOURCE_FILE ./src/*.cpp)
 
 add_library(Thread_static STATIC ${SOURCE_FILE})
 
-include_directories(header)
-include_directories(${UTIL_PATH}/Util/header)
-include_directories(${UTIL_PATH}/Singleton/header)
-target_include_directories(Thread_static PUBLIC header)
+target_include_directories(Thread_static
+        PUBLIC include
+        PUBLIC ${UTILS_PATH}/Util/include
+        PUBLIC ${UTILS_PATH}/Singleton/include)
 target_link_libraries(Thread_static Util_static Singleton_static)
 
+add_executable(ThreadTest test/Thread_test.cpp)
+target_link_libraries(ThreadTest Thread_static)
+add_test(Thread_test ThreadTest)

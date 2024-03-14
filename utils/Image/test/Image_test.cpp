@@ -14,7 +14,7 @@ using namespace myUtil;
 
 TEST(jpeg2bmpGray)
 {
-    string str = "../img/Image/4.jpg";
+    string str = "../../../img/Image/4.jpg";
     JPEGData data;
     clock_t startTime = clock();
     data.read(str.c_str());
@@ -27,7 +27,7 @@ TEST(jpeg2bmpGray)
 
 TEST(jpeg2bmp)
 {
-    string str = "../img/Image/4.jpg";
+    string str = "../../../img/Image/4.jpg";
     JPEGData data;
     clock_t startTime = clock();
     data.read(str.c_str());
@@ -40,7 +40,7 @@ TEST(jpeg2bmp)
 TEST(charDraw)
 {
     string dataSet="@W#$OEXC[(/?=^~_.` ";
-    string str = "../img/Image/4.jpg";
+    string str = "../../../img/Image/4.jpg";
     JPEGData data;
     clock_t startTime = clock();
     data.read(str.c_str());
@@ -65,7 +65,7 @@ TEST(charDraw)
 TEST(bmp2bmpGray)
 {
     clock_t startTime = clock();
-    string str = "../img/Image/5.bmp";
+    string str = "../../../img/Image/5.bmp";
     BMPData bmpData;
     bmpData.read(str.c_str());
 
@@ -82,7 +82,7 @@ TEST(bmp2bmpGray)
 TEST(bmp2bmp)
 {
     clock_t startTime = clock();
-    string str = "../img/Image/5.bmp";
+    string str = "../../../img/Image/5.bmp";
     BMPData bmpData;
     bmpData.read(str.c_str());
 
@@ -95,7 +95,7 @@ TEST(bmp2bmp)
 TEST(bmp2jpeg)
 {
     clock_t startTime = clock();
-    string str = "../img/Image/5.bmp";
+    string str = "../../../img/Image/5.bmp";
     BMPData bmpData;
     bmpData.read(str.c_str());
 
@@ -120,7 +120,7 @@ TEST(jpeg2jpeg)
 TEST(png)
 {
     PNGData pngData;
-    pngData.read("../img/Image/6.png");
+    pngData.read("../../../img/Image/6.png");
 }
 //
 //void threadTest(const string& a){
@@ -132,13 +132,13 @@ TEST(png)
 
 int main()
 {
-//     jpeg2bmp();
-//     bmp2bmp();
-//     jpeg2bmpGray();
-//     bmp2bmpGray();
-//     bmp2jpeg();
-//     jpeg2jpeg();
-    png();
+     jpeg2bmp();
+     bmp2bmp();
+     jpeg2bmpGray();
+     bmp2bmpGray();
+     bmp2jpeg();
+     jpeg2jpeg();
+//    png();
 //    CLog log;
 //    for (int i=0;i<13;i++){
 //        threadTest(string(1, '0'+i));

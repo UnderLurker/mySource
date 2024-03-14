@@ -2,9 +2,12 @@
 // Created by 常笑男 on 2023/12/28.
 //
 #include "jpeg.h"
-#include "ImageUtil.h"
-#include "ImageConst.h"
+
+#include <cstring>
 #include <vector>
+
+#include "ImageConst.h"
+#include "ImageUtil.h"
 
 using namespace std;
 

@@ -56,11 +56,11 @@ int main() {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
-    myUtil::Program cubeProgram("../shader/cubeVertex.vs", myUtil::Shader::VERTEX_SHADER,
-                            "../shader/cubeFragment.fs", myUtil::Shader::FRAGMENT_SHADER);
+    myUtil::Program cubeProgram("../../../shader/cubeVertex.vs", myUtil::Shader::VERTEX_SHADER,
+                            "../../../shader/cubeFragment.fs", myUtil::Shader::FRAGMENT_SHADER);
     cubeProgram.linkProgram();
-    myUtil::Program lightProgram("../shader/lightFragment.fs", myUtil::Shader::FRAGMENT_SHADER,
-                                 "../shader/lightVertex.vs", myUtil::Shader::VERTEX_SHADER);
+    myUtil::Program lightProgram("../../../shader/lightFragment.fs", myUtil::Shader::FRAGMENT_SHADER,
+                                 "../../../shader/lightVertex.vs", myUtil::Shader::VERTEX_SHADER);
     lightProgram.linkProgram();
 
     myUtil::VertexArrayObj cubeVAO;
@@ -87,7 +87,7 @@ int main() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    data = stbi_load("../img/Image/1.jpg", &width, &height, &nrChannels, 0);
+    data = stbi_load("../../../img/Image/1.jpg", &width, &height, &nrChannels, 0);
     if (data) {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
@@ -103,7 +103,7 @@ int main() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    data = stbi_load("../img/Image/7.png", &width, &height, &nrChannels, 0);
+    data = stbi_load("../../../img/Image/7.png", &width, &height, &nrChannels, 0);
     if (data) {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);

@@ -10,6 +10,7 @@
 // #define _JSON_PARSE_DEBUG
 
 #include <cassert>
+#include <cstring>
 #include <list>
 #include <utility>
 

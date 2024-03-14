@@ -15,7 +15,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <Windows.h>
 #define NAME_SPACE_START(name) namespace name {
 #define NAME_SPACE_END() }
 
@@ -118,7 +117,6 @@ private:
 				});
 				str[i]=ch;
 				cout<<"\r|"<<str<<"| "<<(int)i*100/barLen<<"%";
-				Sleep(200);
 			}
 		}
 	};
