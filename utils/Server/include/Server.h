@@ -1,16 +1,18 @@
 #pragma once
 
-#include <string>
 #include <iostream>
+#include <string>
 #include <unordered_map>
 using namespace std;
 #ifndef _SERVER_
 #define _SERVER_
 
 #include <winsock.h>
+
+#include "Ini.h"
 #include "Net.h"
 #include "Util.h"
-#pragma comment(lib,"ws2_32.lib")
+#pragma comment(lib, "ws2_32.lib")
 
 NAME_SPACE_START(myUtil)
 
@@ -20,23 +22,26 @@ NAME_SPACE_START(myUtil)
 class Server {
 public:
     Server();
-    Server(const std::string& addr = SERVER_ADDR, const int& port = SERVER_PORT);
-    ~Server() {}
+    explicit Server(const std::string& addr = SERVER_ADDR, const int& port = SERVER_PORT);
+    ~Server() = default;
+
 public:
     bool listen(const int& maxConnect = 1);
     void setRoute(const string& url, const string& className, const string& classFunName);
     void runRoute(const Request& req, Response* resp);
     void setInterceptor(const string& url, const string& InterceptorName);
-    void close();
+    void close() const;
+
 protected:
-    bool Init();
+    static bool Init();
     void threadFunc(SOCKET m_server);
-    int sendTelegram(const SOCKET& accept, const string& info, int flags);
+    static int sendTelegram(const SOCKET& accept, const string& info, int flags);
+
 private:
-    SOCKET m_server;
-    SOCKADDR_IN m_add_in;
-    //thread listenThread;
-    int connectCount{ 0 };
+    SOCKET m_server{};
+    SOCKADDR_IN m_add_in{};
+    // thread listenThread;
+    int connectCount {0};
     unordered_map<string, pair<string, string>> routeMap;
     unordered_map<string, string> interceptorMap;
     IniHelper iniHelper;
