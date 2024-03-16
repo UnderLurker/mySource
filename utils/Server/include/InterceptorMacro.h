@@ -1,5 +1,9 @@
-#pragma once
-#include "Reflex.h"
+#ifndef _INTERCEPTOR_MACRO_H
+#define _INTERCEPTOR_MACRO_H
 #include "indexInterceptor.h"
-#define REFLEX_INPERCEPTOR_DECLARE \
-REGISTER_REFLEX(IndexInterceptor)
+
+NAME_SPACE_START(myUtil)
+#define REFLEX_INPERCEPTOR_DECLARE REGISTER_REFLEX(IndexInterceptor)
+NAME_SPACE_END()
+
+#endif //!_INTERCEPTOR_MACRO_H

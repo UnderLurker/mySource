@@ -9,5 +9,5 @@ target_include_directories(Music_static
 target_link_libraries(Music_static Util_static)
 
 add_executable(MusicTest test/Music_test.cpp)
-target_link_libraries(MusicTest Util_static)
+target_link_libraries(MusicTest Music_static)
 add_test(Music_Test MusicTest)

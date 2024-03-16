@@ -1,12 +1,14 @@
-#pragma once
-#ifndef _COOKIE_
-#define _COOKIE_
+#ifndef _COOKIE_H
+#define _COOKIE_H
 #include <string>
+#include "Util.h"
+
+NAME_SPACE_START(myUtil)
 using namespace std;
 class Cookie
 {
 public:
-	Cookie() {}
+	Cookie() = default;
 	Cookie(const string& name, const string& value) :
 		_name(name), _value(value) {
 		_comment = "";
@@ -31,15 +33,15 @@ public:
 private:
 	string _name;
 	string _value;
-	//注释
+	//娉ㄩ噴
 	string _comment;
-	//路径，若要访问的url startwith（path）此cookie携带
+	//璺緞锛岃嫢瑕佽闂殑url startwith锛坧ath锛夋cookie鎼哄甫
 	string _path;
-	//网站域名
+	//缃戠珯鍩熷悕
 	string _domain;
 	string _version;
-	//生存时间
+	//鐢熷瓨鏃堕棿
 	int _maxAge{ 0 };
 };
-
-#endif //!_COOKIE_
+NAME_SPACE_END()
+#endif //!_COOKIE_H

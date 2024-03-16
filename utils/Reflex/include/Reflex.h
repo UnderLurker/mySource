@@ -1,4 +1,6 @@
-#pragma once
+#ifndef _REFLEX_H
+#define _REFLEX_H
+
 #include "Util.h"
 #include "Singleton.h"
 #include <cstdint>
@@ -7,9 +9,6 @@
 #include <functional>
 #include <map>
 #include <string>
-#ifndef _REFLEX_
-#define _REFLEX_
-
 NAME_SPACE_START(myUtil)
 
 //因为编译器不支持类模板和实现分开写，所以放到一起了
@@ -135,4 +134,4 @@ NAME_SPACE_END()
         std::function<returnType(className,##__VA_ARGS__)> className##methodName = &className::methodName;\
         myUtil::ClassRegister registerClass##className##methodName##returnType(#className,#methodName,(std::uintptr_t)&className##methodName);
 
-#endif //!_REFLEX;_
+#endif //!_REFLEX_H

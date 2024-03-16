@@ -1,20 +1,17 @@
-#pragma once
+#ifndef _SERVER_H_
+#define _SERVER_H_
 
 #include <iostream>
 #include <string>
 #include <unordered_map>
-using namespace std;
-#ifndef _SERVER_
-#define _SERVER_
-
-#include <winsock.h>
 
 #include "Ini.h"
 #include "Net.h"
 #include "Util.h"
-#pragma comment(lib, "ws2_32.lib")
 
 NAME_SPACE_START(myUtil)
+using namespace std;
+#include <winsock.h>
 
 #define SERVER_ADDR "127.0.0.1"
 #define SERVER_PORT 8080
@@ -38,8 +35,8 @@ protected:
     static int sendTelegram(const SOCKET& accept, const string& info, int flags);
 
 private:
-    SOCKET m_server{};
-    SOCKADDR_IN m_add_in{};
+    SOCKET m_server {};
+    SOCKADDR_IN m_add_in {};
     // thread listenThread;
     int connectCount {0};
     unordered_map<string, pair<string, string>> routeMap;
@@ -48,4 +45,4 @@ private:
 };
 
 NAME_SPACE_END()
-#endif //!_SERVER_
+#endif //!_SERVER_H_

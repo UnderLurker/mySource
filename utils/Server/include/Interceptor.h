@@ -1,9 +1,10 @@
-#pragma once
+#ifndef _INTERCEPTOR_H
+#define _INTERCEPTOR_H
+
 #include "Net.h"
 #include "Reflex.h"
-using namespace myUtil;
-#ifndef _INTERCEPTOR_
-#define _INTERCEPTOR_
+
+NAME_SPACE_START(myUtil)
 
 class Interceptor : public RObject {
 public:
@@ -14,4 +15,5 @@ public:
     virtual void afterCompletion(const Request& request, const Response& response) {}
 };
 
-#endif //!_INTERCEPTOR_
+NAME_SPACE_END()
+#endif //!_INTERCEPTOR_H

@@ -1,9 +1,15 @@
-#pragma once
-#ifndef _CCONTROLLER_
-#define _CCONTROLLER_
+#ifndef _CCONTROLLER_H
+#define _CCONTROLLER_H
 #include "Reflex.h"
-using namespace myUtil;
+#include "Util.h"
+
+NAME_SPACE_START(myUtil)
+
 class CController : public RObject
 {
+public:
+    ~CController() override = default;
 };
-#endif //!_CCONTROLLER_
+
+NAME_SPACE_END()
+#endif //!_CCONTROLLER_H
