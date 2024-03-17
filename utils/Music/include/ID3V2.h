@@ -6,9 +6,9 @@
 #define _ID3V2_H
 
 #include <cstdint>
+#include <cstring>
 #include <fstream>
 #include <memory>
-#include <cstring>
 #include <vector>
 
 namespace myUtil {
@@ -31,6 +31,9 @@ struct TagHeader {
                (size4 & 0x7F);
     }
     [[nodiscard]] uint32_t header() const { return (((header1 << 8) + header2) << 8) + header3; }
+    [[nodiscard]] bool unsynchronisation() const { return (flag & 0x80) == 0x80; }
+    [[nodiscard]] bool extension() const { return (flag & 0x40) == 0x40; }
+    [[nodiscard]] bool test() const { return (flag & 0x40) == 0x40; }
 };
 
 class TagFrame {
@@ -41,8 +44,8 @@ public:
     };
     TagFrame() = default;
     TagFrame(const TagFrame& obj) {
-        _header = obj._header;
-        _flags = obj._flags;
+        _header  = obj._header;
+        _flags   = obj._flags;
         _content = new int8_t[obj._header.size + 1];
         memcpy_s(_content, obj._header.size, obj._content, obj._header.size);
     }
@@ -50,6 +53,12 @@ public:
         delete[] _content;
         _content = nullptr;
     }
+    [[nodiscard]] bool tagProtect() const { return ((_flags >> 8) & 0x80) == 0x80; }
+    [[nodiscard]] bool fileProtect() const { return ((_flags >> 8) & 0x40) == 0x40; }
+    [[nodiscard]] bool readOnly() const { return ((_flags >> 8) & 0x20) == 0x20; }
+    [[nodiscard]] bool compress() const { return ((_flags & 0xFF) & 0x80) == 0x80; }
+    [[nodiscard]] bool encryption() const { return ((_flags & 0xFF) & 0x40) == 0x40; }
+    [[nodiscard]] bool group() const { return ((_flags & 0xFF) & 0x20) == 0x20; }
 
 public:
     TagFrameHeader _header {};

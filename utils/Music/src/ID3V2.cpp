@@ -29,6 +29,9 @@ void ID3V2::readData(std::fstream& file) {
     file.read((char*)&_header, sizeof(_header));
     uint32_t curPos = 0;
     while (curPos < _header.size()) {
+        uint8_t preview = file.get();
+        file.seekg(-1, std::ios::cur);
+        if (preview == 0) break;
         TagFrame frame;
         file.read((char*)&frame._header, sizeof(frame._header));
         convert32(frame._header.size);
@@ -42,6 +45,8 @@ void ID3V2::readData(std::fstream& file) {
         }
         frame._content[frame._header.size] = '\0';
         _frame.push_back(frame);
+        curPos += sizeof(frame._header) + sizeof(uint16_t) + frame._header.size;
     }
+    file.seekg(static_cast<uint32_t>(sizeof(TagHeader)) + _header.size(), std::ios::beg);
 }
 } // namespace myUtil

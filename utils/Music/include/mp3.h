@@ -7,6 +7,7 @@
 
 #include "ID3V2.h"
 #include "music_base.h"
+#include "music_frame.h"
 #include "Util.h"
 
 NAME_SPACE_START(myUtil)
@@ -19,8 +20,10 @@ public:
         _status = analysis();
     }
     MusicStatus analysis() override;
+
 public:
     ID3V2 _id3v2;
+    vector<MusicFrame> _frames;
 };
 
 NAME_SPACE_END()
