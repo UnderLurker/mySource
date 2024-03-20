@@ -80,7 +80,7 @@ public:
 
 public:
     explicit SingleLinkList() = default;
-    SingleLinkList(uint32_t size, T value = T(), uint32_t maxLength = SINGLE_LINK_LIST_MAX_LENGTH);
+    explicit SingleLinkList(uint32_t size, T value = T(), uint32_t maxLength = SINGLE_LINK_LIST_MAX_LENGTH);
     SingleLinkList(T* begin, T* end, uint32_t maxLength = SINGLE_LINK_LIST_MAX_LENGTH);
     SingleLinkList(SingleLinkList<T>&);
     SingleLinkList(const SingleLinkList<T>&&) = delete;

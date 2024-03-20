@@ -10,4 +10,5 @@ target_link_libraries(Music_static Util_static)
 
 add_executable(MusicTest test/Music_test.cpp)
 target_link_libraries(MusicTest Music_static)
+target_include_directories(MusicTest PUBLIC ${UTILS_PATH}/Log/include)
 add_test(Music_Test MusicTest)
