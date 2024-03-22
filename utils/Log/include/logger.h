@@ -107,13 +107,13 @@ public:
                 }
                 _logCache.clear();
             }
-            if (!_clogList.empty()) {
-                writeLog(_clogList.front().value());
-                _clogList.pop();
-            }
             pushLock.unlock();
-            lock.unlock();
             _pushCondition.notify_all();
+            for (const auto& item : _clogList) {
+                writeLog(item.value());
+            }
+            _clogList.clear();
+            lock.unlock();
         }
         _of.close();
         std::cout << "CLog::work success end" << std::endl;
