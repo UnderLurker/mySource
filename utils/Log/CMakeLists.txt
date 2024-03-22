@@ -2,12 +2,10 @@ cmake_minimum_required(VERSION 3.5.0)
 project(logger CXX)
 file(GLOB SOURCE_FILE ./src/logger.cpp)
 
-#include_directories(include)
-## add_library(Matrix SHARED ${SOURCE_FILE})
-## target_include_directories(Matrix PUBLIC header)
-## install(TARGETS Matrix LIBRARY DESTINATION lib)
-#add_library(logger_static STATIC ${SOURCE_FILE})
-#
-#include_directories(${UTILS_PATH}/Util/include)
-#target_include_directories(logger_static PUBLIC header)
-#target_link_libraries(logger_static Util_static)
+add_executable(LoggerTest test/log_test.cpp)
+target_link_libraries(LoggerTest Util_static)
+target_include_directories(LoggerTest
+        PUBLIC include
+        PUBLIC ${UTILS_PATH}/Log/include
+        PUBLIC ${UTILS_PATH}/Util/include)
+add_test(Logger_Test LoggerTest)
