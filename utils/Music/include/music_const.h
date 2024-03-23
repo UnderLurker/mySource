@@ -29,7 +29,7 @@ enum MusicLayer {
 };
 
 typedef std::pair<std::pair<MusicVersion, MusicLayer>, uint8_t> BitRateKey;
-const static std::map<BitRateKey, int16_t> bitRate {
+const static std::map<BitRateKey, int16_t> bitRateMap {
   // {{{MusicVersion, MusicLayer}, bitrateIndex}, value}
     {{{MPEG1, LAYER1}, 0},    0  },
     {{{MPEG1, LAYER1}, 1},    32 },
