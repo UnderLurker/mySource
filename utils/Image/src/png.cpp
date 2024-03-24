@@ -1,59 +1,60 @@
 #include "png.h"
 
-#include <cstdint>
 #include <fstream>
 #include <sstream>
 #include <windef.h>
+#include <zlib.h>
 
 #include "ImageUtil.h"
 #include "Util.h"
 
 NAME_SPACE_START(myUtil)
 
-#define ANCILLARY_CHUNK_FACTORY(chunkName)              \
-    if (chunkName == head.chunkType) {                  \
-        Chunk* chunk = new chunkName##Chunk();          \
-        auto result = chunk->decode(file, head.length); \
-        _ancillaryChunk[chunkName] = chunk;             \
-        return result;                                  \
+#define ANCILLARY_CHUNK_FACTORY(chunkName)                             \
+    if (chunkName == head.chunkType) {                                 \
+        Chunk* chunk               = new chunkName##Chunk();           \
+        auto result                = chunk->decode(file, head.length); \
+        _ancillaryChunk[chunkName] = chunk;                            \
+        return result;                                                 \
     }
 
-void convertSmall16(uint16_t& value)
-{
+#define ANCILLARY_CHUNK_FACTORY_FUNC(chunkName, statement)             \
+    if (chunkName == head.chunkType) {                                 \
+        Chunk* chunk = new chunkName##Chunk();                         \
+        statement;                                                     \
+        auto result                = chunk->decode(file, head.length); \
+        _ancillaryChunk[chunkName] = chunk;                            \
+        return result;                                                 \
+    }
+
+void convertSmall16(uint16_t& value) {
     uint16_t value1 = value & 0x00ff;
     uint16_t value2 = value & 0xff00;
-    value = (value1 << 8) | (value2 >> 8);
+    value           = (value1 << 8) | (value2 >> 8);
 }
 
-void convertSmall32(uint32_t& value)
-{
+void convertSmall32(uint32_t& value) {
     uint32_t value1 = value & 0x000000ff;
     uint32_t value2 = value & 0x0000ff00;
     uint32_t value3 = value & 0x00ff0000;
     uint32_t value4 = value & 0xff000000;
-    value = (value1 << 24) | (value2 << 8) | (value3 >> 8) | (value4 >> 24);
+    value           = (value1 << 24) | (value2 << 8) | (value3 >> 8) | (value4 >> 24);
 }
 
-ImageStatus IHDRChunk::decode(fstream& file, uint32_t length)
-{
-    if (length <= 0)
-        return ERROR_LIMIT;
+ImageStatus IHDRChunk::decode(fstream& file, uint32_t length) {
+    if (length <= 0) return ERROR_LIMIT;
     try {
         file.read((char*)&_data, length);
         file.read((char*)&crc, sizeof(crc));
         convertSmall32(_data.width);
         convertSmall32(_data.height);
         convertSmall32(crc.crc);
-    } catch (...) {
-        return ERROR_UNKNOWN;
-    }
+    } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
 
-ImageStatus PLETChunk::decode(fstream& file, uint32_t length)
-{
-    if (length % 3 == 0)
-        return ERROR_FILE_FORMAT;
+ImageStatus PLETChunk::decode(fstream& file, uint32_t length) {
+    if (length % 3 != 0) return ERROR_FILE_FORMAT;
     try {
         uint32_t len = length / 3;
         _data.resize(len);
@@ -64,26 +65,21 @@ ImageStatus PLETChunk::decode(fstream& file, uint32_t length)
         }
         file.read((char*)&crc, sizeof(crc));
         convertSmall32(crc.crc);
-    } catch (...) {
-        return ERROR_UNKNOWN;
-    }
+    } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
 
-ImageStatus tRNSChunk::decode(fstream& file, uint32_t length)
-{
+ImageStatus tRNSChunk::decode(fstream& file, uint32_t length) {
     try {
         switch (colourType) {
             case 0: {
-                if (length != 2)
-                    return ERROR_FILE_FORMAT;
+                if (length != 2) return ERROR_FILE_FORMAT;
                 file.read((char*)&_data.colourType0, sizeof(_data.colourType0));
                 convertSmall16(_data.colourType0);
                 break;
             }
             case 2: {
-                if (length != sizeof(ChunkColour))
-                    return ERROR_FILE_FORMAT;
+                if (length != sizeof(ChunkColour)) return ERROR_FILE_FORMAT;
                 file.read((char*)&_data.colourType2, sizeof(ChunkColour));
                 convertSmall16(_data.colourType2.red);
                 convertSmall16(_data.colourType2.green);
@@ -104,16 +100,12 @@ ImageStatus tRNSChunk::decode(fstream& file, uint32_t length)
         }
         file.read((char*)&crc, sizeof(crc));
         convertSmall32(crc.crc);
-    } catch (...) {
-        return ERROR_UNKNOWN;
-    }
+    } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
 
-ImageStatus cHRMChunk::decode(fstream& file, uint32_t length)
-{
-    if (length != sizeof(cHRMData))
-        return ERROR_FILE_FORMAT;
+ImageStatus cHRMChunk::decode(fstream& file, uint32_t length) {
+    if (length != sizeof(cHRMData)) return ERROR_FILE_FORMAT;
     try {
         file.read((char*)&_data, sizeof(cHRMData));
         file.read((char*)&crc, sizeof(crc));
@@ -126,31 +118,24 @@ ImageStatus cHRMChunk::decode(fstream& file, uint32_t length)
         convertSmall32(_data.blueX);
         convertSmall32(_data.blueY);
         convertSmall32(crc.crc);
-    } catch (...) {
-        return ERROR_UNKNOWN;
-    }
+    } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
 
-ImageStatus gAMAChunk::decode(fstream& file, uint32_t length)
-{
-    if (length != sizeof(_data))
-        return ERROR_FILE_FORMAT;
+ImageStatus gAMAChunk::decode(fstream& file, uint32_t length) {
+    if (length != sizeof(_data)) return ERROR_FILE_FORMAT;
     try {
         file.read((char*)&_data, sizeof(_data));
         file.read((char*)&crc, sizeof(crc));
         convertSmall32(_data);
         convertSmall32(crc.crc);
-    } catch (...) {
-        return ERROR_UNKNOWN;
-    }
+    } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
 
-ImageStatus iCCPChunk::decode(fstream& file, uint32_t length)
-{
+ImageStatus iCCPChunk::decode(fstream& file, uint32_t length) {
     try {
-        uint8_t ch = 1;
+        char ch = 1;
         for (uint32_t i = 0; i < length; i++) {
             file.read((char*)&ch, sizeof(ch));
             if (ch == 0) {
@@ -170,14 +155,11 @@ ImageStatus iCCPChunk::decode(fstream& file, uint32_t length)
         }
         file.read((char*)&crc, sizeof(crc));
         convertSmall32(crc.crc);
-    } catch (...) {
-        return ERROR_UNKNOWN;
-    }
+    } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
 
-ImageStatus sBITChunk::decode(fstream& file, uint32_t length)
-{
+ImageStatus sBITChunk::decode(fstream& file, uint32_t length) {
     try {
         switch (colourType) {
             case 0: {
@@ -202,44 +184,32 @@ ImageStatus sBITChunk::decode(fstream& file, uint32_t length)
         }
         file.read((char*)&crc, sizeof(crc));
         convertSmall32(crc.crc);
-    } catch (...) {
-        return ERROR_UNKNOWN;
-    }
+    } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
 
-ImageStatus sRGBChunk::decode(fstream& file, uint32_t length)
-{
-    if (length != sizeof(_data))
-        return ERROR_FILE_FORMAT;
+ImageStatus sRGBChunk::decode(fstream& file, uint32_t length) {
+    if (length != sizeof(_data)) return ERROR_FILE_FORMAT;
     try {
         file.read((char*)&_data, sizeof(_data));
         file.read((char*)&crc, sizeof(crc));
         convertSmall32(crc.crc);
-    } catch (...) {
-        return ERROR_UNKNOWN;
-    }
+    } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
 
-ImageStatus cICPChunk::decode(fstream& file, uint32_t length)
-{
-    if (length != sizeof(_data))
-        return ERROR_FILE_FORMAT;
+ImageStatus cICPChunk::decode(fstream& file, uint32_t length) {
+    if (length != sizeof(_data)) return ERROR_FILE_FORMAT;
     try {
         file.read((char*)&_data, sizeof(_data));
         file.read((char*)&crc, sizeof(crc));
         convertSmall32(crc.crc);
-    } catch (...) {
-        return ERROR_UNKNOWN;
-    }
+    } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
 
-ImageStatus mDCvChunk::decode(fstream& file, uint32_t length)
-{
-    if (length != sizeof(_data))
-        return ERROR_FILE_FORMAT;
+ImageStatus mDCvChunk::decode(fstream& file, uint32_t length) {
+    if (length != sizeof(_data)) return ERROR_FILE_FORMAT;
     try {
         file.read((char*)&_data, sizeof(_data));
         file.read((char*)&crc, sizeof(crc));
@@ -254,40 +224,26 @@ ImageStatus mDCvChunk::decode(fstream& file, uint32_t length)
         convertSmall32(_data.maxLum);
         convertSmall32(_data.minLum);
         convertSmall32(crc.crc);
-    } catch (...) {
-        return ERROR_UNKNOWN;
-    }
+    } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
 
-vector<mDCvChunk::Chromaticity> mDCvChunk::chromaticity() const
-{
+vector<mDCvChunk::Chromaticity> mDCvChunk::chromaticity() const {
     return {
-        { _data.chromaticityX1 * 0.00002f, _data.chromaticityY1 * 0.00002f },
-        { _data.chromaticityX2 * 0.00002f, _data.chromaticityY2 * 0.00002f },
-        { _data.chromaticityX3 * 0.00002f, _data.chromaticityY3 * 0.00002f },
+        {_data.chromaticityX1 * 0.00002f, _data.chromaticityY1 * 0.00002f},
+        {_data.chromaticityX2 * 0.00002f, _data.chromaticityY2 * 0.00002f},
+        {_data.chromaticityX3 * 0.00002f, _data.chromaticityY3 * 0.00002f},
     };
 }
 
-mDCvChunk::Chromaticity mDCvChunk::whitePoint()
-{
-    return { _data.whitePointX * 0.00002f, _data.whitePointY * 0.00002f };
-}
+mDCvChunk::Chromaticity mDCvChunk::whitePoint() { return {_data.whitePointX * 0.00002f, _data.whitePointY * 0.00002f}; }
 
-float mDCvChunk::maxLum()
-{
-    return _data.maxLum * 0.0001;
-}
+float mDCvChunk::maxLum() { return _data.maxLum * 0.0001; }
 
-float mDCvChunk::minLum()
-{
-    return _data.minLum * 0.0001;
-}
+float mDCvChunk::minLum() { return _data.minLum * 0.0001; }
 
-ImageStatus cLLiChunk::decode(fstream& file, uint32_t length)
-{
-    if (length != sizeof(uint32_t) * 2)
-        return ERROR_FILE_FORMAT;
+ImageStatus cLLiChunk::decode(fstream& file, uint32_t length) {
+    if (length != sizeof(uint32_t) * 2) return ERROR_FILE_FORMAT;
     try {
         file.read((char*)&MaxCLL, sizeof(MaxCLL));
         file.read((char*)&MaxFALL, sizeof(MaxFALL));
@@ -295,14 +251,11 @@ ImageStatus cLLiChunk::decode(fstream& file, uint32_t length)
         convertSmall32(MaxCLL);
         convertSmall32(MaxFALL);
         convertSmall32(crc.crc);
-    } catch (...) {
-        return ERROR_UNKNOWN;
-    }
+    } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
 
-ImageStatus tEXtChunk::decode(fstream& file, uint32_t length)
-{
+ImageStatus tEXtChunk::decode(fstream& file, uint32_t length) {
     try {
         for (uint32_t i = 0; i < length; i++) {
             char ch;
@@ -323,14 +276,11 @@ ImageStatus tEXtChunk::decode(fstream& file, uint32_t length)
         }
         file.read((char*)&crc, sizeof(crc));
         convertSmall32(crc.crc);
-    } catch (...) {
-        return ERROR_UNKNOWN;
-    }
+    } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
 
-ImageStatus zTXtChunk::decode(fstream& file, uint32_t length)
-{
+ImageStatus zTXtChunk::decode(fstream& file, uint32_t length) {
     try {
         for (uint32_t i = 0; i < length; i++) {
             char ch;
@@ -352,14 +302,11 @@ ImageStatus zTXtChunk::decode(fstream& file, uint32_t length)
         }
         file.read((char*)&crc, sizeof(crc));
         convertSmall32(crc.crc);
-    } catch (...) {
-        return ERROR_UNKNOWN;
-    }
+    } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
 
-ImageStatus iTXtChunk::decode(fstream& file, uint32_t length)
-{
+ImageStatus iTXtChunk::decode(fstream& file, uint32_t length) {
     try {
         uint32_t i = 0;
         for (; i < length; i++) {
@@ -379,14 +326,11 @@ ImageStatus iTXtChunk::decode(fstream& file, uint32_t length)
         textProcess(file, length, i);
         file.read((char*)&crc, sizeof(crc));
         convertSmall32(crc.crc);
-    } catch (...) {
-        return ERROR_UNKNOWN;
-    }
+    } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
 
-void iTXtChunk::tagProcess(fstream& file, uint32_t length, uint32_t& curPos)
-{
+void iTXtChunk::tagProcess(fstream& file, uint32_t length, uint32_t& curPos) {
     queue<char> tagQueue;
     readQueue(file, length, curPos, tagQueue);
     languageTag.resize(tagQueue.size());
@@ -396,8 +340,7 @@ void iTXtChunk::tagProcess(fstream& file, uint32_t length, uint32_t& curPos)
     }
 }
 
-void iTXtChunk::tKeyWordProcess(fstream& file, uint32_t length, uint32_t& curPos)
-{
+void iTXtChunk::tKeyWordProcess(fstream& file, uint32_t length, uint32_t& curPos) {
     queue<uint8_t> q;
     readQueue(file, length, curPos, q);
     translatedKeyWord = make_unique<uint8_t[]>(q.size());
@@ -407,10 +350,9 @@ void iTXtChunk::tKeyWordProcess(fstream& file, uint32_t length, uint32_t& curPos
     }
 }
 
-void iTXtChunk::textProcess(fstream& file, uint32_t length, uint32_t& curPos)
-{
+void iTXtChunk::textProcess(fstream& file, uint32_t length, uint32_t& curPos) {
     uint32_t len = length - curPos - 1;
-    text = make_unique<uint8_t[]>(len);
+    text         = make_unique<uint8_t[]>(len);
     for (uint32_t i = 0; i < len; i++) {
         uint8_t ch;
         file.read((char*)&ch, sizeof(ch));
@@ -418,8 +360,7 @@ void iTXtChunk::textProcess(fstream& file, uint32_t length, uint32_t& curPos)
     }
 }
 
-ImageStatus bKGDChunk::decode(fstream& file, uint32_t length)
-{
+ImageStatus bKGDChunk::decode(fstream& file, uint32_t length) {
     try {
         switch (colourType) {
             case 0:
@@ -442,19 +383,15 @@ ImageStatus bKGDChunk::decode(fstream& file, uint32_t length)
         }
         file.read((char*)&crc, sizeof(crc));
         convertSmall32(crc.crc);
-    } catch (...) {
-        return ERROR_UNKNOWN;
-    }
+    } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
 
-ImageStatus hISTChunk::decode(fstream& file, uint32_t length)
-{
-    if (length % 2 != 0)
-        return ERROR_FILE_FORMAT;
+ImageStatus hISTChunk::decode(fstream& file, uint32_t length) {
+    if (length % 2 != 0) return ERROR_FILE_FORMAT;
     try {
         uint32_t len = length / 2;
-        _data = make_unique<uint16_t[]>(len);
+        _data        = make_unique<uint16_t[]>(len);
         for (uint32_t i = 0; i < len; i++) {
             uint16_t integer;
             file.read((char*)&integer, sizeof(integer));
@@ -463,14 +400,11 @@ ImageStatus hISTChunk::decode(fstream& file, uint32_t length)
         }
         file.read((char*)&crc, sizeof(crc));
         convertSmall32(crc.crc);
-    } catch (...) {
-        return ERROR_UNKNOWN;
-    }
+    } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
 
-ImageStatus pHYsChunk::decode(fstream& file, uint32_t length)
-{
+ImageStatus pHYsChunk::decode(fstream& file, uint32_t length) {
     try {
         file.read((char*)&pixelsPerUnitX, sizeof(pixelsPerUnitX));
         file.read((char*)&pixelsPerUnitY, sizeof(pixelsPerUnitY));
@@ -479,21 +413,17 @@ ImageStatus pHYsChunk::decode(fstream& file, uint32_t length)
         convertSmall32(pixelsPerUnitX);
         convertSmall32(pixelsPerUnitY);
         convertSmall32(crc.crc);
-    } catch (...) {
-        return ERROR_UNKNOWN;
-    }
+    } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
 
-ImageStatus sPLTChunk::decode(fstream& file, uint32_t length)
-{
+ImageStatus sPLTChunk::decode(fstream& file, uint32_t length) {
     try {
         uint32_t pos = 0;
         nameProcess(file, length, pos);
         file.read((char*)&sampleDepth, sizeof(sampleDepth));
         uint32_t len = length - paletteName.size() - sizeof(sampleDepth) - 1;
-        if (len % 3 != 0 || (sampleDepth != 8 && sampleDepth != 16))
-            return ERROR_FILE_FORMAT;
+        if (len % 3 != 0 || (sampleDepth != 8 && sampleDepth != 16)) return ERROR_FILE_FORMAT;
         _entry = make_unique<PaletteEntry[]>(len / 3);
         for (uint32_t i = 0; i < len / 3; i++) {
             PaletteEntry entry {};
@@ -506,14 +436,11 @@ ImageStatus sPLTChunk::decode(fstream& file, uint32_t length)
         }
         file.read((char*)&crc, sizeof(crc));
         convertSmall32(crc.crc);
-    } catch (...) {
-        return ERROR_UNKNOWN;
-    }
+    } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
 
-void sPLTChunk::nameProcess(fstream& file, uint32_t length, uint32_t& curPos)
-{
+void sPLTChunk::nameProcess(fstream& file, uint32_t length, uint32_t& curPos) {
     queue<char> nameQueue;
     readQueue(file, length, curPos, nameQueue);
     paletteName.resize(nameQueue.size());
@@ -523,8 +450,7 @@ void sPLTChunk::nameProcess(fstream& file, uint32_t length, uint32_t& curPos)
     }
 }
 
-void sPLTChunk::paletteEntryProcess(fstream& file, PaletteEntry& entry)
-{
+void sPLTChunk::paletteEntryProcess(fstream& file, PaletteEntry& entry) {
     uint8_t color;
     file.read((char*)&color, sizeof(uint8_t));
     entry.red = color;
@@ -536,20 +462,16 @@ void sPLTChunk::paletteEntryProcess(fstream& file, PaletteEntry& entry)
     entry.alpha = color;
 }
 
-ImageStatus eXIfChunk::decode(fstream& file, uint32_t length)
-{
+ImageStatus eXIfChunk::decode(fstream& file, uint32_t length) {
     try {
         file.seekg(length, ios::cur);
         file.read((char*)&crc, sizeof(crc));
         convertSmall32(crc.crc);
-    } catch (...) {
-        return ERROR_UNKNOWN;
-    }
+    } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
 
-ImageStatus tIMEChunk::decode(fstream& file, uint32_t length)
-{
+ImageStatus tIMEChunk::decode(fstream& file, uint32_t length) {
     try {
         file.read((char*)&year, sizeof(year));
         file.read((char*)&month, sizeof(month));
@@ -560,28 +482,22 @@ ImageStatus tIMEChunk::decode(fstream& file, uint32_t length)
         file.read((char*)&crc, sizeof(crc));
         convertSmall16(year);
         convertSmall32(crc.crc);
-    } catch (...) {
-        return ERROR_UNKNOWN;
-    }
+    } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
 
-ImageStatus acTLChunk::decode(fstream& file, uint32_t length)
-{
+ImageStatus acTLChunk::decode(fstream& file, uint32_t length) {
     try {
         file.read((char*)&_data, sizeof(_data));
         file.read((char*)&crc, sizeof(crc));
         convertSmall32(_data.numFrames);
         convertSmall32(_data.numPlays);
         convertSmall32(crc.crc);
-    } catch (...) {
-        return ERROR_UNKNOWN;
-    }
+    } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
 
-ImageStatus fcTLChunk::decode(fstream& file, uint32_t length)
-{
+ImageStatus fcTLChunk::decode(fstream& file, uint32_t length) {
     try {
         file.read((char*)&_data, sizeof(_data));
         file.read((char*)&disposeOp, sizeof(disposeOp));
@@ -595,66 +511,66 @@ ImageStatus fcTLChunk::decode(fstream& file, uint32_t length)
         convertSmall16(_data.delayNum);
         convertSmall16(_data.delayDen);
         convertSmall32(crc.crc);
-    } catch (...) {
-        return ERROR_UNKNOWN;
-    }
+    } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
 
-ImageStatus fdATChunk::decode(fstream& file, uint32_t length)
-{
+ImageStatus fdATChunk::decode(fstream& file, uint32_t length) {
     try {
         file.read((char*)&sequenceNumber, sizeof(sequenceNumber));
         uint32_t len = length - sizeof(sequenceNumber);
-        frameData = make_unique<uint8_t[]>(len);
+        frameData    = make_unique<uint8_t[]>(len);
         for (uint32_t i = 0; i < len; i++) {
             frameData[i] = file.get();
         }
         file.read((char*)&crc, sizeof(crc));
         convertSmall32(sequenceNumber);
         convertSmall32(crc.crc);
-    } catch (...) {
-        return ERROR_UNKNOWN;
-    }
+    } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
 
-ImageStatus IDATChunk::decode(fstream& file, uint32_t length)
-{
+ImageStatus IDATChunk::decode(fstream& file, uint32_t length) {
     try {
+#ifdef _IDAT_DEBUG_
+        fstream hexFile("E:/code/mySource/log/hexFile.txt", ios::out | ios::app);
+#endif
+        cout << hex << file.tellg() << endl;
         _data = make_unique<uint8_t[]>(length);
         for (uint32_t i = 0; i < length; i++) {
             _data[i] = file.get();
+#ifdef _IDAT_DEBUG_
+            if (i % 16 == 0) hexFile << endl;
+            hexFile.width(2);
+            hexFile.fill('0');
+            hexFile << hex << (int)_data[i] << " ";
+#endif
         }
+//        uLong len    = 600000000;
+//        uLong inLen  = length;
+//        auto uncompr = make_unique<uint8_t[]>(len);
+//        int err      = uncompress2(uncompr.get(), &len, _data.get(), &inLen);
         file.read((char*)&crc, sizeof(crc));
         convertSmall32(crc.crc);
-    } catch (...) {
-        return ERROR_UNKNOWN;
-    }
+    } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
 
-ImageStatus IENDChunk::decode(fstream& file, uint32_t length)
-{
+ImageStatus IENDChunk::decode(fstream& file, uint32_t length) {
     try {
         file.read((char*)&crc, sizeof(crc));
         convertSmall32(crc.crc);
-    } catch (...) {
-        return ERROR_UNKNOWN;
-    }
+    } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
 
-ImageStatus PNGData::read(const char* filePath)
-{
+ImageStatus PNGData::read(const char* filePath) {
     CHECK_NULL_RETURN(filePath, ERROR_NULLPTR)
     fstream file(filePath, ios::in | ios::binary);
-    if (file.fail())
-        return ERROR_FILE_OPERATOR;
+    if (file.fail()) return ERROR_FILE_OPERATOR;
     try {
         file.read((char*)&_formatFlag, sizeof(_formatFlag));
-        if (!checkFormat())
-            return ERROR_FILE_FORMAT;
+        if (!checkFormat()) return ERROR_FILE_FORMAT;
         file.seekg(4, ios::cur); // formatFlag's CRC
         ChunkHead head {};
         do {
@@ -663,25 +579,22 @@ ImageStatus PNGData::read(const char* filePath)
             convertSmall32(head.length);
             convertSmall32(head.chunkType);
             TEMP_LOG("chunkType:%s, length:%d\n", typeMap[head.chunkType].c_str(), head.length)
-            if (decodeProcess(file, head) != SUCCESS)
-                return ERROR_FILE_DECODE;
+            if (decodeProcess(file, head) != SUCCESS) return ERROR_FILE_DECODE;
         } while (head.chunkType != IEND && !file.eof());
-    } catch (...) {
-        return ERROR_UNKNOWN;
-    }
+    } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
 
-ImageStatus PNGData::decodeProcess(fstream& file, const ChunkHead& head)
-{
+ImageStatus PNGData::decodeProcess(fstream& file, const ChunkHead& head) {
     ImageStatus status = ERROR_UNKNOWN;
     try {
         switch (head.chunkType) {
-            case IHDR:
-                status = _IHDR.decode(file, head.length);
-                _width = _IHDR.width();
+            case IHDR: {
+                status  = _IHDR.decode(file, head.length);
+                _width  = _IHDR.width();
                 _height = _IHDR.height();
                 break;
+            }
             case PLTE:
                 status = _PLTE.decode(file, head.length);
                 break;
@@ -696,15 +609,12 @@ ImageStatus PNGData::decodeProcess(fstream& file, const ChunkHead& head)
             default:
                 return ancillaryChunkFactory(file, head);
         }
-    } catch (...) {
-        return ERROR_UNKNOWN;
-    }
+    } catch (...) { return ERROR_UNKNOWN; }
     return status;
 }
 
-ImageStatus PNGData::ancillaryChunkFactory(fstream& file, const ChunkHead& head)
-{
-    ANCILLARY_CHUNK_FACTORY(tRNS)
+ImageStatus PNGData::ancillaryChunkFactory(fstream& file, const ChunkHead& head) {
+    ANCILLARY_CHUNK_FACTORY_FUNC(tRNS, ((tRNSChunk*)chunk)->colourType = _IHDR._data.colorType)
     ANCILLARY_CHUNK_FACTORY(cHRM)
     ANCILLARY_CHUNK_FACTORY(gAMA)
     ANCILLARY_CHUNK_FACTORY(iCCP)

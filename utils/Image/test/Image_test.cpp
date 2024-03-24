@@ -3,7 +3,7 @@
 #include <locale>
 #include <sstream>
 
-//#include "logger.h"
+// #include "logger.h"
 #include "bmp.h"
 #include "jpeg.h"
 #include "png.h"
@@ -12,8 +12,7 @@
 using namespace std;
 using namespace myUtil;
 
-TEST(jpeg2bmpGray)
-{
+TEST(jpeg2bmpGray) {
     string str = "../../../img/Image/4.jpg";
     JPEGData data;
     clock_t startTime = clock();
@@ -25,8 +24,7 @@ TEST(jpeg2bmpGray)
     cout << dec << clock() - startTime << "ms" << endl;
 }
 
-TEST(jpeg2bmp)
-{
+TEST(jpeg2bmp) {
     string str = "../../../img/Image/4.jpg";
     JPEGData data;
     clock_t startTime = clock();
@@ -37,10 +35,9 @@ TEST(jpeg2bmp)
     cout << dec << clock() - startTime << "ms" << endl;
 }
 
-TEST(charDraw)
-{
-    string dataSet="@W#$OEXC[(/?=^~_.` ";
-    string str = "../../../img/Image/4.jpg";
+TEST(charDraw) {
+    string dataSet = "@W#$OEXC[(/?=^~_.` ";
+    string str     = "../../../img/Image/4.jpg";
     JPEGData data;
     clock_t startTime = clock();
     data.read(str.c_str());
@@ -48,12 +45,12 @@ TEST(charDraw)
 
     BMPData bmp(data.getRGBMatrix(), data.getWidth(), data.getHeight(), true);
     bmp.GrayEncoder();
-    auto temp = bmp.getGray();
-    double a = (dataSet.size() * 1.0 / 255);
+    auto temp      = bmp.getGray();
+    double a       = (dataSet.size() * 1.0 / 255);
     int32_t length = 1, expect = 2;
     for (int i = 0; i < temp.row; i += length * expect) {
         for (int j = 0; j < temp.col; j += length) {
-            auto t = temp.getValue(i, j);
+            auto t    = temp.getValue(i, j);
             int index = (int)(a * (int)t);
             file << dataSet[index];
         }
@@ -62,10 +59,9 @@ TEST(charDraw)
     cout << dec << clock() - startTime << "ms" << endl;
 }
 
-TEST(bmp2bmpGray)
-{
+TEST(bmp2bmpGray) {
     clock_t startTime = clock();
-    string str = "../../../img/Image/5.bmp";
+    string str        = "../../../img/Image/5.bmp";
     BMPData bmpData;
     bmpData.read(str.c_str());
 
@@ -79,10 +75,9 @@ TEST(bmp2bmpGray)
     cout << dec << clock() - startTime << "ms" << endl;
 }
 
-TEST(bmp2bmp)
-{
+TEST(bmp2bmp) {
     clock_t startTime = clock();
-    string str = "../../../img/Image/5.bmp";
+    string str        = "../../../img/Image/5.bmp";
     BMPData bmpData;
     bmpData.read(str.c_str());
 
@@ -92,10 +87,9 @@ TEST(bmp2bmp)
     cout << dec << clock() - startTime << "ms" << endl;
 }
 
-TEST(bmp2jpeg)
-{
+TEST(bmp2jpeg) {
     clock_t startTime = clock();
-    string str = "../../../img/Image/5.bmp";
+    string str        = "../../../img/Image/5.bmp";
     BMPData bmpData;
     bmpData.read(str.c_str());
 
@@ -106,10 +100,9 @@ TEST(bmp2jpeg)
     cout << dec << clock() - startTime << "ms" << endl;
 }
 
-TEST(jpeg2jpeg)
-{
+TEST(jpeg2jpeg) {
     clock_t startTime = clock();
-    string str = "bmp2jpeg.jpg";
+    string str        = "bmp2jpeg.jpg";
     JPEGData data;
     data.read(str.c_str());
     auto a = data.write("jpeg2jpeg.jpg");
@@ -117,32 +110,18 @@ TEST(jpeg2jpeg)
     cout << dec << clock() - startTime << "ms" << endl;
 }
 
-TEST(png)
-{
+TEST(png) {
     PNGData pngData;
     pngData.read("../../../img/Image/6.png");
 }
-//
-//void threadTest(const string& a){
-//    thread th([&](){
-//        CLog::push("abc" + a);
-//    });
-//    th.join();
-//}
 
-int main()
-{
-     jpeg2bmp();
-     bmp2bmp();
-     jpeg2bmpGray();
-     bmp2bmpGray();
-     bmp2jpeg();
-     jpeg2jpeg();
-//    png();
-//    CLog log;
-//    for (int i=0;i<13;i++){
-//        threadTest(string(1, '0'+i));
-//    }
-//    CLog::end();
+int main() {
+    //     jpeg2bmp();
+    //     bmp2bmp();
+    //     jpeg2bmpGray();
+    //     bmp2bmpGray();
+    //     bmp2jpeg();
+    //     jpeg2jpeg();
+    png();
     return 0;
 }

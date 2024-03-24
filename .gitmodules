@@ -7,3 +7,6 @@
 [submodule "third_part/glfw"]
 	path = third_part/glfw
 	url = https://github.com/glfw/glfw.git
+[submodule "third_part/zlib"]
+	path = third_part/zlib
+	url = https://github.com/madler/zlib.git

@@ -6,11 +6,12 @@ file(GLOB QRCODE_SOURCE_FILE ./src/QrEncode.cpp)
 add_library(Image_static STATIC ${IMAGE_SOURCE_FILE}
         ./src/jpeg.cpp
         ./src/png.cpp)
-target_link_libraries(Image_static Util_static)
+target_link_libraries(Image_static Util_static zlibstatic)
 target_include_directories(Image_static PUBLIC
         include
         ${UTILS_PATH}/Util/include
-        ${UTILS_PATH}/Matrix/include)
+        ${UTILS_PATH}/Matrix/include
+        ${THIRD_PART}/zlib)
 
 add_executable(ImageTest test/Image_test.cpp)
 target_link_libraries(ImageTest Image_static)

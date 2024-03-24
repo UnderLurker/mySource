@@ -7,8 +7,8 @@
 #include <vector>
 
 #include "ImageBase.h"
-#include "ImageUtil.h"
 #include "ImageConst.h"
+#include "ImageUtil.h"
 #include "Matrix.h"
 #include "Util.h"
 
@@ -16,6 +16,7 @@
 
 NAME_SPACE_START(myUtil)
 #define _DEBUG_
+// #define _IDAT_DEBUG_
 #define TEMP_LOG(fmt, ...) printf(fmt, ##__VA_ARGS__);
 
 enum ChunkType {
@@ -47,15 +48,31 @@ enum ChunkType {
 };
 
 static map<uint32_t, string> typeMap {
-    { IDAT, "IDAT" }, { IEND, "IEND" }, { IHDR, "IHDR" },
-    { PLTE, "PLTE" }, { acTL, "acTL" }, { bKGD, "bKGD" },
-    { cHRM, "cHRM" }, { cICP, "cICP" }, { cLLi, "cLLi" },
-    { eXIf, "eXIf" }, { fcTL, "fcTL" }, { fdAT, "fdAT" },
-    { gAMA, "gAMA" }, { hIST, "hIST" }, { iCCP, "iCCP" },
-    { iTXt, "iTXt" }, { mDCv, "mDCv" }, { pHYs, "pHYs" },
-    { sBIT, "sBIT" }, { sPLT, "sPLT" }, { sRGB, "sRGB" },
-    { tEXt, "tEXt" }, { tIME, "tIME" }, { tRNS, "tRNS" },
-    { zTXt, "zTXt" },
+    {IDAT, "IDAT"},
+    {IEND, "IEND"},
+    {IHDR, "IHDR"},
+    {PLTE, "PLTE"},
+    {acTL, "acTL"},
+    {bKGD, "bKGD"},
+    {cHRM, "cHRM"},
+    {cICP, "cICP"},
+    {cLLi, "cLLi"},
+    {eXIf, "eXIf"},
+    {fcTL, "fcTL"},
+    {fdAT, "fdAT"},
+    {gAMA, "gAMA"},
+    {hIST, "hIST"},
+    {iCCP, "iCCP"},
+    {iTXt, "iTXt"},
+    {mDCv, "mDCv"},
+    {pHYs, "pHYs"},
+    {sBIT, "sBIT"},
+    {sPLT, "sPLT"},
+    {sRGB, "sRGB"},
+    {tEXt, "tEXt"},
+    {tIME, "tIME"},
+    {tRNS, "tRNS"},
+    {zTXt, "zTXt"},
 };
 
 void convertSmall16(uint16_t& value);
@@ -64,9 +81,8 @@ void convertSmall32(uint32_t& value);
 struct ChunkHead {
     uint32_t length;
     uint32_t chunkType;
-    void reset()
-    {
-        length = 0;
+    void reset() {
+        length    = 0;
         chunkType = 0;
     }
 };
@@ -80,20 +96,14 @@ class Chunk {
 public:
     CRC crc {};
     virtual ImageStatus decode(fstream& file, uint32_t length) { return SUCCESS; }
-    uint32_t CRC() const
-    {
-        return crc.crc;
-    }
+    [[nodiscard]] uint32_t CRC() const { return crc.crc; }
     template<typename T>
-    void readQueue(fstream& file, uint32_t length, uint32_t& curPos, queue<T>& q)
-    {
+    void readQueue(fstream& file, uint32_t length, uint32_t& curPos, queue<T>& q) {
         for (; curPos < length; curPos++) {
             T ch;
             file.read((char*)&ch, sizeof(ch));
-            if (ch == 0)
-                break;
-            else
-                q.push(ch);
+            if (ch == 0) break;
+            else q.push(ch);
         }
     }
 };
@@ -118,14 +128,8 @@ class IHDRChunk : public Chunk {
 public:
     IHDRData _data {};
     ImageStatus decode(fstream& file, uint32_t length) override;
-    uint32_t width() const
-    {
-        return _data.width;
-    }
-    uint32_t height() const
-    {
-        return _data.height;
-    }
+    [[nodiscard]] uint32_t width() const { return _data.width; }
+    [[nodiscard]] uint32_t height() const { return _data.height; }
 };
 
 class PLETChunk : public Chunk {
@@ -138,10 +142,7 @@ class PLETChunk : public Chunk {
 public:
     vector<PLETData> _data;
     ImageStatus decode(fstream& file, uint32_t length) override;
-    vector<PLETData>& palette()
-    {
-        return _data;
-    }
+    vector<PLETData>& palette() { return _data; }
 };
 
 class tRNSChunk : public Chunk {
@@ -158,12 +159,9 @@ public:
     // Indexed-colour	3
     // Greyscale with alpha	4
     // Truecolour with alpha	6
-    uint32_t colourType { 0 };
+    uint32_t colourType {0};
     ImageStatus decode(fstream& file, uint32_t length) override;
-    tRNSData& tRNS()
-    {
-        return _data;
-    }
+    tRNSData& tRNS() { return _data; }
 };
 
 class cHRMChunk : public Chunk {
@@ -185,7 +183,7 @@ public:
 
 class gAMAChunk : public Chunk {
 public:
-    uint32_t _data;
+    uint32_t _data {};
     ImageStatus decode(fstream& file, uint32_t length) override;
 };
 
@@ -225,14 +223,14 @@ class sBITChunk : public Chunk {
     };
 
 public:
-    uint32_t colourType { 0 };
-    sBITData _data;
+    uint32_t colourType {0};
+    sBITData _data {};
     ImageStatus decode(fstream& file, uint32_t length) override;
 };
 
 class sRGBChunk : public Chunk {
 public:
-    uint8_t _data;
+    uint8_t _data {};
     ImageStatus decode(fstream& file, uint32_t length) override;
 };
 
@@ -270,26 +268,20 @@ public:
     };
     mDCvData _data {};
     ImageStatus decode(fstream& file, uint32_t length) override;
-    vector<Chromaticity> chromaticity() const;
+    [[nodiscard]] vector<Chromaticity> chromaticity() const;
     Chromaticity whitePoint();
     float maxLum();
     float minLum();
 };
 
 class cLLiChunk : public Chunk {
-    uint32_t MaxCLL;
-    uint32_t MaxFALL;
+    uint32_t MaxCLL {};
+    uint32_t MaxFALL {};
 
 public:
     ImageStatus decode(fstream& file, uint32_t length) override;
-    uint32_t maxCLL()
-    {
-        return MaxCLL * 0.0001;
-    }
-    uint32_t maxFALL()
-    {
-        return MaxFALL * 0.0001;
-    }
+    [[nodiscard]] uint32_t maxCLL() const { return MaxCLL * 0.0001; }
+    [[nodiscard]] uint32_t maxFALL() const { return MaxFALL * 0.0001; }
 };
 
 class tEXtChunk : public Chunk {
@@ -331,8 +323,8 @@ class bKGDChunk : public Chunk {
     };
 
 public:
-    uint32_t colourType { 0 };
-    bKGDData _data;
+    uint32_t colourType {0};
+    bKGDData _data {};
     ImageStatus decode(fstream& file, uint32_t length) override;
 };
 
@@ -344,10 +336,10 @@ public:
 
 class pHYsChunk : public Chunk {
 public:
-    uint32_t pixelsPerUnitX;
-    uint32_t pixelsPerUnitY;
+    uint32_t pixelsPerUnitX {};
+    uint32_t pixelsPerUnitY {};
     // 0:unit is unknown  1:unit is the metre
-    uint8_t unit;
+    uint8_t unit {};
     ImageStatus decode(fstream& file, uint32_t length) override;
 };
 
@@ -378,12 +370,12 @@ public:
 
 class tIMEChunk : public Chunk {
 public:
-    uint16_t year;
-    uint8_t month;
-    uint8_t day;
-    uint8_t hour;
-    uint8_t minute;
-    uint8_t second;
+    uint16_t year {};
+    uint8_t month {};
+    uint8_t day {};
+    uint8_t hour {};
+    uint8_t minute {};
+    uint8_t second {};
     ImageStatus decode(fstream& file, uint32_t length) override;
 };
 
@@ -394,7 +386,7 @@ class acTLChunk : public Chunk {
     };
 
 public:
-    acTLData _data;
+    acTLData _data {};
     ImageStatus decode(fstream& file, uint32_t length) override;
 };
 
@@ -410,9 +402,9 @@ class fcTLChunk : public Chunk {
     };
 
 public:
-    uint8_t disposeOp;
-    uint8_t blendOp;
-    fcTLData _data;
+    uint8_t disposeOp {};
+    uint8_t blendOp {};
+    fcTLData _data {};
     ImageStatus decode(fstream& file, uint32_t length) override;
 };
 
@@ -425,7 +417,7 @@ public:
 
 class IDATChunk : public Chunk {
 public:
-    unique_ptr<uint8_t[]> _data { nullptr };
+    unique_ptr<uint8_t[]> _data {nullptr};
     ImageStatus decode(fstream& file, uint32_t length) override;
 };
 
@@ -436,28 +428,26 @@ public:
 
 class PNGData : public Image {
     string _filePath;
-    uint32_t _formatFlag;
-    int32_t _width { 0 };
-    int32_t _height { 0 };
-    Matrix<RGB>* _rgb { nullptr };
+    uint32_t _formatFlag {};
+    int32_t _width {0};
+    int32_t _height {0};
+    Matrix<RGB>* _rgb {nullptr};
     IHDRChunk _IHDR;
     PLETChunk _PLTE;
     IENDChunk _IEND;
     list<IDATChunk> _IDAT;
     unordered_map<uint32_t, Chunk*> _ancillaryChunk;
+
 public:
     explicit PNGData() = default;
-    ~PNGData() override
-    {
-        if (_rgb)
-            delete _rgb;
-        for(auto& item : _ancillaryChunk){
-            if (item.second)
-                delete item.second;
+    ~PNGData() override {
+        delete _rgb;
+        _rgb = nullptr;
+        for (auto& item : _ancillaryChunk) {
+            delete item.second;
             item.second = nullptr;
         }
     }
-
 
     ImageStatus read(const char* filePath) override;
     ImageStatus write(const char* filePath) override { return SUCCESS; }
@@ -467,7 +457,7 @@ public:
     void setWidth(int32_t width) override { _width = width; }
     void setHeight(int32_t height) override { _height = height; }
     [[nodiscard]] Matrix<RGB> getRGBMatrix() const override { return *_rgb; } // 获取通用的RGB数据
-    void setRGBMatrix(const Matrix<RGB>& rgb) override { *_rgb = rgb; } // 设置通用的RGB数据
+    void setRGBMatrix(const Matrix<RGB>& rgb) override { *_rgb = rgb; }       // 设置通用的RGB数据
 private:
     [[maybe_unused]] bool checkFormat() override { return _formatFlag == PNG_FLAG; }
     ImageStatus decodeProcess(fstream& file, const ChunkHead& head);
