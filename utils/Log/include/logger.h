@@ -11,6 +11,7 @@
 #include <iostream>
 #include <list>
 #include <mutex>
+#include <sstream>
 #include <string>
 #include <thread>
 
@@ -165,21 +166,36 @@ private:
 #define TrimFilePath(x) strrchr(x, '/') ? strrchr(x, '/') + 1 : x
 #endif
 
-#define LogDebug(method, fmt, ...)                                                                                  \
-    CLOG_PUSH(myUtil::DEBUG, method, "[%s][%s:%d][DEBUG]:" fmt "\n", getTimeString().get(), TrimFilePath(__FILE__), \
-              __LINE__, ##__VA_ARGS__)
+#define LogDebug(method, fmt, ...)                                                                  \
+    {                                                                                               \
+        std::stringstream ss;                                                                       \
+        ss << this_thread::get_id();                                                                \
+        CLOG_PUSH(myUtil::DEBUG, method, "[%s][%s:%d][%s][DEBUG]:" fmt "\n", getTimeString().get(), \
+                  TrimFilePath(__FILE__), __LINE__, ss.str().c_str(), ##__VA_ARGS__)                \
+    }
 
-#define LogInfo(method, fmt, ...)                                                                                 \
-    CLOG_PUSH(myUtil::INFO, method, "[%s][%s:%d][INFO]:" fmt "\n", getTimeString().get(), TrimFilePath(__FILE__), \
-              __LINE__, ##__VA_ARGS__)
+#define LogInfo(method, fmt, ...)                                                                 \
+    {                                                                                             \
+        std::stringstream ss;                                                                     \
+        ss << this_thread::get_id();                                                              \
+        CLOG_PUSH(myUtil::INFO, method, "[%s][%s:%d][%s][INFO]:" fmt "\n", getTimeString().get(), \
+                  TrimFilePath(__FILE__), __LINE__, ss.str().c_str(), ##__VA_ARGS__)              \
+    }
 
-#define LogWarn(method, fmt, ...)                                                               \
-    CLOG_PUSH(myUtil::WARNING, method, "[%s][%s:%d][WARNING]:" fmt "\n", getTimeString().get(), \
-              TrimFilePath(__FILE__), __LINE__, ##__VA_ARGS__)
+#define LogWarn(method, fmt, ...)                                                                       \
+    {                                                                                                   \
+        std::stringstream ss;                                                                           \
+        ss << this_thread::get_id();                                                                    \
+        CLOG_PUSH(myUtil::WARNING, method, "[%s][%s:%d][%s][WARNING]:" fmt "\n", getTimeString().get(), \
+                  TrimFilePath(__FILE__), __LINE__, ss.str().c_str(), ##__VA_ARGS__)                    \
+    }
 
-#define LogError(method, fmt, ...)                                                                                  \
-    CLOG_PUSH(myUtil::ERROR, method, "[%s][%s:%d][ERROR]:" fmt "\n", getTimeString().get(), TrimFilePath(__FILE__), \
-              __LINE__, ##__VA_ARGS__)
-
+#define LogError(method, fmt, ...)                                                                  \
+    {                                                                                               \
+        std::stringstream ss;                                                                       \
+        ss << this_thread::get_id();                                                                \
+        CLOG_PUSH(myUtil::ERROR, method, "[%s][%s:%d][%s][ERROR]:" fmt "\n", getTimeString().get(), \
+                  TrimFilePath(__FILE__), __LINE__, ss.str().c_str(), ##__VA_ARGS__)                \
+    }
 NAME_SPACE_END()
 #endif //!_LOGGER_H

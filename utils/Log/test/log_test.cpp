@@ -19,7 +19,7 @@ void print(int number, const char* content) {
 }
 
 void clogTest() {
-    CLOG_TYPE(print, ERROR)
+    CLOG_TYPE(print, WARNING)
     thread th(print, 5, "this is µÄ·¢Éäµã0/");
     thread th1(print, 5, "this is 1/");
     thread th2(print, 5, "this is 2/");
@@ -40,6 +40,8 @@ void clogTest() {
     th7.join();
     th8.join();
     th9.join();
+    stringstream ss;
+    ss << this_thread::get_id();
 }
 
 int main(){
