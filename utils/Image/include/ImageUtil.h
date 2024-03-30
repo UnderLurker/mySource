@@ -38,6 +38,9 @@ enum ImageStatus {
     ERROR_JPEG_DRI,
     ERROR_JPEG_SOS,
     ERROR_JPEG_EOI,
+    ERROR_UNCOMPRESS,
+    ERROR_METHOD_UNDEFINE,
+    ERROR_UNDO_FILTER,
 };
 
 #undef RGB

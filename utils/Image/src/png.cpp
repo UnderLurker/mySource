@@ -10,21 +10,21 @@
 
 NAME_SPACE_START(myUtil)
 
-#define ANCILLARY_CHUNK_FACTORY(chunkName)                             \
-    if (chunkName == head.chunkType) {                                 \
-        Chunk* chunk               = new chunkName##Chunk();           \
-        auto result                = chunk->decode(file, head.length); \
-        _ancillaryChunk[chunkName] = chunk;                            \
-        return result;                                                 \
+#define ANCILLARY_CHUNK_FACTORY(chunkName)                                            \
+    if (myUtil::CHUNK::chunkName == head.chunkType) {                                 \
+        Chunk* chunk                              = new chunkName##Chunk();           \
+        auto result                               = chunk->decode(file, head.length); \
+        _ancillaryChunk[myUtil::CHUNK::chunkName] = chunk;                            \
+        return result;                                                                \
     }
 
-#define ANCILLARY_CHUNK_FACTORY_FUNC(chunkName, statement)             \
-    if (chunkName == head.chunkType) {                                 \
-        Chunk* chunk = new chunkName##Chunk();                         \
-        statement;                                                     \
-        auto result                = chunk->decode(file, head.length); \
-        _ancillaryChunk[chunkName] = chunk;                            \
-        return result;                                                 \
+#define ANCILLARY_CHUNK_FACTORY_FUNC(chunkName, statement)                            \
+    if (myUtil::CHUNK::chunkName == head.chunkType) {                                 \
+        Chunk* chunk = new chunkName##Chunk();                                        \
+        statement;                                                                    \
+        auto result                               = chunk->decode(file, head.length); \
+        _ancillaryChunk[myUtil::CHUNK::chunkName] = chunk;                            \
+        return result;                                                                \
     }
 
 void convertSmall16(uint16_t& value) {
@@ -53,14 +53,36 @@ ImageStatus IHDRChunk::decode(fstream& file, uint32_t length) {
     return SUCCESS;
 }
 
-ImageStatus PLETChunk::decode(fstream& file, uint32_t length) {
+uint32_t IHDRChunk::minCompressDataLength() const {
+    uint32_t result = 0;
+    switch (colorType()) {
+        case CHUNK::GREY_SCALE:
+            result = CHUNK::ColorTypeBitMap[CHUNK::GREY_SCALE] * bitDepth() / 8;
+            break;
+        case CHUNK::RGB:
+            result = CHUNK::ColorTypeBitMap[CHUNK::RGB] * bitDepth() / 8;
+            break;
+        case CHUNK::INDEXED_COLOUR:
+            result = CHUNK::ColorTypeBitMap[CHUNK::INDEXED_COLOUR] * bitDepth() / 8;
+            break;
+        case CHUNK::GREY_ALPHA:
+            result = CHUNK::ColorTypeBitMap[CHUNK::GREY_ALPHA] * bitDepth() / 8;
+            break;
+        case CHUNK::RGBA:
+            result = CHUNK::ColorTypeBitMap[CHUNK::RGBA] * bitDepth() / 8;
+            break;
+    }
+    return result;
+}
+
+ImageStatus PLTEChunk::decode(fstream& file, uint32_t length) {
     if (length % 3 != 0) return ERROR_FILE_FORMAT;
     try {
         uint32_t len = length / 3;
         _data.resize(len);
         for (uint32_t i = 0; i < len; i++) {
-            PLETData data {};
-            file.read((char*)&data, sizeof(PLETData));
+            PLTEData data {};
+            file.read((char*)&data, sizeof(PLTEData));
             _data.at(i) = data;
         }
         file.read((char*)&crc, sizeof(crc));
@@ -162,20 +184,20 @@ ImageStatus iCCPChunk::decode(fstream& file, uint32_t length) {
 ImageStatus sBITChunk::decode(fstream& file, uint32_t length) {
     try {
         switch (colourType) {
-            case 0: {
+            case CHUNK::GREY_SCALE: {
                 file.read((char*)&_data.colourType0, sizeof(_data.colourType0));
                 break;
             }
-            case 2:
-            case 3: {
+            case CHUNK::RGB:
+            case CHUNK::INDEXED_COLOUR: {
                 file.read((char*)&_data.colourType23, sizeof(_data.colourType23));
                 break;
             }
-            case 4: {
+            case CHUNK::GREY_ALPHA: {
                 file.read((char*)&_data.colourType4, sizeof(_data.colourType4));
                 break;
             }
-            case 6: {
+            case CHUNK::RGBA: {
                 file.read((char*)&_data.colourType6, sizeof(_data.colourType6));
                 break;
             }
@@ -530,26 +552,23 @@ ImageStatus fdATChunk::decode(fstream& file, uint32_t length) {
     return SUCCESS;
 }
 
-ImageStatus IDATChunk::decode(fstream& file, uint32_t length) {
+ImageStatus IDATChunk::decode(fstream& file, uint32_t length, std::vector<std::pair<long, long>>& IDATMap) {
     try {
 #ifdef _IDAT_DEBUG_
         fstream hexFile("E:/code/mySource/log/hexFile.txt", ios::out | ios::app);
 #endif
         cout << hex << file.tellg() << endl;
-        _data = make_unique<uint8_t[]>(length);
-        for (uint32_t i = 0; i < length; i++) {
-            _data[i] = file.get();
+        IDATMap.emplace_back(file.tellg(), length);
 #ifdef _IDAT_DEBUG_
+        for (uint32_t i = 0; i < length; i++) {
             if (i % 16 == 0) hexFile << endl;
             hexFile.width(2);
             hexFile.fill('0');
             hexFile << hex << (int)_data[i] << " ";
-#endif
         }
-//        uLong len    = 600000000;
-//        uLong inLen  = length;
-//        auto uncompr = make_unique<uint8_t[]>(len);
-//        int err      = uncompress2(uncompr.get(), &len, _data.get(), &inLen);
+#else
+        file.seekg(length, std::ios::cur);
+#endif
         file.read((char*)&crc, sizeof(crc));
         convertSmall32(crc.crc);
     } catch (...) { return ERROR_UNKNOWN; }
@@ -566,6 +585,7 @@ ImageStatus IENDChunk::decode(fstream& file, uint32_t length) {
 
 ImageStatus PNGData::read(const char* filePath) {
     CHECK_NULL_RETURN(filePath, ERROR_NULLPTR)
+    _filePath = string(filePath);
     fstream file(filePath, ios::in | ios::binary);
     if (file.fail()) return ERROR_FILE_OPERATOR;
     try {
@@ -578,9 +598,11 @@ ImageStatus PNGData::read(const char* filePath) {
             file.read((char*)&head, sizeof(head));
             convertSmall32(head.length);
             convertSmall32(head.chunkType);
-            TEMP_LOG("chunkType:%s, length:%d\n", typeMap[head.chunkType].c_str(), head.length)
+#ifdef _DEBUG_
+            TEMP_LOG("chunkType:%s, length:%d\n", CHUNK::typeMap[head.chunkType].c_str(), head.length)
+#endif
             if (decodeProcess(file, head) != SUCCESS) return ERROR_FILE_DECODE;
-        } while (head.chunkType != IEND && !file.eof());
+        } while (head.chunkType != CHUNK::IEND && !file.eof());
     } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
@@ -589,21 +611,23 @@ ImageStatus PNGData::decodeProcess(fstream& file, const ChunkHead& head) {
     ImageStatus status = ERROR_UNKNOWN;
     try {
         switch (head.chunkType) {
-            case IHDR: {
-                status  = _IHDR.decode(file, head.length);
-                _width  = _IHDR.width();
-                _height = _IHDR.height();
+            case CHUNK::IHDR: {
+                status                 = _IHDR.decode(file, head.length);
+                _width                 = _IHDR.width();
+                _height                = _IHDR.height();
+                _minCompressDataLength = _IHDR.minCompressDataLength();
                 break;
             }
-            case PLTE:
-                status = _PLTE.decode(file, head.length);
+            case CHUNK::IDAT: {
+                IDATChunk iDATChunk;
+                status    = iDATChunk.decode(file, head.length, _IDATMap);
+                _iDATLen += static_cast<long>(head.length);
                 break;
-            case IEND:
+            }
+            case CHUNK::IEND: {
                 status = _IEND.decode(file, head.length);
-                break;
-            case IDAT: {
-                _IDAT.emplace_back(IDATChunk());
-                status = _IDAT.back().decode(file, head.length);
+                if (status != SUCCESS) break;
+                status = decodeIDATDataProcess(file);
                 break;
             }
             default:
@@ -614,6 +638,7 @@ ImageStatus PNGData::decodeProcess(fstream& file, const ChunkHead& head) {
 }
 
 ImageStatus PNGData::ancillaryChunkFactory(fstream& file, const ChunkHead& head) {
+    ANCILLARY_CHUNK_FACTORY(PLTE)
     ANCILLARY_CHUNK_FACTORY_FUNC(tRNS, ((tRNSChunk*)chunk)->colourType = _IHDR._data.colorType)
     ANCILLARY_CHUNK_FACTORY(cHRM)
     ANCILLARY_CHUNK_FACTORY(gAMA)
@@ -636,5 +661,169 @@ ImageStatus PNGData::ancillaryChunkFactory(fstream& file, const ChunkHead& head)
     ANCILLARY_CHUNK_FACTORY(fcTL)
     ANCILLARY_CHUNK_FACTORY(fdAT)
     return ERROR_STRUCT_NOT_DEFINE;
+}
+
+ImageStatus PNGData::decodeIDATDataProcess(fstream& file) {
+    ImageStatus result = SUCCESS;
+    if ((result = getIDATData(file)) != SUCCESS) return result;
+    if ((result = uncompress_UndoFilter()) != SUCCESS) return result;
+    return result;
+}
+
+ImageStatus PNGData::getIDATData(fstream& file) {
+    try {
+        _data.reset();
+        _data    = std::make_unique<uint8_t[]>(_iDATLen);
+        long cur = 0;
+        for (const auto& item : _IDATMap) {
+            file.seekg(item.first, std::ios::beg);
+            file.read((char*)(_data.get() + cur), item.second);
+            cur += item.second;
+        }
+    } catch (...) { return ERROR_UNKNOWN; }
+    return SUCCESS;
+}
+
+ImageStatus PNGData::uncompress_UndoFilter() {
+    try {
+        // uncompress
+        uLong len = (_minCompressDataLength * _IHDR.width() + 1) * _IHDR.height();
+        //        auto uncompressData = std::make_unique<uint8_t[]>(len);
+        //        int err             = compress(uncompressData.get(), &len, _data.get(), _iDATLen);
+        //        if (err != Z_OK) return ERROR_UNCOMPRESS;
+        auto uncompressData = std::make_unique<uint8_t[]>(len);
+        z_stream stream;
+        stream.zalloc    = Z_NULL;
+        stream.zfree     = Z_NULL;
+        stream.opaque    = Z_NULL;
+        stream.avail_in  = _iDATLen;
+        stream.next_in   = _data.get();
+        stream.avail_out = len;
+        stream.next_out  = uncompressData.get();
+        inflateInit(&stream);
+        inflate(&stream, Z_NO_FLUSH);
+        inflateEnd(&stream);
+        _data.reset();
+        // undo filter
+        switch (_IHDR.filterMethod()) {
+            case 0:
+                if (!undoFilter0(uncompressData, len)) return ERROR_UNDO_FILTER;
+                return SUCCESS;
+            case 3:
+            case 4:
+                return ERROR_METHOD_UNDEFINE;
+        }
+    } catch (...) { return ERROR_UNKNOWN; }
+    return SUCCESS;
+}
+
+bool PNGData::undoFilter0(unique_ptr<uint8_t[]>& uncompressData, unsigned long length) {
+    try {
+        uint32_t len = _minCompressDataLength * _IHDR.width() + 1;
+        for (uint32_t i = 0; i < length; i += len) {
+            switch (uncompressData[i]) {
+                case CHUNK::NONE:
+                    continue;
+                case CHUNK::SUB:
+                    png_undo_filter_sub(uncompressData, i + 1, len - 1);
+                    break;
+                case CHUNK::UP:
+                    png_undo_filter_up(uncompressData, i + 1, len - 1);
+                    break;
+                case CHUNK::AVERAGE:
+                    png_undo_filter_average(uncompressData, i + 1, len - 1);
+                    break;
+                case CHUNK::PAETH:
+                    png_undo_filter_paeth(uncompressData, i + 1, len - 1);
+                    break;
+                default:
+                    return false;
+            }
+        }
+        data2Matrix(uncompressData);
+    } catch (...) { return false; }
+    return true;
+}
+
+void PNGData::png_undo_filter_sub(unique_ptr<uint8_t[]>& uncompressData, uint32_t curPos, uint32_t length) const {
+    for (int32_t i = curPos + _minCompressDataLength; i < curPos + length; i += _minCompressDataLength) {
+        int32_t k = i;
+        for (int32_t j = i - _minCompressDataLength; j < i; j++, k++) {
+            uncompressData[k] += uncompressData[j];
+        }
+    }
+}
+
+void PNGData::png_undo_filter_up(unique_ptr<uint8_t[]>& uncompressData, uint32_t curPos, uint32_t length) {
+    if (curPos < length + 1) return;
+    for (int32_t i = curPos, j = curPos - length - 1; i < curPos + length; i++, j++) {
+        uncompressData[i] += uncompressData[j];
+    }
+}
+
+void PNGData::png_undo_filter_average(unique_ptr<uint8_t[]>& uncompressData, uint32_t curPos, uint32_t length) const {
+    if (curPos < length + 1) return;
+    for (int32_t i = curPos; i < curPos + length; i++) {
+        uint8_t a          = (i - _minCompressDataLength) < curPos ? 0 : uncompressData[i - _minCompressDataLength];
+        uint8_t b          = uncompressData[i - length - 1];
+        uncompressData[i] += ((int32_t)a + (int32_t)b) / 2;
+    }
+}
+
+void PNGData::png_undo_filter_paeth(unique_ptr<uint8_t[]>& uncompressData, uint32_t curPos, uint32_t length) {
+    auto PaethPredictor = [=](uint8_t a, uint8_t b, uint8_t c) {
+        int32_t p  = a + b - c;
+        int32_t pa = abs(p - a);
+        int32_t pb = abs(p - b);
+        int32_t pc = abs(p - c);
+        if (pa <= pb && pa <= pc) return a;
+        else if (pb <= pc) return b;
+        else return c;
+    };
+    if (curPos < length + 1) return;
+    for (int32_t i = curPos; i < curPos + length; i++) {
+        uint8_t a = (i - _minCompressDataLength) < curPos ? 0 : uncompressData[i - _minCompressDataLength];
+        uint8_t b = uncompressData[i - length - 1];
+        uint8_t c = (i - _minCompressDataLength) < curPos ? 0 : uncompressData[i - _minCompressDataLength - length - 1];
+        uncompressData[i] += PaethPredictor(a, b, c);
+    }
+}
+
+void PNGData::data2Matrix(unique_ptr<uint8_t[]>& uncompressData) {
+    _rgb             = new Matrix<RGB>(_IHDR.height(), _IHDR.width());
+    auto convertRGBA = [&](uint8_t* pos, uint8_t bitDepth, myUtil::CHUNK::ColorType type) {
+        uint32_t count = CHUNK::ColorTypeBitMap[type];
+        RGB res {};
+        if (bitDepth >= 8) {
+            uint8_t temp[4] {0};
+            int32_t bit = bitDepth / 8;
+            for (int32_t i = 0; i < count; i++) {
+                int32_t value = 0;
+                for (int32_t j = 0; j < bit; j++) {
+                    value = (value << 8) | *(pos + i * bit + j);
+                }
+                temp[i] = value;
+            }
+            if (type == CHUNK::GREY_SCALE) return RGB {temp[0], temp[0], temp[0], 0};
+            else if (type == CHUNK::RGB) return RGB {temp[0], temp[1], temp[2], 0};
+            else if (type == CHUNK::INDEXED_COLOUR) {
+                auto chunk   = dynamic_cast<PLTEChunk*>(_ancillaryChunk[CHUNK::PLTE]);
+                auto palette = chunk->palette()[temp[0]];
+                return RGB {palette.rgbRed, palette.rgbGreen, palette.rgbBlue, 0};
+            } else if (type == CHUNK::GREY_ALPHA) return RGB {temp[0], temp[0], temp[0], temp[1]};
+            else if (type == CHUNK::RGBA) return RGB {temp[0], temp[1], temp[2], temp[3]};
+        } else {
+            // 暂未实现位深度为1，2，4的GREY_SCALE和INDEXED_COLOUR
+        }
+        return res;
+    };
+    auto* pos = uncompressData.get() + 1;
+    for (int32_t i = 0; i < _IHDR.height(); i++) {
+        for (int32_t j = 0; j < _IHDR.width(); j++) {
+            _rgb->setValue(i, j, convertRGBA(pos, _IHDR.bitDepth(), static_cast<CHUNK::ColorType>(_IHDR.colorType())));
+            pos += _minCompressDataLength;
+        }
+        pos += 1;
+    }
 }
 NAME_SPACE_END()

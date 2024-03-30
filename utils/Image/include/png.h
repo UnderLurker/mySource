@@ -18,7 +18,7 @@ NAME_SPACE_START(myUtil)
 #define _DEBUG_
 // #define _IDAT_DEBUG_
 #define TEMP_LOG(fmt, ...) printf(fmt, ##__VA_ARGS__);
-
+namespace CHUNK {
 enum ChunkType {
     IDAT = 0x49444154,
     IEND = 0x49454E44,
@@ -75,6 +75,31 @@ static map<uint32_t, string> typeMap {
     {zTXt, "zTXt"},
 };
 
+enum FilterType {
+    NONE = 0,
+    SUB,
+    UP,
+    AVERAGE,
+    PAETH
+};
+
+enum ColorType {
+    GREY_SCALE     = 0,
+    RGB            = 2,
+    INDEXED_COLOUR = 3,
+    GREY_ALPHA     = 4,
+    RGBA           = 6
+};
+
+static map<ColorType, uint32_t> ColorTypeBitMap {
+    {GREY_SCALE,     1},
+    {RGB,            3},
+    {INDEXED_COLOUR, 1},
+    {GREY_ALPHA,     2},
+    {RGBA,           4}
+};
+}
+
 void convertSmall16(uint16_t& value);
 void convertSmall32(uint32_t& value);
 
@@ -130,19 +155,25 @@ public:
     ImageStatus decode(fstream& file, uint32_t length) override;
     [[nodiscard]] uint32_t width() const { return _data.width; }
     [[nodiscard]] uint32_t height() const { return _data.height; }
+    [[nodiscard]] uint8_t bitDepth() const { return _data.bitDepth; }
+    [[nodiscard]] uint8_t colorType() const { return _data.colorType; }
+    [[nodiscard]] uint8_t compressionMethod() const { return _data.compressionMethod; }
+    [[nodiscard]] uint8_t filterMethod() const { return _data.filterMethod; }
+    [[nodiscard]] uint8_t interlaceMethod() const { return _data.interlaceMethod; }
+    [[nodiscard]] uint32_t minCompressDataLength() const;
 };
 
-class PLETChunk : public Chunk {
-    struct PLETData {
+class PLTEChunk : public Chunk {
+    struct PLTEData {
         uint8_t rgbRed;
         uint8_t rgbGreen;
         uint8_t rgbBlue;
     };
 
 public:
-    vector<PLETData> _data;
+    vector<PLTEData> _data;
     ImageStatus decode(fstream& file, uint32_t length) override;
-    vector<PLETData>& palette() { return _data; }
+    vector<PLTEData>& palette() { return _data; }
 };
 
 class tRNSChunk : public Chunk {
@@ -417,8 +448,7 @@ public:
 
 class IDATChunk : public Chunk {
 public:
-    unique_ptr<uint8_t[]> _data {nullptr};
-    ImageStatus decode(fstream& file, uint32_t length) override;
+    ImageStatus decode(fstream& file, uint32_t length, std::vector<std::pair<long, long>>& IDATMap);
 };
 
 class IENDChunk : public Chunk {
@@ -431,12 +461,14 @@ class PNGData : public Image {
     uint32_t _formatFlag {};
     int32_t _width {0};
     int32_t _height {0};
+    uint32_t _minCompressDataLength {1};
+    long _iDATLen {0}; // idat compressed data length (total)
     Matrix<RGB>* _rgb {nullptr};
     IHDRChunk _IHDR;
-    PLETChunk _PLTE;
     IENDChunk _IEND;
-    list<IDATChunk> _IDAT;
     unordered_map<uint32_t, Chunk*> _ancillaryChunk;
+    unique_ptr<uint8_t[]> _data {nullptr};
+    std::vector<std::pair<long, long>> _IDATMap; // pair<pos, length>
 
 public:
     explicit PNGData() = default;
@@ -462,6 +494,15 @@ private:
     [[maybe_unused]] bool checkFormat() override { return _formatFlag == PNG_FLAG; }
     ImageStatus decodeProcess(fstream& file, const ChunkHead& head);
     ImageStatus ancillaryChunkFactory(fstream& file, const ChunkHead& head);
+    ImageStatus decodeIDATDataProcess(fstream& file);
+    ImageStatus getIDATData(fstream& file);
+    ImageStatus uncompress_UndoFilter();
+    bool undoFilter0(unique_ptr<uint8_t[]>& uncompressData, unsigned long length);
+    void png_undo_filter_sub(unique_ptr<uint8_t[]>& uncompressData, uint32_t curPos, uint32_t length) const;
+    void png_undo_filter_up(unique_ptr<uint8_t[]>& uncompressData, uint32_t curPos, uint32_t length);
+    void png_undo_filter_average(unique_ptr<uint8_t[]>& uncompressData, uint32_t curPos, uint32_t length) const;
+    void png_undo_filter_paeth(unique_ptr<uint8_t[]>& uncompressData, uint32_t curPos, uint32_t length);
+    void data2Matrix(unique_ptr<uint8_t[]>& uncompressData);
 };
 
 NAME_SPACE_END()

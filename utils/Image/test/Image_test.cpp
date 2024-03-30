@@ -112,7 +112,10 @@ TEST(jpeg2jpeg) {
 
 TEST(png) {
     PNGData pngData;
-    pngData.read("../../../img/Image/6.png");
+    pngData.read("../../../img/Image/7.png");
+    JPEGData data;
+    data.setRGBMatrix(pngData.getRGBMatrix());
+    data.write("png2jpeg.jpg");
 }
 
 int main() {
