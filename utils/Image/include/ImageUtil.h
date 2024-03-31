@@ -45,12 +45,12 @@ enum ImageStatus {
 
 #undef RGB
 struct RGB {
-    uint8_t red { 0 };
-    uint8_t green { 0 };
-    uint8_t blue { 0 };
-    uint8_t alpha { 0 };
+    uint16_t red { 0 };
+    uint16_t green { 0 };
+    uint16_t blue { 0 };
+    uint16_t alpha { 0 };
     explicit RGB() = default;
-    RGB(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 0) : red(r), green(g), blue(b), alpha(a) {}
+    RGB(uint16_t r, uint16_t g, uint16_t b, uint16_t a = 0) : red(r), green(g), blue(b), alpha(a) {}
 };
 
 static const RGB RGB_BLACK = RGB(0, 0, 0);

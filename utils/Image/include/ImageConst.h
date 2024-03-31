@@ -10,7 +10,7 @@
 NAME_SPACE_START(myUtil)
 
 #ifdef _IMAGE_PNG_
-static uint32_t PNG_FLAG = 0x474E5089;
+static uint64_t PNG_FLAG = 0x0A1A0A0D474E5089;
 #endif
 
 #ifdef _IMAGE_JPEG_

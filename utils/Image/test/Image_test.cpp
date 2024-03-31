@@ -110,12 +110,27 @@ TEST(jpeg2jpeg) {
     cout << dec << clock() - startTime << "ms" << endl;
 }
 
-TEST(png) {
+TEST(png2jpeg) {
+    clock_t startTime = clock();
     PNGData pngData;
-    pngData.read("../../../img/Image/7.png");
+    pngData.read("../../../img/Image/6.png");
+    cout << dec << clock() - startTime << "ms" << endl;
+
     JPEGData data;
     data.setRGBMatrix(pngData.getRGBMatrix());
     data.write("png2jpeg.jpg");
+
+    cout << dec << clock() - startTime << "ms" << endl;
+}
+
+TEST(png2png) {
+    clock_t startTime = clock();
+    PNGData pngData;
+    pngData.read("../../../img/Image/6.png");
+
+    pngData.write("png2png.png");
+
+    cout << dec << clock() - startTime << "ms" << endl;
 }
 
 int main() {
@@ -125,6 +140,7 @@ int main() {
     //     bmp2bmpGray();
     //     bmp2jpeg();
     //     jpeg2jpeg();
-    png();
+    png2jpeg();
+//    png2png();
     return 0;
 }

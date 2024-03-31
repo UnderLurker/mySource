@@ -15,8 +15,8 @@
 // https://www.w3.org/TR/png-3
 
 NAME_SPACE_START(myUtil)
-#define _DEBUG_
-// #define _IDAT_DEBUG_
+// #define _DEBUG_
+//  #define _IDAT_DEBUG_
 #define TEMP_LOG(fmt, ...) printf(fmt, ##__VA_ARGS__);
 namespace CHUNK {
 enum ChunkType {
@@ -98,7 +98,7 @@ static map<ColorType, uint32_t> ColorTypeBitMap {
     {GREY_ALPHA,     2},
     {RGBA,           4}
 };
-}
+} // namespace CHUNK
 
 void convertSmall16(uint16_t& value);
 void convertSmall32(uint32_t& value);
@@ -121,6 +121,7 @@ class Chunk {
 public:
     CRC crc {};
     virtual ImageStatus decode(fstream& file, uint32_t length) { return SUCCESS; }
+    virtual ImageStatus encode(fstream& file) { return SUCCESS; }
     [[nodiscard]] uint32_t CRC() const { return crc.crc; }
     template<typename T>
     void readQueue(fstream& file, uint32_t length, uint32_t& curPos, queue<T>& q) {
@@ -131,12 +132,10 @@ public:
             else q.push(ch);
         }
     }
-};
 
-struct ChunkColour {
-    uint16_t red;
-    uint16_t green;
-    uint16_t blue;
+protected:
+    static void write32(fstream& file, uint32_t value);
+    static void write16(fstream& file, uint16_t value);
 };
 
 class IHDRChunk : public Chunk {
@@ -153,6 +152,7 @@ class IHDRChunk : public Chunk {
 public:
     IHDRData _data {};
     ImageStatus decode(fstream& file, uint32_t length) override;
+    ImageStatus encode(std::fstream& file) override;
     [[nodiscard]] uint32_t width() const { return _data.width; }
     [[nodiscard]] uint32_t height() const { return _data.height; }
     [[nodiscard]] uint8_t bitDepth() const { return _data.bitDepth; }
@@ -173,13 +173,14 @@ class PLTEChunk : public Chunk {
 public:
     vector<PLTEData> _data;
     ImageStatus decode(fstream& file, uint32_t length) override;
+    ImageStatus encode(std::fstream& file) override;
     vector<PLTEData>& palette() { return _data; }
 };
 
 class tRNSChunk : public Chunk {
     struct tRNSData {
         uint16_t colourType0;
-        ChunkColour colourType2;
+        RGB colourType2;
         vector<uint8_t> colourType3;
     };
     tRNSData _data;
@@ -192,6 +193,7 @@ public:
     // Truecolour with alpha	6
     uint32_t colourType {0};
     ImageStatus decode(fstream& file, uint32_t length) override;
+    ImageStatus encode(std::fstream& file) override;
     tRNSData& tRNS() { return _data; }
 };
 
@@ -210,12 +212,14 @@ class cHRMChunk : public Chunk {
 public:
     cHRMData _data {};
     ImageStatus decode(fstream& file, uint32_t length) override;
+    ImageStatus encode(std::fstream& file) override;
 };
 
 class gAMAChunk : public Chunk {
 public:
     uint32_t _data {};
     ImageStatus decode(fstream& file, uint32_t length) override;
+    ImageStatus encode(std::fstream& file) override;
 };
 
 class iCCPChunk : public Chunk {
@@ -228,41 +232,31 @@ class iCCPChunk : public Chunk {
 public:
     iCCPData _data {};
     ImageStatus decode(fstream& file, uint32_t length) override;
+    ImageStatus encode(std::fstream& file) override;
 };
 
 class sBITChunk : public Chunk {
-    struct SignificantColour {
-        uint8_t red;
-        uint8_t green;
-        uint8_t blue;
-    };
     struct SignificantGrey {
         uint8_t greyScale;
         uint8_t alpha;
     };
-    struct SignificantColourAll {
-        uint8_t red;
-        uint8_t green;
-        uint8_t blue;
-        uint8_t alpha;
-    };
-    union sBITData {
-        uint8_t colourType0;
-        SignificantColour colourType23;
-        SignificantGrey colourType4;
-        SignificantColourAll colourType6;
+    struct sBITData {
+        RGB colourType236;
+        SignificantGrey colourType04;
     };
 
 public:
     uint32_t colourType {0};
-    sBITData _data {};
+    sBITData _data;
     ImageStatus decode(fstream& file, uint32_t length) override;
+    ImageStatus encode(std::fstream& file) override;
 };
 
 class sRGBChunk : public Chunk {
 public:
     uint8_t _data {};
     ImageStatus decode(fstream& file, uint32_t length) override;
+    ImageStatus encode(std::fstream& file) override;
 };
 
 class cICPChunk : public Chunk {
@@ -276,6 +270,7 @@ class cICPChunk : public Chunk {
 public:
     cICPData _data {};
     ImageStatus decode(fstream& file, uint32_t length) override;
+    ImageStatus encode(std::fstream& file) override;
 };
 
 class mDCvChunk : public Chunk {
@@ -299,6 +294,7 @@ public:
     };
     mDCvData _data {};
     ImageStatus decode(fstream& file, uint32_t length) override;
+    ImageStatus encode(std::fstream& file) override;
     [[nodiscard]] vector<Chromaticity> chromaticity() const;
     Chromaticity whitePoint();
     float maxLum();
@@ -311,6 +307,7 @@ class cLLiChunk : public Chunk {
 
 public:
     ImageStatus decode(fstream& file, uint32_t length) override;
+    ImageStatus encode(std::fstream& file) override;
     [[nodiscard]] uint32_t maxCLL() const { return MaxCLL * 0.0001; }
     [[nodiscard]] uint32_t maxFALL() const { return MaxFALL * 0.0001; }
 };
@@ -320,6 +317,7 @@ public:
     char keyWord[80];
     string textString;
     ImageStatus decode(fstream& file, uint32_t length) override;
+    ImageStatus encode(std::fstream& file) override;
 };
 
 class zTXtChunk : public Chunk {
@@ -328,6 +326,7 @@ public:
     uint8_t compressMethod;
     vector<uint8_t> compressDataStream;
     ImageStatus decode(fstream& file, uint32_t length) override;
+    ImageStatus encode(std::fstream& file) override;
 };
 
 class iTXtChunk : public Chunk {
@@ -338,7 +337,10 @@ public:
     string languageTag;
     unique_ptr<uint8_t[]> translatedKeyWord;
     unique_ptr<uint8_t[]> text;
+    uint32_t translatedKeyWordLen;
+    uint32_t textLen;
     ImageStatus decode(fstream& file, uint32_t length) override;
+    ImageStatus encode(std::fstream& file) override;
 
 private:
     void tagProcess(fstream& file, uint32_t length, uint32_t& curPos);
@@ -349,7 +351,7 @@ private:
 class bKGDChunk : public Chunk {
     union bKGDData {
         uint16_t greyScale;
-        ChunkColour colour;
+        RGB colour;
         uint8_t paletteIndex;
     };
 
@@ -357,12 +359,16 @@ public:
     uint32_t colourType {0};
     bKGDData _data {};
     ImageStatus decode(fstream& file, uint32_t length) override;
+    ImageStatus encode(std::fstream& file) override;
 };
 
 class hISTChunk : public Chunk {
+    uint32_t _dataLen;
+
 public:
     unique_ptr<uint16_t[]> _data;
     ImageStatus decode(fstream& file, uint32_t length) override;
+    ImageStatus encode(std::fstream& file) override;
 };
 
 class pHYsChunk : public Chunk {
@@ -372,31 +378,35 @@ public:
     // 0:unit is unknown  1:unit is the metre
     uint8_t unit {};
     ImageStatus decode(fstream& file, uint32_t length) override;
+    ImageStatus encode(std::fstream& file) override;
 };
 
 class sPLTChunk : public Chunk {
-    struct PaletteEntry {
+    uint32_t entryLen;
+    struct EntryData {
         uint16_t red;
         uint16_t green;
         uint16_t blue;
         uint16_t alpha;
+        uint16_t frequency;
     };
 
 public:
     string paletteName;
     // 8 or 16
     uint8_t sampleDepth;
-    unique_ptr<PaletteEntry[]> _entry;
+    unique_ptr<EntryData[]> _entry;
     ImageStatus decode(fstream& file, uint32_t length) override;
+    ImageStatus encode(std::fstream& file) override;
 
 private:
     void nameProcess(fstream& file, uint32_t length, uint32_t& curPos);
-    static void paletteEntryProcess(fstream& file, PaletteEntry& entry);
 };
 
 class eXIfChunk : public Chunk {
 public:
     ImageStatus decode(fstream& file, uint32_t length) override;
+    ImageStatus encode(std::fstream& file) override;
 };
 
 class tIMEChunk : public Chunk {
@@ -408,6 +418,7 @@ public:
     uint8_t minute {};
     uint8_t second {};
     ImageStatus decode(fstream& file, uint32_t length) override;
+    ImageStatus encode(std::fstream& file) override;
 };
 
 class acTLChunk : public Chunk {
@@ -419,6 +430,7 @@ class acTLChunk : public Chunk {
 public:
     acTLData _data {};
     ImageStatus decode(fstream& file, uint32_t length) override;
+    ImageStatus encode(std::fstream& file) override;
 };
 
 class fcTLChunk : public Chunk {
@@ -437,30 +449,34 @@ public:
     uint8_t blendOp {};
     fcTLData _data {};
     ImageStatus decode(fstream& file, uint32_t length) override;
+    ImageStatus encode(std::fstream& file) override;
 };
 
 class fdATChunk : public Chunk {
+    uint32_t dataLen;
+
 public:
     uint32_t sequenceNumber;
     unique_ptr<uint8_t[]> frameData;
     ImageStatus decode(fstream& file, uint32_t length) override;
+    ImageStatus encode(std::fstream& file) override;
 };
 
 class IDATChunk : public Chunk {
 public:
     ImageStatus decode(fstream& file, uint32_t length, std::vector<std::pair<long, long>>& IDATMap);
+    ImageStatus encode(std::fstream &file) override;
 };
 
 class IENDChunk : public Chunk {
 public:
     ImageStatus decode(fstream& file, uint32_t length) override;
+    ImageStatus encode(std::fstream& file) override;
 };
 
 class PNGData : public Image {
     string _filePath;
-    uint32_t _formatFlag {};
-    int32_t _width {0};
-    int32_t _height {0};
+    uint64_t _formatFlag {};
     uint32_t _minCompressDataLength {1};
     long _iDATLen {0}; // idat compressed data length (total)
     Matrix<RGB>* _rgb {nullptr};
@@ -482,12 +498,12 @@ public:
     }
 
     ImageStatus read(const char* filePath) override;
-    ImageStatus write(const char* filePath) override { return SUCCESS; }
+    ImageStatus write(const char* filePath) override;
 
-    [[nodiscard]] int32_t getWidth() const override { return _width; }
-    [[nodiscard]] int32_t getHeight() const override { return _height; }
-    void setWidth(int32_t width) override { _width = width; }
-    void setHeight(int32_t height) override { _height = height; }
+    [[nodiscard]] int32_t getWidth() const override { return _IHDR.width(); }
+    [[nodiscard]] int32_t getHeight() const override { return _IHDR.height(); }
+    void setWidth(int32_t width) override { _IHDR._data.width = width; }
+    void setHeight(int32_t height) override { _IHDR._data.height = height; }
     [[nodiscard]] Matrix<RGB> getRGBMatrix() const override { return *_rgb; } // 获取通用的RGB数据
     void setRGBMatrix(const Matrix<RGB>& rgb) override { *_rgb = rgb; }       // 设置通用的RGB数据
 private:

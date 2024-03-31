@@ -41,6 +41,20 @@ void convertSmall32(uint32_t& value) {
     value           = (value1 << 24) | (value2 << 8) | (value3 >> 8) | (value4 >> 24);
 }
 
+void Chunk::write32(fstream& file, uint32_t value) {
+    for (int32_t i = 0; i < 4; i++) {
+        file << (uint8_t)((value & 0xFF000000) >> 24);
+        value <<= 8;
+    }
+}
+
+void Chunk::write16(fstream& file, uint16_t value) {
+    for (int32_t i = 0; i < 2; i++) {
+        file << (uint8_t)((value & 0xFF00) >> 8);
+        value <<= 8;
+    }
+}
+
 ImageStatus IHDRChunk::decode(fstream& file, uint32_t length) {
     if (length <= 0) return ERROR_LIMIT;
     try {
@@ -49,6 +63,18 @@ ImageStatus IHDRChunk::decode(fstream& file, uint32_t length) {
         convertSmall32(_data.width);
         convertSmall32(_data.height);
         convertSmall32(crc.crc);
+    } catch (...) { return ERROR_UNKNOWN; }
+    return SUCCESS;
+}
+
+ImageStatus IHDRChunk::encode(std::fstream& file) {
+    try {
+        write32(file, 13);
+        file.write(CHUNK::typeMap[CHUNK::IHDR].c_str(), 4);
+        write32(file, _data.width);
+        write32(file, _data.height);
+        file << bitDepth() << colorType() << compressionMethod() << filterMethod() << interlaceMethod();
+        write32(file, crc.crc);
     } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
@@ -91,6 +117,18 @@ ImageStatus PLTEChunk::decode(fstream& file, uint32_t length) {
     return SUCCESS;
 }
 
+ImageStatus PLTEChunk::encode(std::fstream& file) {
+    try {
+        write32(file, sizeof(PLTEData) * _data.size());
+        file.write(CHUNK::typeMap[CHUNK::PLTE].c_str(), 4);
+        for (const auto& item : _data) {
+            file << item.rgbRed << item.rgbGreen << item.rgbBlue;
+        }
+        write32(file, crc.crc);
+    } catch (...) { return ERROR_UNKNOWN; }
+    return SUCCESS;
+}
+
 ImageStatus tRNSChunk::decode(fstream& file, uint32_t length) {
     try {
         switch (colourType) {
@@ -101,8 +139,10 @@ ImageStatus tRNSChunk::decode(fstream& file, uint32_t length) {
                 break;
             }
             case 2: {
-                if (length != sizeof(ChunkColour)) return ERROR_FILE_FORMAT;
-                file.read((char*)&_data.colourType2, sizeof(ChunkColour));
+                if (length != 6) return ERROR_FILE_FORMAT;
+                file.read((char*)&_data.colourType2.red, 2);
+                file.read((char*)&_data.colourType2.green, 2);
+                file.read((char*)&_data.colourType2.blue, 2);
                 convertSmall16(_data.colourType2.red);
                 convertSmall16(_data.colourType2.green);
                 convertSmall16(_data.colourType2.blue);
@@ -126,6 +166,35 @@ ImageStatus tRNSChunk::decode(fstream& file, uint32_t length) {
     return SUCCESS;
 }
 
+ImageStatus tRNSChunk::encode(std::fstream& file) {
+    try {
+        uint32_t size = 2;
+        if (colourType == 2) size = 6;
+        else if (colourType == 3) size = _data.colourType3.size();
+        write32(file, size);
+        file.write(CHUNK::typeMap[CHUNK::tRNS].c_str(), 4);
+        switch (colourType) {
+            case 0:
+                write16(file, _data.colourType0);
+                break;
+            case 2: {
+                write16(file, _data.colourType2.red);
+                write16(file, _data.colourType2.green);
+                write16(file, _data.colourType2.blue);
+                break;
+            }
+            case 3: {
+                for_each(_data.colourType3.begin(), _data.colourType3.end(), [&](uint8_t val) { file << val; });
+                break;
+            }
+            default:
+                return ERROR_ENUM;
+        }
+        write32(file, crc.crc);
+    } catch (...) { return ERROR_UNKNOWN; }
+    return SUCCESS;
+}
+
 ImageStatus cHRMChunk::decode(fstream& file, uint32_t length) {
     if (length != sizeof(cHRMData)) return ERROR_FILE_FORMAT;
     try {
@@ -144,6 +213,23 @@ ImageStatus cHRMChunk::decode(fstream& file, uint32_t length) {
     return SUCCESS;
 }
 
+ImageStatus cHRMChunk::encode(std::fstream& file) {
+    try {
+        write32(file, 32);
+        file.write(CHUNK::typeMap[CHUNK::cHRM].c_str(), 4);
+        write32(file, _data.whitePointX);
+        write32(file, _data.whitePointY);
+        write32(file, _data.redX);
+        write32(file, _data.redY);
+        write32(file, _data.greenX);
+        write32(file, _data.greenY);
+        write32(file, _data.blueX);
+        write32(file, _data.blueY);
+        write32(file, crc.crc);
+    } catch (...) { return ERROR_UNKNOWN; }
+    return SUCCESS;
+}
+
 ImageStatus gAMAChunk::decode(fstream& file, uint32_t length) {
     if (length != sizeof(_data)) return ERROR_FILE_FORMAT;
     try {
@@ -151,6 +237,16 @@ ImageStatus gAMAChunk::decode(fstream& file, uint32_t length) {
         file.read((char*)&crc, sizeof(crc));
         convertSmall32(_data);
         convertSmall32(crc.crc);
+    } catch (...) { return ERROR_UNKNOWN; }
+    return SUCCESS;
+}
+
+ImageStatus gAMAChunk::encode(std::fstream& file) {
+    try {
+        write32(file, 4);
+        file.write(CHUNK::typeMap[CHUNK::gAMA].c_str(), 4);
+        write32(file, _data);
+        write32(file, crc.crc);
     } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
@@ -181,24 +277,41 @@ ImageStatus iCCPChunk::decode(fstream& file, uint32_t length) {
     return SUCCESS;
 }
 
+ImageStatus iCCPChunk::encode(std::fstream& file) {
+    try {
+        write32(file, strlen(_data.profileName) + 2 + _data.compressProfile.size());
+        file.write(CHUNK::typeMap[CHUNK::iCCP].c_str(), 4);
+        file.write(_data.profileName, strlen(_data.profileName));
+        file << (uint8_t)0 << _data.compressMethod;
+        for (const auto& item : _data.compressProfile) {
+            file << item;
+        }
+        write32(file, crc.crc);
+    } catch (...) { return ERROR_UNKNOWN; }
+    return SUCCESS;
+}
+
 ImageStatus sBITChunk::decode(fstream& file, uint32_t length) {
     try {
         switch (colourType) {
-            case CHUNK::GREY_SCALE: {
-                file.read((char*)&_data.colourType0, sizeof(_data.colourType0));
+            case CHUNK::GREY_SCALE:
+                file.read((char*)&_data.colourType04.greyScale, 1);
                 break;
-            }
             case CHUNK::RGB:
             case CHUNK::INDEXED_COLOUR: {
-                file.read((char*)&_data.colourType23, sizeof(_data.colourType23));
+                file.read((char*)&_data.colourType236.red, 1);
+                file.read((char*)&_data.colourType236.green, 1);
+                file.read((char*)&_data.colourType236.blue, 1);
                 break;
             }
-            case CHUNK::GREY_ALPHA: {
-                file.read((char*)&_data.colourType4, sizeof(_data.colourType4));
+            case CHUNK::GREY_ALPHA:
+                file.read((char*)&_data.colourType04, 2);
                 break;
-            }
             case CHUNK::RGBA: {
-                file.read((char*)&_data.colourType6, sizeof(_data.colourType6));
+                file.read((char*)&_data.colourType236.red, 1);
+                file.read((char*)&_data.colourType236.green, 1);
+                file.read((char*)&_data.colourType236.blue, 1);
+                file.read((char*)&_data.colourType236.alpha, 1);
                 break;
             }
             default:
@@ -206,6 +319,40 @@ ImageStatus sBITChunk::decode(fstream& file, uint32_t length) {
         }
         file.read((char*)&crc, sizeof(crc));
         convertSmall32(crc.crc);
+    } catch (...) { return ERROR_UNKNOWN; }
+    return SUCCESS;
+}
+
+ImageStatus sBITChunk::encode(std::fstream& file) {
+    try {
+        uint32_t size = 1;
+        if (colourType == CHUNK::RGB || colourType == CHUNK::INDEXED_COLOUR) size = 3;
+        else if (colourType == CHUNK::GREY_ALPHA) size = 2;
+        else if (colourType == CHUNK::RGBA) size = 4;
+        write32(file, size);
+        file.write(CHUNK::typeMap[CHUNK::sBIT].c_str(), 4);
+        switch (colourType) {
+            case CHUNK::GREY_SCALE:
+                file << _data.colourType04.greyScale;
+                break;
+            case CHUNK::RGB:
+            case CHUNK::INDEXED_COLOUR: {
+                auto temp = _data.colourType236;
+                file << temp.red << temp.green << temp.blue;
+                break;
+            }
+            case CHUNK::GREY_ALPHA:
+                file << _data.colourType04.greyScale << _data.colourType04.alpha;
+                break;
+            case CHUNK::RGBA: {
+                auto temp = _data.colourType236;
+                file << temp.red << temp.green << temp.blue << temp.alpha;
+                break;
+            }
+            default:
+                break;
+        }
+        write32(file, crc.crc);
     } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
@@ -220,12 +367,32 @@ ImageStatus sRGBChunk::decode(fstream& file, uint32_t length) {
     return SUCCESS;
 }
 
+ImageStatus sRGBChunk::encode(std::fstream& file) {
+    try {
+        write32(file, 1);
+        file.write(CHUNK::typeMap[CHUNK::sRGB].c_str(), 4);
+        file << _data;
+        write32(file, crc.crc);
+    } catch (...) { return ERROR_UNKNOWN; }
+    return SUCCESS;
+}
+
 ImageStatus cICPChunk::decode(fstream& file, uint32_t length) {
     if (length != sizeof(_data)) return ERROR_FILE_FORMAT;
     try {
         file.read((char*)&_data, sizeof(_data));
         file.read((char*)&crc, sizeof(crc));
         convertSmall32(crc.crc);
+    } catch (...) { return ERROR_UNKNOWN; }
+    return SUCCESS;
+}
+
+ImageStatus cICPChunk::encode(std::fstream& file) {
+    try {
+        write32(file, 4);
+        file.write(CHUNK::typeMap[CHUNK::cICP].c_str(), 4);
+        file << _data.colourPrimaries << _data.transferFunction << _data.matrixCoefficients << _data.videoFullRangeFlag;
+        write32(file, crc.crc);
     } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
@@ -246,6 +413,25 @@ ImageStatus mDCvChunk::decode(fstream& file, uint32_t length) {
         convertSmall32(_data.maxLum);
         convertSmall32(_data.minLum);
         convertSmall32(crc.crc);
+    } catch (...) { return ERROR_UNKNOWN; }
+    return SUCCESS;
+}
+
+ImageStatus mDCvChunk::encode(std::fstream& file) {
+    try {
+        write32(file, 24);
+        file.write(CHUNK::typeMap[CHUNK::mDCv].c_str(), 4);
+        write16(file, _data.chromaticityX1);
+        write16(file, _data.chromaticityY1);
+        write16(file, _data.chromaticityX2);
+        write16(file, _data.chromaticityY2);
+        write16(file, _data.chromaticityX3);
+        write16(file, _data.chromaticityY3);
+        write16(file, _data.whitePointX);
+        write16(file, _data.whitePointY);
+        write32(file, _data.maxLum);
+        write32(file, _data.minLum);
+        write32(file, crc.crc);
     } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
@@ -277,6 +463,17 @@ ImageStatus cLLiChunk::decode(fstream& file, uint32_t length) {
     return SUCCESS;
 }
 
+ImageStatus cLLiChunk::encode(std::fstream& file) {
+    try {
+        write32(file, 8);
+        file.write(CHUNK::typeMap[CHUNK::cLLi].c_str(), 4);
+        write32(file, MaxCLL);
+        write32(file, MaxFALL);
+        write32(file, crc.crc);
+    } catch (...) { return ERROR_UNKNOWN; }
+    return SUCCESS;
+}
+
 ImageStatus tEXtChunk::decode(fstream& file, uint32_t length) {
     try {
         for (uint32_t i = 0; i < length; i++) {
@@ -298,6 +495,18 @@ ImageStatus tEXtChunk::decode(fstream& file, uint32_t length) {
         }
         file.read((char*)&crc, sizeof(crc));
         convertSmall32(crc.crc);
+    } catch (...) { return ERROR_UNKNOWN; }
+    return SUCCESS;
+}
+
+ImageStatus tEXtChunk::encode(std::fstream& file) {
+    try {
+        write32(file, strlen(keyWord) + 1 + textString.size());
+        file.write(CHUNK::typeMap[CHUNK::tEXt].c_str(), 4);
+        file.write(keyWord, strlen(keyWord));
+        file << 0;
+        file.write(textString.c_str(), strlen(textString.c_str()));
+        write32(file, crc.crc);
     } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
@@ -328,6 +537,20 @@ ImageStatus zTXtChunk::decode(fstream& file, uint32_t length) {
     return SUCCESS;
 }
 
+ImageStatus zTXtChunk::encode(std::fstream& file) {
+    try {
+        write32(file, strlen(keyWord) + 2 + compressDataStream.size());
+        file.write(CHUNK::typeMap[CHUNK::zTXt].c_str(), 4);
+        file.write(keyWord, strlen(keyWord));
+        file << (uint8_t)0 << compressMethod;
+        for (const auto& item : compressDataStream) {
+            file << item;
+        }
+        write32(file, crc.crc);
+    } catch (...) { return ERROR_UNKNOWN; }
+    return SUCCESS;
+}
+
 ImageStatus iTXtChunk::decode(fstream& file, uint32_t length) {
     try {
         uint32_t i = 0;
@@ -352,6 +575,22 @@ ImageStatus iTXtChunk::decode(fstream& file, uint32_t length) {
     return SUCCESS;
 }
 
+ImageStatus iTXtChunk::encode(std::fstream& file) {
+    try {
+        write32(file, strlen(keyWord) + 5 + languageTag.size() + translatedKeyWordLen + textLen);
+        file.write(CHUNK::typeMap[CHUNK::iTXt].c_str(), 4);
+        file.write(keyWord, strlen(keyWord));
+        file << (uint8_t)0 << compressFlag << compressMethod;
+        if (languageTag.size() > 0) file.write(languageTag.c_str(), strlen(languageTag.c_str()));
+        file << (uint8_t)0;
+        if (translatedKeyWordLen > 0) file.write((char*)translatedKeyWord.get(), translatedKeyWordLen);
+        file << (uint8_t)0;
+        if (textLen > 0) file.write((char*)text.get(), textLen);
+        write32(file, crc.crc);
+    } catch (...) { return ERROR_UNKNOWN; }
+    return SUCCESS;
+}
+
 void iTXtChunk::tagProcess(fstream& file, uint32_t length, uint32_t& curPos) {
     queue<char> tagQueue;
     readQueue(file, length, curPos, tagQueue);
@@ -365,7 +604,8 @@ void iTXtChunk::tagProcess(fstream& file, uint32_t length, uint32_t& curPos) {
 void iTXtChunk::tKeyWordProcess(fstream& file, uint32_t length, uint32_t& curPos) {
     queue<uint8_t> q;
     readQueue(file, length, curPos, q);
-    translatedKeyWord = make_unique<uint8_t[]>(q.size());
+    translatedKeyWord    = make_unique<uint8_t[]>(q.size());
+    translatedKeyWordLen = q.size();
     for (uint32_t j = 0; j < q.size(); j++) {
         translatedKeyWord[j] = q.front();
         q.pop();
@@ -375,6 +615,7 @@ void iTXtChunk::tKeyWordProcess(fstream& file, uint32_t length, uint32_t& curPos
 void iTXtChunk::textProcess(fstream& file, uint32_t length, uint32_t& curPos) {
     uint32_t len = length - curPos - 1;
     text         = make_unique<uint8_t[]>(len);
+    textLen      = len;
     for (uint32_t i = 0; i < len; i++) {
         uint8_t ch;
         file.read((char*)&ch, sizeof(ch));
@@ -392,7 +633,9 @@ ImageStatus bKGDChunk::decode(fstream& file, uint32_t length) {
                 break;
             case 2:
             case 6:
-                file.read((char*)&_data.colour, sizeof(_data.colour));
+                file.read((char*)&_data.colour.red, 2);
+                file.read((char*)&_data.colour.green, 2);
+                file.read((char*)&_data.colour.blue, 2);
                 convertSmall16(_data.colour.red);
                 convertSmall16(_data.colour.green);
                 convertSmall16(_data.colour.blue);
@@ -409,6 +652,36 @@ ImageStatus bKGDChunk::decode(fstream& file, uint32_t length) {
     return SUCCESS;
 }
 
+ImageStatus bKGDChunk::encode(std::fstream& file) {
+    try {
+        uint32_t size = 2;
+        if (colourType == 2 || colourType == 6) size = 6;
+        else if (colourType == 3) size = 1;
+        write32(file, size);
+        file.write(CHUNK::typeMap[CHUNK::bKGD].c_str(), 4);
+        switch (colourType) {
+            case 0:
+            case 4:
+                write16(file, _data.greyScale);
+                break;
+            case 2:
+            case 6: {
+                write16(file, _data.colour.red);
+                write16(file, _data.colour.green);
+                write16(file, _data.colour.blue);
+                break;
+            }
+            case 3:
+                file << _data.paletteIndex;
+                break;
+            default:
+                return ERROR_ENUM;
+        }
+        write32(file, crc.crc);
+    } catch (...) { return ERROR_UNKNOWN; }
+    return SUCCESS;
+}
+
 ImageStatus hISTChunk::decode(fstream& file, uint32_t length) {
     if (length % 2 != 0) return ERROR_FILE_FORMAT;
     try {
@@ -420,8 +693,21 @@ ImageStatus hISTChunk::decode(fstream& file, uint32_t length) {
             convertSmall16(integer);
             _data[i] = integer;
         }
+        _dataLen = len;
         file.read((char*)&crc, sizeof(crc));
         convertSmall32(crc.crc);
+    } catch (...) { return ERROR_UNKNOWN; }
+    return SUCCESS;
+}
+
+ImageStatus hISTChunk::encode(std::fstream& file) {
+    try {
+        write32(file, 2 * _dataLen);
+        file.write(CHUNK::typeMap[CHUNK::hIST].c_str(), 4);
+        for (uint32_t i = 0; i < _dataLen; i++) {
+            write16(file, _data[i]);
+        }
+        write32(file, crc.crc);
     } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
@@ -439,25 +725,62 @@ ImageStatus pHYsChunk::decode(fstream& file, uint32_t length) {
     return SUCCESS;
 }
 
+ImageStatus pHYsChunk::encode(std::fstream& file) {
+    try {
+        write32(file, 9);
+        file.write(CHUNK::typeMap[CHUNK::pHYs].c_str(), 4);
+        write32(file, pixelsPerUnitX);
+        write32(file, pixelsPerUnitY);
+        file << unit;
+        write32(file, crc.crc);
+    } catch (...) { return ERROR_UNKNOWN; }
+    return SUCCESS;
+}
+
 ImageStatus sPLTChunk::decode(fstream& file, uint32_t length) {
     try {
         uint32_t pos = 0;
         nameProcess(file, length, pos);
         file.read((char*)&sampleDepth, sizeof(sampleDepth));
-        uint32_t len = length - paletteName.size() - sizeof(sampleDepth) - 1;
-        if (len % 3 != 0 || (sampleDepth != 8 && sampleDepth != 16)) return ERROR_FILE_FORMAT;
-        _entry = make_unique<PaletteEntry[]>(len / 3);
-        for (uint32_t i = 0; i < len / 3; i++) {
-            PaletteEntry entry {};
-            if (sampleDepth == 8) {
-                paletteEntryProcess(file, entry);
-                continue;
-            }
-            file.read((char*)&entry, sizeof(entry));
+        uint32_t len  = length - paletteName.size() - sizeof(sampleDepth) - 1;
+        uint32_t each = sampleDepth == 8 ? 6 : 10;
+        if (len % each != 0 || (sampleDepth != 8 && sampleDepth != 16)) return ERROR_FILE_FORMAT;
+        _entry   = make_unique<EntryData[]>(len / each);
+        entryLen = len / each;
+        for (uint32_t i = 0; i < len / each; i++) {
+            EntryData entry {};
+            file.read((char*)&entry.red, sampleDepth / 8);
+            file.read((char*)&entry.green, sampleDepth / 8);
+            file.read((char*)&entry.blue, sampleDepth / 8);
+            file.read((char*)&entry.alpha, sampleDepth / 8);
+            file.read((char*)&entry.frequency, 2);
             _entry[i] = entry;
         }
         file.read((char*)&crc, sizeof(crc));
         convertSmall32(crc.crc);
+    } catch (...) { return ERROR_UNKNOWN; }
+    return SUCCESS;
+}
+
+ImageStatus sPLTChunk::encode(std::fstream& file) {
+    try {
+        write32(file, paletteName.size() + 2 + entryLen * (sampleDepth == 8 ? 6 : 10));
+        file.write(CHUNK::typeMap[CHUNK::sPLT].c_str(), 4);
+        if (!paletteName.empty()) file.write(paletteName.c_str(), paletteName.size());
+        file << (uint8_t)0 << sampleDepth;
+        for (uint32_t i = 0; i < entryLen; i++) {
+            auto temp = _entry[i];
+            if (sampleDepth == 8) {
+                file << (uint8_t)temp.red << (uint8_t)temp.green << (uint8_t)temp.blue << (uint8_t)temp.alpha;
+            } else if (sampleDepth == 16) {
+                write16(file, temp.red);
+                write16(file, temp.green);
+                write16(file, temp.blue);
+                write16(file, temp.alpha);
+            }
+            write16(file, temp.frequency);
+        }
+        write32(file, crc.crc);
     } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
@@ -472,23 +795,20 @@ void sPLTChunk::nameProcess(fstream& file, uint32_t length, uint32_t& curPos) {
     }
 }
 
-void sPLTChunk::paletteEntryProcess(fstream& file, PaletteEntry& entry) {
-    uint8_t color;
-    file.read((char*)&color, sizeof(uint8_t));
-    entry.red = color;
-    file.read((char*)&color, sizeof(uint8_t));
-    entry.green = color;
-    file.read((char*)&color, sizeof(uint8_t));
-    entry.blue = color;
-    file.read((char*)&color, sizeof(uint8_t));
-    entry.alpha = color;
-}
-
 ImageStatus eXIfChunk::decode(fstream& file, uint32_t length) {
     try {
         file.seekg(length, ios::cur);
         file.read((char*)&crc, sizeof(crc));
         convertSmall32(crc.crc);
+    } catch (...) { return ERROR_UNKNOWN; }
+    return SUCCESS;
+}
+
+ImageStatus eXIfChunk::encode(std::fstream& file) {
+    try {
+        write32(file, 0);
+        file.write(CHUNK::typeMap[CHUNK::eXIf].c_str(), 4);
+        write32(file, crc.crc);
     } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
@@ -508,6 +828,17 @@ ImageStatus tIMEChunk::decode(fstream& file, uint32_t length) {
     return SUCCESS;
 }
 
+ImageStatus tIMEChunk::encode(std::fstream& file) {
+    try {
+        write32(file, 7);
+        file.write(CHUNK::typeMap[CHUNK::tIME].c_str(), 4);
+        write16(file, year);
+        file << month << day << hour << minute << second;
+        write32(file, crc.crc);
+    } catch (...) { return ERROR_UNKNOWN; }
+    return SUCCESS;
+}
+
 ImageStatus acTLChunk::decode(fstream& file, uint32_t length) {
     try {
         file.read((char*)&_data, sizeof(_data));
@@ -515,6 +846,17 @@ ImageStatus acTLChunk::decode(fstream& file, uint32_t length) {
         convertSmall32(_data.numFrames);
         convertSmall32(_data.numPlays);
         convertSmall32(crc.crc);
+    } catch (...) { return ERROR_UNKNOWN; }
+    return SUCCESS;
+}
+
+ImageStatus acTLChunk::encode(std::fstream& file) {
+    try {
+        write32(file, 8);
+        file.write(CHUNK::typeMap[CHUNK::acTL].c_str(), 4);
+        write32(file, _data.numFrames);
+        write32(file, _data.numPlays);
+        write32(file, crc.crc);
     } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
@@ -537,11 +879,29 @@ ImageStatus fcTLChunk::decode(fstream& file, uint32_t length) {
     return SUCCESS;
 }
 
+ImageStatus fcTLChunk::encode(std::fstream& file) {
+    try {
+        write32(file, 26);
+        file.write(CHUNK::typeMap[CHUNK::fcTL].c_str(), 4);
+        write32(file, _data.sequenceNumber);
+        write32(file, _data.width);
+        write32(file, _data.height);
+        write32(file, _data.offsetX);
+        write32(file, _data.offsetY);
+        write16(file, _data.delayNum);
+        write16(file, _data.delayDen);
+        file << disposeOp << blendOp;
+        write32(file, crc.crc);
+    } catch (...) { return ERROR_UNKNOWN; }
+    return SUCCESS;
+}
+
 ImageStatus fdATChunk::decode(fstream& file, uint32_t length) {
     try {
         file.read((char*)&sequenceNumber, sizeof(sequenceNumber));
         uint32_t len = length - sizeof(sequenceNumber);
         frameData    = make_unique<uint8_t[]>(len);
+        dataLen      = len;
         for (uint32_t i = 0; i < len; i++) {
             frameData[i] = file.get();
         }
@@ -552,12 +912,25 @@ ImageStatus fdATChunk::decode(fstream& file, uint32_t length) {
     return SUCCESS;
 }
 
+ImageStatus fdATChunk::encode(std::fstream& file) {
+    try {
+        write32(file, 4 + dataLen);
+        file.write(CHUNK::typeMap[CHUNK::fdAT].c_str(), 4);
+        write32(file, sequenceNumber);
+        for (uint32_t i = 0; i < dataLen; i++) {
+            file << frameData[i];
+        }
+        write32(file, crc.crc);
+    } catch (...) { return ERROR_UNKNOWN; }
+    return SUCCESS;
+}
+
 ImageStatus IDATChunk::decode(fstream& file, uint32_t length, std::vector<std::pair<long, long>>& IDATMap) {
     try {
 #ifdef _IDAT_DEBUG_
         fstream hexFile("E:/code/mySource/log/hexFile.txt", ios::out | ios::app);
-#endif
         cout << hex << file.tellg() << endl;
+#endif
         IDATMap.emplace_back(file.tellg(), length);
 #ifdef _IDAT_DEBUG_
         for (uint32_t i = 0; i < length; i++) {
@@ -575,10 +948,29 @@ ImageStatus IDATChunk::decode(fstream& file, uint32_t length, std::vector<std::p
     return SUCCESS;
 }
 
+ImageStatus IDATChunk::encode(std::fstream& file) {
+    try {
+        write32(file, 4);
+        file.write(CHUNK::typeMap[CHUNK::IDAT].c_str(), 4);
+        // compress data
+        write32(file, crc.crc);
+    } catch (...) { return ERROR_UNKNOWN; }
+    return SUCCESS;
+}
+
 ImageStatus IENDChunk::decode(fstream& file, uint32_t length) {
     try {
         file.read((char*)&crc, sizeof(crc));
         convertSmall32(crc.crc);
+    } catch (...) { return ERROR_UNKNOWN; }
+    return SUCCESS;
+}
+
+ImageStatus IENDChunk::encode(std::fstream& file) {
+    try {
+        write32(file, 0);
+        file.write(CHUNK::typeMap[CHUNK::IEND].c_str(), 4);
+        write32(file, crc.crc);
     } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
@@ -591,7 +983,6 @@ ImageStatus PNGData::read(const char* filePath) {
     try {
         file.read((char*)&_formatFlag, sizeof(_formatFlag));
         if (!checkFormat()) return ERROR_FILE_FORMAT;
-        file.seekg(4, ios::cur); // formatFlag's CRC
         ChunkHead head {};
         do {
             head.reset();
@@ -613,8 +1004,6 @@ ImageStatus PNGData::decodeProcess(fstream& file, const ChunkHead& head) {
         switch (head.chunkType) {
             case CHUNK::IHDR: {
                 status                 = _IHDR.decode(file, head.length);
-                _width                 = _IHDR.width();
-                _height                = _IHDR.height();
                 _minCompressDataLength = _IHDR.minCompressDataLength();
                 break;
             }
@@ -643,7 +1032,7 @@ ImageStatus PNGData::ancillaryChunkFactory(fstream& file, const ChunkHead& head)
     ANCILLARY_CHUNK_FACTORY(cHRM)
     ANCILLARY_CHUNK_FACTORY(gAMA)
     ANCILLARY_CHUNK_FACTORY(iCCP)
-    ANCILLARY_CHUNK_FACTORY(sBIT)
+    ANCILLARY_CHUNK_FACTORY_FUNC(sBIT, ((sBITChunk*)chunk)->colourType = _IHDR._data.colorType)
     ANCILLARY_CHUNK_FACTORY(sRGB)
     ANCILLARY_CHUNK_FACTORY(cICP)
     ANCILLARY_CHUNK_FACTORY(mDCv)
@@ -651,7 +1040,7 @@ ImageStatus PNGData::ancillaryChunkFactory(fstream& file, const ChunkHead& head)
     ANCILLARY_CHUNK_FACTORY(tEXt)
     ANCILLARY_CHUNK_FACTORY(zTXt)
     ANCILLARY_CHUNK_FACTORY(iTXt)
-    ANCILLARY_CHUNK_FACTORY(bKGD)
+    ANCILLARY_CHUNK_FACTORY_FUNC(bKGD, ((bKGDChunk*)chunk)->colourType = _IHDR._data.colorType)
     ANCILLARY_CHUNK_FACTORY(hIST)
     ANCILLARY_CHUNK_FACTORY(pHYs)
     ANCILLARY_CHUNK_FACTORY(sPLT)
@@ -790,20 +1179,22 @@ void PNGData::png_undo_filter_paeth(unique_ptr<uint8_t[]>& uncompressData, uint3
 }
 
 void PNGData::data2Matrix(unique_ptr<uint8_t[]>& uncompressData) {
-    _rgb             = new Matrix<RGB>(_IHDR.height(), _IHDR.width());
-    auto convertRGBA = [&](uint8_t* pos, uint8_t bitDepth, myUtil::CHUNK::ColorType type) {
+    _rgb           = new Matrix<RGB>(_IHDR.height(), _IHDR.width());
+    uint8_t curBit = 0;
+    // read all bitDepth
+    auto convertRGBA = [&](uint8_t*& pos, uint8_t bitDepth, myUtil::CHUNK::ColorType type) {
         uint32_t count = CHUNK::ColorTypeBitMap[type];
-        RGB res {};
         if (bitDepth >= 8) {
-            uint8_t temp[4] {0};
+            uint16_t temp[4] {0};
             int32_t bit = bitDepth / 8;
             for (int32_t i = 0; i < count; i++) {
-                int32_t value = 0;
+                uint16_t value = 0;
                 for (int32_t j = 0; j < bit; j++) {
                     value = (value << 8) | *(pos + i * bit + j);
                 }
                 temp[i] = value;
             }
+            pos += _minCompressDataLength;
             if (type == CHUNK::GREY_SCALE) return RGB {temp[0], temp[0], temp[0], 0};
             else if (type == CHUNK::RGB) return RGB {temp[0], temp[1], temp[2], 0};
             else if (type == CHUNK::INDEXED_COLOUR) {
@@ -814,16 +1205,35 @@ void PNGData::data2Matrix(unique_ptr<uint8_t[]>& uncompressData) {
             else if (type == CHUNK::RGBA) return RGB {temp[0], temp[1], temp[2], temp[3]};
         } else {
             // 暂未实现位深度为1，2，4的GREY_SCALE和INDEXED_COLOUR
+            uint16_t temp = ((*pos) << curBit) >> (8 - bitDepth);
+            if ((curBit + bitDepth) >= 8) pos++;
+            curBit = (curBit + bitDepth) % 8;
+            if (type == CHUNK::GREY_SCALE) return RGB {temp, temp, temp, 0};
+            else if (type == CHUNK::INDEXED_COLOUR) {
+                auto chunk   = dynamic_cast<PLTEChunk*>(_ancillaryChunk[CHUNK::PLTE]);
+                auto palette = chunk->palette()[temp];
+                return RGB {palette.rgbRed, palette.rgbGreen, palette.rgbBlue, 0};
+            }
         }
-        return res;
+        return RGB {};
     };
     auto* pos = uncompressData.get() + 1;
     for (int32_t i = 0; i < _IHDR.height(); i++) {
         for (int32_t j = 0; j < _IHDR.width(); j++) {
             _rgb->setValue(i, j, convertRGBA(pos, _IHDR.bitDepth(), static_cast<CHUNK::ColorType>(_IHDR.colorType())));
-            pos += _minCompressDataLength;
         }
         pos += 1;
     }
+}
+
+ImageStatus PNGData::write(const char* filePath) {
+    CHECK_NULL_RETURN(filePath, ERROR_NULLPTR)
+    try {
+        fstream file(filePath, std::ios::out | std::ios::binary);
+        if (file.fail()) return ERROR_FILE_OPERATOR;
+        file.write((char*)&PNG_FLAG, sizeof(PNG_FLAG));
+        _IHDR.encode(file);
+    } catch (...) { return ERROR_UNKNOWN; }
+    return SUCCESS;
 }
 NAME_SPACE_END()
