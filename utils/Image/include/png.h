@@ -17,6 +17,7 @@
 NAME_SPACE_START(myUtil)
 // #define _DEBUG_
 //  #define _IDAT_DEBUG_
+#define IDAT_MAX_LEN       0xFFFF
 #define TEMP_LOG(fmt, ...) printf(fmt, ##__VA_ARGS__);
 namespace CHUNK {
 enum ChunkType {
@@ -132,10 +133,19 @@ public:
             else q.push(ch);
         }
     }
+    [[maybe_unused]] static uint32_t createCRC(const uint8_t* buf, uint32_t len);
 
 protected:
     static void write32(fstream& file, uint32_t value);
+    static void write32(uint8_t* target, uint32_t value, uint32_t pos);
     static void write16(fstream& file, uint16_t value);
+    static void write16(uint8_t* target, uint16_t value, uint32_t pos);
+
+private:
+    static unsigned long crcTable[256];
+
+public:
+    static bool crcTableComputed;
 };
 
 class IHDRChunk : public Chunk {
@@ -465,7 +475,8 @@ public:
 class IDATChunk : public Chunk {
 public:
     ImageStatus decode(fstream& file, uint32_t length, std::vector<std::pair<long, long>>& IDATMap);
-    ImageStatus encode(std::fstream &file) override;
+    // data inflated and filtered
+    ImageStatus encode(std::fstream& file, unique_ptr<uint8_t[]>& data, long dataLen);
 };
 
 class IENDChunk : public Chunk {
@@ -514,11 +525,17 @@ private:
     ImageStatus getIDATData(fstream& file);
     ImageStatus uncompress_UndoFilter();
     bool undoFilter0(unique_ptr<uint8_t[]>& uncompressData, unsigned long length);
+    bool filter0(unique_ptr<uint8_t[]>& originData, unsigned long originLen);
     void png_undo_filter_sub(unique_ptr<uint8_t[]>& uncompressData, uint32_t curPos, uint32_t length) const;
+    void png_filter_sub(unique_ptr<uint8_t[]>& originData, uint32_t curPos, uint32_t length);
     void png_undo_filter_up(unique_ptr<uint8_t[]>& uncompressData, uint32_t curPos, uint32_t length);
+    void png_filter_up(unique_ptr<uint8_t[]>& originData, uint32_t curPos, uint32_t length);
     void png_undo_filter_average(unique_ptr<uint8_t[]>& uncompressData, uint32_t curPos, uint32_t length) const;
+    void png_filter_average(unique_ptr<uint8_t[]>& originData, uint32_t curPos, uint32_t length);
     void png_undo_filter_paeth(unique_ptr<uint8_t[]>& uncompressData, uint32_t curPos, uint32_t length);
+    void png_filter_paeth(unique_ptr<uint8_t[]>& originData, uint32_t curPos, uint32_t length);
     void data2Matrix(unique_ptr<uint8_t[]>& uncompressData);
+    void matrix2Data(unique_ptr<uint8_t[]>& originData);
 };
 
 NAME_SPACE_END()

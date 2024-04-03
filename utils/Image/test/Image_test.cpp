@@ -140,7 +140,7 @@ int main() {
     //     bmp2bmpGray();
     //     bmp2jpeg();
     //     jpeg2jpeg();
-    png2jpeg();
-//    png2png();
+//    png2jpeg();
+    png2png();
     return 0;
 }
