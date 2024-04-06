@@ -41,6 +41,7 @@ enum ImageStatus {
     ERROR_UNCOMPRESS,
     ERROR_METHOD_UNDEFINE,
     ERROR_UNDO_FILTER,
+    ERROR_FILTER,
 };
 
 #undef RGB

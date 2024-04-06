@@ -19,6 +19,7 @@ NAME_SPACE_START(myUtil)
 //  #define _IDAT_DEBUG_
 #define IDAT_MAX_LEN       0xFFFF
 #define TEMP_LOG(fmt, ...) printf(fmt, ##__VA_ARGS__);
+#define DEFAULT_CRC        0x826042AE
 namespace CHUNK {
 enum ChunkType {
     IDAT = 0x49444154,
@@ -134,6 +135,11 @@ public:
         }
     }
     [[maybe_unused]] static uint32_t createCRC(const uint8_t* buf, uint32_t len);
+    void addNext(Chunk* next) {
+        CHECK_NULL_VOID(next)
+        if (_next == nullptr) _next = std::unique_ptr<Chunk>(next);
+        _next->addNext(next);
+    }
 
 protected:
     static void write32(fstream& file, uint32_t value);
@@ -145,6 +151,7 @@ private:
     static unsigned long crcTable[256];
 
 public:
+    std::unique_ptr<Chunk> _next {nullptr};
     static bool crcTableComputed;
 };
 
@@ -152,7 +159,7 @@ class IHDRChunk : public Chunk {
     struct IHDRData {
         uint32_t width;
         uint32_t height;
-        uint8_t bitDepth;
+        uint8_t bitDepth {8};
         uint8_t colorType;
         uint8_t compressionMethod;
         uint8_t filterMethod;
@@ -185,6 +192,12 @@ public:
     ImageStatus decode(fstream& file, uint32_t length) override;
     ImageStatus encode(std::fstream& file) override;
     vector<PLTEData>& palette() { return _data; }
+    uint32_t findColour(const RGB& rgb) {
+        for (uint32_t i = 0; i < _data.size(); i++) {
+            if (_data[i].rgbRed == rgb.red && _data[i].rgbGreen == rgb.green && _data[i].rgbBlue == rgb.blue) return i;
+        }
+        return 0;
+    }
 };
 
 class tRNSChunk : public Chunk {
@@ -476,7 +489,7 @@ class IDATChunk : public Chunk {
 public:
     ImageStatus decode(fstream& file, uint32_t length, std::vector<std::pair<long, long>>& IDATMap);
     // data inflated and filtered
-    ImageStatus encode(std::fstream& file, unique_ptr<uint8_t[]>& data, long dataLen);
+    static ImageStatus encode(std::fstream& file, unique_ptr<uint8_t[]>& data, unsigned long dataLen);
 };
 
 class IENDChunk : public Chunk {
@@ -493,8 +506,8 @@ class PNGData : public Image {
     Matrix<RGB>* _rgb {nullptr};
     IHDRChunk _IHDR;
     IENDChunk _IEND;
-    unordered_map<uint32_t, Chunk*> _ancillaryChunk;
-    unique_ptr<uint8_t[]> _data {nullptr};
+    std::map<uint32_t, Chunk*> _ancillaryChunk;
+    std::unique_ptr<uint8_t[]> _data {nullptr};
     std::vector<std::pair<long, long>> _IDATMap; // pair<pos, length>
 
 public:
@@ -513,10 +526,23 @@ public:
 
     [[nodiscard]] int32_t getWidth() const override { return _IHDR.width(); }
     [[nodiscard]] int32_t getHeight() const override { return _IHDR.height(); }
+    [[nodiscard]] Matrix<RGB> getRGBMatrix() const override { return *_rgb; } // 获取通用的RGB数据
+    [[nodiscard]] CHUNK::ColorType getColorType() const { return static_cast<CHUNK::ColorType>(_IHDR.colorType()); }
+    [[nodiscard]] uint8_t getCompressionMethod() const { return _IHDR.compressionMethod(); }
+    [[nodiscard]] uint8_t getFilterMethod() const { return _IHDR.filterMethod(); }
+    [[nodiscard]] uint8_t getInterlaceMethod() const { return _IHDR.interlaceMethod(); }
     void setWidth(int32_t width) override { _IHDR._data.width = width; }
     void setHeight(int32_t height) override { _IHDR._data.height = height; }
-    [[nodiscard]] Matrix<RGB> getRGBMatrix() const override { return *_rgb; } // 获取通用的RGB数据
-    void setRGBMatrix(const Matrix<RGB>& rgb) override { *_rgb = rgb; }       // 设置通用的RGB数据
+    void setRGBMatrix(const Matrix<RGB>& rgb) override { *_rgb = rgb; } // 设置通用的RGB数据
+    void setColorType(CHUNK::ColorType type) {}
+    void setCompressionMethod(uint8_t method) { _IHDR._data.compressionMethod = method; }
+    void setFilterMethod(uint8_t method) { _IHDR._data.filterMethod = method; }
+    void setInterlaceMethod(uint8_t method) { _IHDR._data.interlaceMethod = method; }
+    [[nodiscard]] Chunk* getChunkByType(CHUNK::ChunkType type) {
+        if (_ancillaryChunk.find(type) != _ancillaryChunk.end()) return _ancillaryChunk[type];
+        return nullptr;
+    }
+
 private:
     [[maybe_unused]] bool checkFormat() override { return _formatFlag == PNG_FLAG; }
     ImageStatus decodeProcess(fstream& file, const ChunkHead& head);
@@ -524,6 +550,7 @@ private:
     ImageStatus decodeIDATDataProcess(fstream& file);
     ImageStatus getIDATData(fstream& file);
     ImageStatus uncompress_UndoFilter();
+    ImageStatus compress_Filter(fstream& file);
     bool undoFilter0(unique_ptr<uint8_t[]>& uncompressData, unsigned long length);
     bool filter0(unique_ptr<uint8_t[]>& originData, unsigned long originLen);
     void png_undo_filter_sub(unique_ptr<uint8_t[]>& uncompressData, uint32_t curPos, uint32_t length) const;
