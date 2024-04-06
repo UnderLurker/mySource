@@ -9,6 +9,8 @@
 
 NAME_SPACE_START(myUtil)
 
+#define CHUNK_DEFAULT_COUNT 65535
+
 #define ANCILLARY_CHUNK_FACTORY(chunkName)                                                            \
     if (myUtil::CHUNK::chunkName == head.chunkType) {                                                 \
         Chunk* chunk = new chunkName##Chunk();                                                        \
@@ -32,6 +34,16 @@ NAME_SPACE_START(myUtil)
             _ancillaryChunk[CHUNK::chunkName] = chunk;                                                \
         }                                                                                             \
         return result;                                                                                \
+    }
+
+#define ANCILLARY_CHUNK_ENCODE(chunkName, qty)                             \
+    if (_ancillaryChunk.find(CHUNK::chunkName) != _ancillaryChunk.end()) { \
+        auto chunk    = _ancillaryChunk[CHUNK::chunkName];                 \
+        int32_t count = qty;                                               \
+        while (count-- > 0 && chunk != nullptr) {                          \
+            chunk->encode(file);                                           \
+            chunk = chunk->_next.get();                                    \
+        }                                                                  \
     }
 
 void convertSmall16(uint16_t& value) {
@@ -1202,6 +1214,17 @@ ImageStatus PNGData::read(const char* filePath) {
     return SUCCESS;
 }
 
+Chunk* PNGData::getChunkByType(CHUNK::ChunkType type) {
+    if (_ancillaryChunk.find(type) != _ancillaryChunk.end()) return _ancillaryChunk[type];
+    return nullptr;
+}
+
+void PNGData::setRGBMatrix(const Matrix<RGB>& rgb) {
+    _rgb               = new Matrix<RGB>(rgb);
+    _IHDR._data.width  = rgb.col;
+    _IHDR._data.height = rgb.row;
+}
+
 ImageStatus PNGData::decodeProcess(fstream& file, const ChunkHead& head) {
     ImageStatus status = ERROR_UNKNOWN;
     try {
@@ -1234,6 +1257,8 @@ ImageStatus PNGData::ancillaryChunkFactory(fstream& file, const ChunkHead& head)
     ANCILLARY_CHUNK_FACTORY_FUNC(tRNS, ((tRNSChunk*)chunk)->colourType = _IHDR._data.colorType)
     ANCILLARY_CHUNK_FACTORY_FUNC(sBIT, ((sBITChunk*)chunk)->colourType = _IHDR._data.colorType)
     ANCILLARY_CHUNK_FACTORY_FUNC(bKGD, ((bKGDChunk*)chunk)->colourType = _IHDR._data.colorType)
+    ANCILLARY_CHUNK_FACTORY_FUNC(acTL, _animateFlag = true)
+    ANCILLARY_CHUNK_FACTORY_FUNC(fdAT, _animateStaticImageFlag = true)
     ANCILLARY_CHUNK_FACTORY(PLTE)
     ANCILLARY_CHUNK_FACTORY(cHRM)
     ANCILLARY_CHUNK_FACTORY(gAMA)
@@ -1250,9 +1275,7 @@ ImageStatus PNGData::ancillaryChunkFactory(fstream& file, const ChunkHead& head)
     ANCILLARY_CHUNK_FACTORY(sPLT)
     ANCILLARY_CHUNK_FACTORY(eXIf)
     ANCILLARY_CHUNK_FACTORY(tIME)
-    ANCILLARY_CHUNK_FACTORY(acTL)
     ANCILLARY_CHUNK_FACTORY(fcTL)
-    ANCILLARY_CHUNK_FACTORY(fdAT)
     return ERROR_STRUCT_NOT_DEFINE;
 }
 
@@ -1484,9 +1507,12 @@ void PNGData::data2Matrix(unique_ptr<uint8_t[]>& uncompressData) {
             if (type == CHUNK::GREY_SCALE) return RGB {temp[0], temp[0], temp[0], 0};
             else if (type == CHUNK::RGB) return RGB {temp[0], temp[1], temp[2], 0};
             else if (type == CHUNK::INDEXED_COLOUR) {
-                auto chunk   = dynamic_cast<PLTEChunk*>(_ancillaryChunk[CHUNK::PLTE]);
-                auto palette = chunk->palette()[temp[0]];
-                return RGB {palette.rgbRed, palette.rgbGreen, palette.rgbBlue, 0};
+                auto chunk           = dynamic_cast<PLTEChunk*>(_ancillaryChunk[CHUNK::PLTE]);
+                auto palette         = chunk->palette()[temp[0]];
+                uint16_t transparent = 255;
+                if (_ancillaryChunk.find(CHUNK::tRNS) != _ancillaryChunk.end())
+                    transparent = ((tRNSChunk*)_ancillaryChunk[CHUNK::tRNS])->tRNS().colourType3[temp[0]];
+                return RGB {palette.rgbRed, palette.rgbGreen, palette.rgbBlue, transparent};
             } else if (type == CHUNK::GREY_ALPHA) return RGB {temp[0], temp[0], temp[0], temp[1]};
             else if (type == CHUNK::RGBA) return RGB {temp[0], temp[1], temp[2], temp[3]};
         } else {
@@ -1521,8 +1547,24 @@ ImageStatus PNGData::write(const char* filePath) {
         file.write((char*)&PNG_FLAG, sizeof(PNG_FLAG));
         _minCompressDataLength = _IHDR.minCompressDataLength();
         _IHDR.encode(file);
-
-        compress_Filter(file);
+        bool havePLTE = findChunk(CHUNK::PLTE);
+        if (havePLTE && _animateFlag) {
+            if (_animateStaticImageFlag) {
+                animatedImagesPLTEWithStaticImage(file);
+            } else {
+                animatedImagesPLTE(file);
+            }
+        } else if (havePLTE && !_animateFlag) {
+            staticImagesPLTE(file);
+        } else if (_animateFlag) {
+            if (_animateStaticImageFlag) {
+                animatedImagesWithStaticImage(file);
+            } else {
+                animatedImages(file);
+            }
+        } else {
+            staticImages(file);
+        }
         _IEND.encode(file);
     } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
@@ -1532,7 +1574,7 @@ void PNGData::matrix2Data(unique_ptr<uint8_t[]>& originData) {
     uint32_t curBit        = 0;
     uint32_t rowWidth      = _minCompressDataLength * _IHDR.width() + 1;
     auto convertOriginData = [&](int32_t row, int32_t col, uint8_t bitDepth) {
-        uint32_t pos   = rowWidth * row + col * _minCompressDataLength + 1;
+        uint32_t pos   = rowWidth * row + col * _minCompressDataLength;
         uint32_t count = CHUNK::ColorTypeBitMap[(CHUNK::ColorType)_IHDR.colorType()];
         uint32_t bytes = bitDepth / 8;
         auto rgb       = _rgb->getValue(row, col);
@@ -1586,5 +1628,185 @@ void PNGData::matrix2Data(unique_ptr<uint8_t[]>& originData) {
         }
         curBit = 0;
     }
+}
+
+void PNGData::staticImagesPLTE(fstream& file) {
+    if (findChunk(CHUNK::tIME) || findChunk(CHUNK::zTXt) || findChunk(CHUNK::tEXt) || findChunk(CHUNK::iTXt) ||
+        findChunk(CHUNK::pHYs)) {
+        ANCILLARY_CHUNK_ENCODE(tIME, 1)
+        ANCILLARY_CHUNK_ENCODE(zTXt, CHUNK_DEFAULT_COUNT)
+        ANCILLARY_CHUNK_ENCODE(tEXt, CHUNK_DEFAULT_COUNT)
+        ANCILLARY_CHUNK_ENCODE(iTXt, CHUNK_DEFAULT_COUNT)
+        ANCILLARY_CHUNK_ENCODE(pHYs, 1)
+        return;
+    } else if (findChunk(CHUNK::sPLT) || findChunk(CHUNK::eXIf)) {
+        ANCILLARY_CHUNK_ENCODE(sPLT, CHUNK_DEFAULT_COUNT)
+        ANCILLARY_CHUNK_ENCODE(eXIf, 1)
+        compress_Filter(file);
+        return;
+    }
+    ANCILLARY_CHUNK_ENCODE(iCCP, 1)
+    ANCILLARY_CHUNK_ENCODE(cICP, 1)
+    ANCILLARY_CHUNK_ENCODE(sRGB, 1)
+    ANCILLARY_CHUNK_ENCODE(sBIT, 1)
+    ANCILLARY_CHUNK_ENCODE(gAMA, 1)
+    ANCILLARY_CHUNK_ENCODE(cHRM, 1)
+    ANCILLARY_CHUNK_ENCODE(mDCv, 1)
+    ANCILLARY_CHUNK_ENCODE(cLLi, 1)
+    ANCILLARY_CHUNK_ENCODE(PLTE, 1)
+    ANCILLARY_CHUNK_ENCODE(tRNS, 1)
+    ANCILLARY_CHUNK_ENCODE(hIST, 1)
+    ANCILLARY_CHUNK_ENCODE(bKGD, 1)
+    compress_Filter(file);
+}
+
+void PNGData::staticImages(fstream& file) {
+    if (findChunk(CHUNK::tIME) || findChunk(CHUNK::zTXt) || findChunk(CHUNK::tEXt) || findChunk(CHUNK::iTXt)) {
+        ANCILLARY_CHUNK_ENCODE(tIME, 1)
+        ANCILLARY_CHUNK_ENCODE(zTXt, CHUNK_DEFAULT_COUNT)
+        ANCILLARY_CHUNK_ENCODE(tEXt, CHUNK_DEFAULT_COUNT)
+        ANCILLARY_CHUNK_ENCODE(iTXt, CHUNK_DEFAULT_COUNT)
+        return;
+    }
+    ANCILLARY_CHUNK_ENCODE(pHYs, 1)
+    ANCILLARY_CHUNK_ENCODE(sPLT, CHUNK_DEFAULT_COUNT)
+    ANCILLARY_CHUNK_ENCODE(iCCP, 1)
+    ANCILLARY_CHUNK_ENCODE(cICP, 1)
+    ANCILLARY_CHUNK_ENCODE(sRGB, 1)
+    ANCILLARY_CHUNK_ENCODE(sBIT, 1)
+    ANCILLARY_CHUNK_ENCODE(gAMA, 1)
+    ANCILLARY_CHUNK_ENCODE(cHRM, 1)
+    ANCILLARY_CHUNK_ENCODE(mDCv, 1)
+    ANCILLARY_CHUNK_ENCODE(cLLi, 1)
+    ANCILLARY_CHUNK_ENCODE(tRNS, 1)
+    ANCILLARY_CHUNK_ENCODE(bKGD, 1)
+    ANCILLARY_CHUNK_ENCODE(eXIf, 1)
+    compress_Filter(file);
+}
+
+void PNGData::animatedImagesPLTEWithStaticImage(fstream& file) {
+    if (findChunk(CHUNK::tIME) || findChunk(CHUNK::zTXt) || findChunk(CHUNK::tEXt) || findChunk(CHUNK::iTXt) ||
+        findChunk(CHUNK::pHYs)) {
+        ANCILLARY_CHUNK_ENCODE(tIME, 1)
+        ANCILLARY_CHUNK_ENCODE(zTXt, CHUNK_DEFAULT_COUNT)
+        ANCILLARY_CHUNK_ENCODE(tEXt, CHUNK_DEFAULT_COUNT)
+        ANCILLARY_CHUNK_ENCODE(iTXt, CHUNK_DEFAULT_COUNT)
+        ANCILLARY_CHUNK_ENCODE(pHYs, 1)
+        return;
+    } else if (findChunk(CHUNK::sPLT) || findChunk(CHUNK::eXIf) || findChunk(CHUNK::acTL) || findChunk(CHUNK::fcTL)) {
+        ANCILLARY_CHUNK_ENCODE(sPLT, CHUNK_DEFAULT_COUNT)
+        ANCILLARY_CHUNK_ENCODE(eXIf, 1)
+        ANCILLARY_CHUNK_ENCODE(acTL, 1)
+        ANCILLARY_CHUNK_ENCODE(fcTL, 1)
+        compress_Filter(file);
+        ANCILLARY_CHUNK_ENCODE(fdAT, CHUNK_DEFAULT_COUNT)
+        ANCILLARY_CHUNK_ENCODE(fcTL, CHUNK_DEFAULT_COUNT)
+        return;
+    }
+    ANCILLARY_CHUNK_ENCODE(iCCP, 1)
+    ANCILLARY_CHUNK_ENCODE(cICP, 1)
+    ANCILLARY_CHUNK_ENCODE(sRGB, 1)
+    ANCILLARY_CHUNK_ENCODE(sBIT, 1)
+    ANCILLARY_CHUNK_ENCODE(gAMA, 1)
+    ANCILLARY_CHUNK_ENCODE(cHRM, 1)
+    ANCILLARY_CHUNK_ENCODE(mDCv, 1)
+    ANCILLARY_CHUNK_ENCODE(cLLi, 1)
+    ANCILLARY_CHUNK_ENCODE(PLTE, 1)
+    ANCILLARY_CHUNK_ENCODE(tRNS, 1)
+    ANCILLARY_CHUNK_ENCODE(hIST, 1)
+    ANCILLARY_CHUNK_ENCODE(bKGD, 1)
+    compress_Filter(file);
+    ANCILLARY_CHUNK_ENCODE(fdAT, CHUNK_DEFAULT_COUNT)
+    ANCILLARY_CHUNK_ENCODE(fcTL, CHUNK_DEFAULT_COUNT)
+}
+
+void PNGData::animatedImagesWithStaticImage(fstream& file) {
+    if (findChunk(CHUNK::tIME) || findChunk(CHUNK::zTXt) || findChunk(CHUNK::tEXt) || findChunk(CHUNK::iTXt)) {
+        ANCILLARY_CHUNK_ENCODE(tIME, 1)
+        ANCILLARY_CHUNK_ENCODE(zTXt, CHUNK_DEFAULT_COUNT)
+        ANCILLARY_CHUNK_ENCODE(tEXt, CHUNK_DEFAULT_COUNT)
+        ANCILLARY_CHUNK_ENCODE(iTXt, CHUNK_DEFAULT_COUNT)
+        return;
+    }
+    ANCILLARY_CHUNK_ENCODE(pHYs, 1)
+    ANCILLARY_CHUNK_ENCODE(sPLT, CHUNK_DEFAULT_COUNT)
+    ANCILLARY_CHUNK_ENCODE(iCCP, 1)
+    ANCILLARY_CHUNK_ENCODE(cICP, 1)
+    ANCILLARY_CHUNK_ENCODE(sRGB, 1)
+    ANCILLARY_CHUNK_ENCODE(sBIT, 1)
+    ANCILLARY_CHUNK_ENCODE(gAMA, 1)
+    ANCILLARY_CHUNK_ENCODE(cHRM, 1)
+    ANCILLARY_CHUNK_ENCODE(mDCv, 1)
+    ANCILLARY_CHUNK_ENCODE(cLLi, 1)
+    ANCILLARY_CHUNK_ENCODE(tRNS, 1)
+    ANCILLARY_CHUNK_ENCODE(bKGD, 1)
+    ANCILLARY_CHUNK_ENCODE(eXIf, 1)
+    ANCILLARY_CHUNK_ENCODE(acTL, 1)
+    ANCILLARY_CHUNK_ENCODE(fcTL, 1)
+    compress_Filter(file);
+    ANCILLARY_CHUNK_ENCODE(fdAT, CHUNK_DEFAULT_COUNT)
+    ANCILLARY_CHUNK_ENCODE(fcTL, CHUNK_DEFAULT_COUNT)
+}
+
+void PNGData::animatedImagesPLTE(fstream& file) {
+    if (findChunk(CHUNK::tIME) || findChunk(CHUNK::zTXt) || findChunk(CHUNK::tEXt) || findChunk(CHUNK::iTXt) ||
+        findChunk(CHUNK::pHYs)) {
+        ANCILLARY_CHUNK_ENCODE(tIME, 1)
+        ANCILLARY_CHUNK_ENCODE(zTXt, CHUNK_DEFAULT_COUNT)
+        ANCILLARY_CHUNK_ENCODE(tEXt, CHUNK_DEFAULT_COUNT)
+        ANCILLARY_CHUNK_ENCODE(iTXt, CHUNK_DEFAULT_COUNT)
+        ANCILLARY_CHUNK_ENCODE(pHYs, 1)
+        return;
+    } else if (findChunk(CHUNK::sPLT) || findChunk(CHUNK::eXIf) || findChunk(CHUNK::acTL)) {
+        ANCILLARY_CHUNK_ENCODE(sPLT, CHUNK_DEFAULT_COUNT)
+        ANCILLARY_CHUNK_ENCODE(eXIf, 1)
+        ANCILLARY_CHUNK_ENCODE(acTL, 1)
+        compress_Filter(file);
+        ANCILLARY_CHUNK_ENCODE(fdAT, CHUNK_DEFAULT_COUNT)
+        ANCILLARY_CHUNK_ENCODE(fcTL, CHUNK_DEFAULT_COUNT)
+        return;
+    }
+    ANCILLARY_CHUNK_ENCODE(iCCP, 1)
+    ANCILLARY_CHUNK_ENCODE(cICP, 1)
+    ANCILLARY_CHUNK_ENCODE(sRGB, 1)
+    ANCILLARY_CHUNK_ENCODE(sBIT, 1)
+    ANCILLARY_CHUNK_ENCODE(gAMA, 1)
+    ANCILLARY_CHUNK_ENCODE(cHRM, 1)
+    ANCILLARY_CHUNK_ENCODE(mDCv, 1)
+    ANCILLARY_CHUNK_ENCODE(cLLi, 1)
+    ANCILLARY_CHUNK_ENCODE(PLTE, 1)
+    ANCILLARY_CHUNK_ENCODE(tRNS, 1)
+    ANCILLARY_CHUNK_ENCODE(hIST, 1)
+    ANCILLARY_CHUNK_ENCODE(bKGD, 1)
+    compress_Filter(file);
+    ANCILLARY_CHUNK_ENCODE(fdAT, CHUNK_DEFAULT_COUNT)
+    ANCILLARY_CHUNK_ENCODE(fcTL, CHUNK_DEFAULT_COUNT)
+}
+
+void PNGData::animatedImages(fstream& file) {
+    if (findChunk(CHUNK::tIME) || findChunk(CHUNK::zTXt) || findChunk(CHUNK::tEXt) || findChunk(CHUNK::iTXt)) {
+        ANCILLARY_CHUNK_ENCODE(tIME, 1)
+        ANCILLARY_CHUNK_ENCODE(zTXt, CHUNK_DEFAULT_COUNT)
+        ANCILLARY_CHUNK_ENCODE(tEXt, CHUNK_DEFAULT_COUNT)
+        ANCILLARY_CHUNK_ENCODE(iTXt, CHUNK_DEFAULT_COUNT)
+        return;
+    }
+    ANCILLARY_CHUNK_ENCODE(pHYs, 1)
+    ANCILLARY_CHUNK_ENCODE(sPLT, CHUNK_DEFAULT_COUNT)
+    ANCILLARY_CHUNK_ENCODE(iCCP, 1)
+    ANCILLARY_CHUNK_ENCODE(cICP, 1)
+    ANCILLARY_CHUNK_ENCODE(sRGB, 1)
+    ANCILLARY_CHUNK_ENCODE(sBIT, 1)
+    ANCILLARY_CHUNK_ENCODE(gAMA, 1)
+    ANCILLARY_CHUNK_ENCODE(cHRM, 1)
+    ANCILLARY_CHUNK_ENCODE(mDCv, 1)
+    ANCILLARY_CHUNK_ENCODE(cLLi, 1)
+    ANCILLARY_CHUNK_ENCODE(tRNS, 1)
+    ANCILLARY_CHUNK_ENCODE(bKGD, 1)
+    ANCILLARY_CHUNK_ENCODE(eXIf, 1)
+    ANCILLARY_CHUNK_ENCODE(acTL, 1)
+    compress_Filter(file);
+    ANCILLARY_CHUNK_ENCODE(fdAT, CHUNK_DEFAULT_COUNT)
+    ANCILLARY_CHUNK_ENCODE(fcTL, CHUNK_DEFAULT_COUNT)
 }
 NAME_SPACE_END()

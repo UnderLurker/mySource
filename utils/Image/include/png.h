@@ -160,7 +160,7 @@ class IHDRChunk : public Chunk {
         uint32_t width;
         uint32_t height;
         uint8_t bitDepth {8};
-        uint8_t colorType;
+        uint8_t colorType {CHUNK::RGB};
         uint8_t compressionMethod;
         uint8_t filterMethod;
         uint8_t interlaceMethod;
@@ -502,10 +502,16 @@ class PNGData : public Image {
     string _filePath;
     uint64_t _formatFlag {};
     uint32_t _minCompressDataLength {1};
+    bool _animateFlag {false};
+    bool _animateStaticImageFlag{false};
     long _iDATLen {0}; // idat compressed data length (total)
     Matrix<RGB>* _rgb {nullptr};
     IHDRChunk _IHDR;
     IENDChunk _IEND;
+    // each chunk with same name
+    //     ┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐
+    //     │    1   │─►│    2   │─►│    3   │─►│    4   │
+    //     └────────┘  └────────┘  └────────┘  └────────┘
     std::map<uint32_t, Chunk*> _ancillaryChunk;
     std::unique_ptr<uint8_t[]> _data {nullptr};
     std::vector<std::pair<long, long>> _IDATMap; // pair<pos, length>
@@ -527,21 +533,26 @@ public:
     [[nodiscard]] int32_t getWidth() const override { return _IHDR.width(); }
     [[nodiscard]] int32_t getHeight() const override { return _IHDR.height(); }
     [[nodiscard]] Matrix<RGB> getRGBMatrix() const override { return *_rgb; } // 获取通用的RGB数据
+    [[nodiscard]] uint8_t getBitDepth() const { return _IHDR.bitDepth(); }
     [[nodiscard]] CHUNK::ColorType getColorType() const { return static_cast<CHUNK::ColorType>(_IHDR.colorType()); }
     [[nodiscard]] uint8_t getCompressionMethod() const { return _IHDR.compressionMethod(); }
     [[nodiscard]] uint8_t getFilterMethod() const { return _IHDR.filterMethod(); }
     [[nodiscard]] uint8_t getInterlaceMethod() const { return _IHDR.interlaceMethod(); }
+    [[nodiscard]] Chunk* getChunkByType(CHUNK::ChunkType type);
+    [[nodiscard]] std::map<uint32_t, Chunk*>& getAncillaryChunkList() { return _ancillaryChunk; }
+    [[nodiscard]] bool getAnimateFlag() const { return _animateFlag; }
+    [[nodiscard]] bool getAnimateStaticImageFlag() const { return _animateStaticImageFlag; }
     void setWidth(int32_t width) override { _IHDR._data.width = width; }
     void setHeight(int32_t height) override { _IHDR._data.height = height; }
-    void setRGBMatrix(const Matrix<RGB>& rgb) override { *_rgb = rgb; } // 设置通用的RGB数据
-    void setColorType(CHUNK::ColorType type) {}
+    void setRGBMatrix(const Matrix<RGB>& rgb) override; // 设置通用的RGB数据
+    void setBitDepth(uint8_t bitDepth) { _IHDR._data.bitDepth = bitDepth; }
+    void setColorType(CHUNK::ColorType type) { _IHDR._data.colorType = type; }
     void setCompressionMethod(uint8_t method) { _IHDR._data.compressionMethod = method; }
     void setFilterMethod(uint8_t method) { _IHDR._data.filterMethod = method; }
     void setInterlaceMethod(uint8_t method) { _IHDR._data.interlaceMethod = method; }
-    [[nodiscard]] Chunk* getChunkByType(CHUNK::ChunkType type) {
-        if (_ancillaryChunk.find(type) != _ancillaryChunk.end()) return _ancillaryChunk[type];
-        return nullptr;
-    }
+    void setAnimateFlag(bool flag) { _animateFlag = flag; }
+    void setAnimateStaticImageFlag(bool flag) { _animateStaticImageFlag = flag; }
+    [[nodiscard]] bool findChunk(CHUNK::ChunkType type) { return _ancillaryChunk.find(type) != _ancillaryChunk.end(); }
 
 private:
     [[maybe_unused]] bool checkFormat() override { return _formatFlag == PNG_FLAG; }
@@ -563,6 +574,12 @@ private:
     void png_filter_paeth(unique_ptr<uint8_t[]>& originData, uint32_t curPos, uint32_t length);
     void data2Matrix(unique_ptr<uint8_t[]>& uncompressData);
     void matrix2Data(unique_ptr<uint8_t[]>& originData);
+    void staticImagesPLTE(fstream& file);
+    void staticImages(fstream& file);
+    void animatedImagesPLTEWithStaticImage(fstream& file);
+    void animatedImagesWithStaticImage(fstream& file);
+    void animatedImagesPLTE(fstream& file);
+    void animatedImages(fstream& file);
 };
 
 NAME_SPACE_END()

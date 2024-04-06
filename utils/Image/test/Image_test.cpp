@@ -126,10 +126,25 @@ TEST(png2jpeg) {
 TEST(png2png) {
     clock_t startTime = clock();
     PNGData pngData;
-    pngData.read("../../../img/Image/6.png");
+    pngData.read("../../../img/Image/7.png");
 
+//    pngData.setColorType(CHUNK::INDEXED_COLOUR);
     pngData.write("png2png.png");
 
+//    PNGData png;
+//    png.read("png2png.png");
+    cout << dec << clock() - startTime << "ms" << endl;
+}
+
+TEST(jpeg2png) {
+    string str = "../../../img/Image/2.jpg";
+    JPEGData data;
+    clock_t startTime = clock();
+    data.read(str.c_str());
+
+    PNGData png;
+    png.setRGBMatrix(data.getRGBMatrix());
+    png.write("jpeg2png.png");
     cout << dec << clock() - startTime << "ms" << endl;
 }
 
@@ -142,5 +157,6 @@ int main() {
     //     jpeg2jpeg();
 //    png2jpeg();
     png2png();
+    jpeg2png();
     return 0;
 }
