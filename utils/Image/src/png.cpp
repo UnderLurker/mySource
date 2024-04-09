@@ -1225,6 +1225,11 @@ void PNGData::setRGBMatrix(const Matrix<RGB>& rgb) {
     _IHDR._data.height = rgb.row;
 }
 
+void PNGData::addChunkByType(CHUNK::ChunkType type, Chunk* chunk) {
+    if(findChunk(type)) _ancillaryChunk[type]->addNext(chunk);
+    _ancillaryChunk[type] = chunk;
+}
+
 ImageStatus PNGData::decodeProcess(fstream& file, const ChunkHead& head) {
     ImageStatus status = ERROR_UNKNOWN;
     try {

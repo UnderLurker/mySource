@@ -552,6 +552,7 @@ public:
     void setInterlaceMethod(uint8_t method) { _IHDR._data.interlaceMethod = method; }
     void setAnimateFlag(bool flag) { _animateFlag = flag; }
     void setAnimateStaticImageFlag(bool flag) { _animateStaticImageFlag = flag; }
+    void addChunkByType(CHUNK::ChunkType type, Chunk* chunk);
     [[nodiscard]] bool findChunk(CHUNK::ChunkType type) { return _ancillaryChunk.find(type) != _ancillaryChunk.end(); }
 
 private:
