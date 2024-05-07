@@ -138,12 +138,13 @@ JsonNode::JsonNode(JsonNode&& obj) noexcept {
 JsonNode::JsonNode(char*& begin, JsonDocument* doc, JsonNode* parent)
     : _doc(doc), _parent(parent) {
     if (begin) _status = Load(begin);
+    else _status = ERROR_NULLPTR;
 }
 
 JsonNode::~JsonNode() {
-    _next = nullptr;
+    _next   = nullptr;
     _parent = nullptr;
-    _doc = nullptr;
+    _doc    = nullptr;
     for_each(_children.begin(), _children.end(), [](JsonNode* node) {
         delete node;
         node = nullptr;
@@ -376,49 +377,49 @@ JsonNode& JsonNode::operator[](const string& index) const { return at(index); }
 
 float JsonNode::toFloat(float defaultValue) const {
     assert(_type == Number);
-    float result = defaultValue;
-    stringstream ss(_value.getValue());
-    ss >> result;
+    char* pEnd  = nullptr;
+    auto result = std::strtof(_value.getPtr(), &pEnd);
+    if (pEnd == _value.getPtr()) result = defaultValue;
     return result;
 }
 
 double JsonNode::toDouble(double defaultValue) const {
     assert(_type == Number);
-    double result = defaultValue;
-    stringstream ss(_value.getValue());
-    ss >> result;
+    char* pEnd  = nullptr;
+    auto result = static_cast<double>(std::strtod(_value.getPtr(), &pEnd));
+    if (pEnd == _value.getPtr()) result = defaultValue;
     return result;
 }
 
 int32_t JsonNode::toInt32(int32_t defaultValue) const {
     assert(_type == Number);
-    int32_t result = defaultValue;
-    stringstream ss(_value.getValue());
-    ss >> result;
+    char* pEnd  = nullptr;
+    auto result = static_cast<int32_t>(std::strtol(_value.getPtr(), &pEnd, 10));
+    if (pEnd == _value.getPtr()) result = defaultValue;
     return result;
 }
 
 int64_t JsonNode::toInt64(int64_t defaultValue) const {
     assert(_type == Number);
-    int64_t result = defaultValue;
-    stringstream ss(_value.getValue());
-    ss >> result;
+    char* pEnd  = nullptr;
+    auto result = std::strtoll(_value.getPtr(), &pEnd, 10);
+    if (pEnd == _value.getPtr()) result = defaultValue;
     return result;
 }
 
 uint32_t JsonNode::toUInt32(uint32_t defaultValue) const {
     assert(_type == Number);
-    uint32_t result = defaultValue;
-    stringstream ss(_value.getValue());
-    ss >> result;
+    char* pEnd  = nullptr;
+    auto result = static_cast<uint32_t>(std::strtoul(_value.getPtr(), &pEnd, 10));
+    if (pEnd == _value.getPtr()) result = defaultValue;
     return result;
 }
 
 uint64_t JsonNode::toUInt64(uint64_t defaultValue) const {
     assert(_type == Number);
-    uint64_t result = defaultValue;
-    stringstream ss(_value.getValue());
-    ss >> result;
+    char* pEnd  = nullptr;
+    auto result = std::strtoull(_value.getPtr(), &pEnd, 10);
+    if (pEnd == _value.getPtr()) result = defaultValue;
     return result;
 }
 
@@ -447,9 +448,24 @@ void* JsonNode::toRObject(const string& className) {
             case String:
                 result->set<string>(item->getKey(), item->getValue());
                 break;
-            case Number:
-                result->set<double>(item->getKey(), item->toDouble());
+            case Number: {
+                std::string keyType = result->getType(item->getKey());
+                size_t keySize      = result->getTypeSize(item->getKey());
+                if (keyType == "float") {
+                    result->set<float>(item->getKey(), item->toFloat());
+                } else if (keyType == "double") {
+                    result->set<double>(item->getKey(), item->toDouble());
+                } else if ((keyType == "int" || keyType == "int32_t") && keySize == sizeof(int32_t)) {
+                    result->set<int32_t>(item->getKey(), item->toInt32());
+                } else if (keyType == "uint32_t" && keySize == sizeof(uint32_t)) {
+                    result->set<uint32_t>(item->getKey(), item->toUInt32());
+                } else if (keyType == "int64_t" && keySize == sizeof(int64_t)) {
+                    result->set<int64_t>(item->getKey(), item->toInt64());
+                } else if (keyType == "uint64_t" && keySize == sizeof(uint64_t)) {
+                    result->set<uint64_t>(item->getKey(), item->toUInt64());
+                }
                 break;
+            }
             case Bool:
                 result->set<bool>(item->getKey(), item->toBool());
                 break;
@@ -473,9 +489,24 @@ void* JsonNode::toRObject(const string& className, Args... args) {
             case String:
                 result->set<string>(item->getKey(), item->getValue());
                 break;
-            case Number:
-                result->set<double>(item->getKey(), item->toDouble());
+            case Number: {
+                std::string keyType = result->getType(item->getKey());
+                size_t keySize      = result->getTypeSize(item->getKey());
+                if (keyType == "float") {
+                    result->set<float>(item->getKey(), item->toFloat());
+                } else if (keyType == "double") {
+                    result->set<double>(item->getKey(), item->toDouble());
+                } else if ((keyType == "int" || keyType == "int32_t") && keySize == sizeof(int32_t)) {
+                    result->set<int32_t>(item->getKey(), item->toInt32());
+                } else if (keyType == "uint32_t" && keySize == sizeof(uint32_t)) {
+                    result->set<uint32_t>(item->getKey(), item->toUInt32());
+                } else if (keyType == "int64_t" && keySize == sizeof(int64_t)) {
+                    result->set<int64_t>(item->getKey(), item->toInt64());
+                } else if (keyType == "uint64_t" && keySize == sizeof(uint64_t)) {
+                    result->set<uint64_t>(item->getKey(), item->toUInt64());
+                }
                 break;
+            }
             case Bool:
                 result->set<bool>(item->getKey(), item->toBool());
                 break;
@@ -504,9 +535,24 @@ void* JsonNode::toRObject(const string& className, const list<string>& subClassN
             case String:
                 result->set<string>(item->getKey(), item->getValue());
                 break;
-            case Number:
-                result->set<double>(item->getKey(), item->toDouble());
+            case Number: {
+                std::string keyType = result->getType(item->getKey());
+                size_t keySize      = result->getTypeSize(item->getKey());
+                if (keyType == "float") {
+                    result->set<float>(item->getKey(), item->toFloat());
+                } else if (keyType == "double") {
+                    result->set<double>(item->getKey(), item->toDouble());
+                } else if ((keyType == "int" || keyType == "int32_t") && keySize == sizeof(int32_t)) {
+                    result->set<int32_t>(item->getKey(), item->toInt32());
+                } else if (keyType == "uint32_t" && keySize == sizeof(uint32_t)) {
+                    result->set<uint32_t>(item->getKey(), item->toUInt32());
+                } else if (keyType == "int64_t" && keySize == sizeof(int64_t)) {
+                    result->set<int64_t>(item->getKey(), item->toInt64());
+                } else if (keyType == "uint64_t" && keySize == sizeof(uint64_t)) {
+                    result->set<uint64_t>(item->getKey(), item->toUInt64());
+                }
                 break;
+            }
             case Bool:
                 result->set<bool>(item->getKey(), item->toBool());
                 break;

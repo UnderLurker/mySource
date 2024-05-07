@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <iomanip>
 // #include "JsonSerialize.h"
 #include "JsonParse.h"
 #include "Reflex.h"
@@ -10,12 +11,12 @@ using namespace myUtil;
 class C : public RObject {
 public:
     string a;
-    double b;
+    uint32_t b;
 };
 
 class B : public RObject {
 public:
-    string efg;
+    float efg;
     double hig;
     C* uio;
 };
@@ -31,9 +32,9 @@ public:
 
 REGISTER_REFLEX(C)
 REGISTER_REFLEX_FIELD(C, string, a)
-REGISTER_REFLEX_FIELD(C, double, b)
+REGISTER_REFLEX_FIELD(C, uint32_t, b)
 REGISTER_REFLEX(B)
-REGISTER_REFLEX_FIELD(B, string, efg)
+REGISTER_REFLEX_FIELD(B, float, efg)
 REGISTER_REFLEX_FIELD(B, double, hig)
 REGISTER_REFLEX_FIELD(B, C, uio)
 REGISTER_REFLEX(A)
@@ -118,17 +119,17 @@ void JsonParseTest5() {
     cout << a->program << endl;
     cout << a->request << endl;
     cout << a->abc->efg << endl;
-    cout << a->abc->hig << endl;
+    cout << setprecision(10) << a->abc->hig << endl;
     cout << a->abc->uio->a << endl;
-    cout << a->abc->uio->b << endl;
+    cout << setprecision(10) << a->abc->uio->b << endl;
     cout << a->bcd->a << endl;
-    cout << a->bcd->b << endl;
+    cout << setprecision(10) << a->bcd->b << endl;
 }
 int main() {
-    //    JsonParseTest1();
-    //    JsonParseTest2();
-    //    JsonParseTest3();
-    JsonParseTest4();
+    // JsonParseTest1();
+    // JsonParseTest2();
+    // JsonParseTest3();
+    // JsonParseTest4();
     JsonParseTest5();
     return 0;
 }
