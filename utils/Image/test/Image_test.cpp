@@ -3,7 +3,7 @@
 #include <locale>
 #include <sstream>
 
-// #include "logger.h"
+#include "picture_algorithm.h"
 #include "bmp.h"
 #include "jpeg.h"
 #include "png.h"
@@ -148,15 +148,55 @@ TEST(jpeg2png) {
     cout << dec << clock() - startTime << "ms" << endl;
 }
 
+TEST(PictureTest) {
+    clock_t startTime = clock();
+    string str        = "../../../img/Image/5.bmp";
+    BMPData bmpData;
+    bmpData.read(str.c_str());
+
+    const auto matrix = bmpData.getRGBMatrix();
+
+    JPEGData shrink;
+    shrink.setRGBMatrix(*PictureAlgorithm::ShrinkMatrix(matrix, 1.8));
+    shrink.write("shrink1.jpg");
+    shrink.setRGBMatrix(*PictureAlgorithm::ShrinkMatrix(matrix, 0.5, Nearest));
+    shrink.write("shrink2.jpg");
+
+    JPEGData verImage;
+    verImage.setRGBMatrix(*PictureAlgorithm::verticalImage(matrix));
+    verImage.write("verImage.jpg");
+
+    JPEGData horImage;
+    horImage.setRGBMatrix(*PictureAlgorithm::horizontalImage(matrix));
+    horImage.write("horImage.jpg");
+
+    JPEGData rotate90;
+    rotate90.setRGBMatrix(*PictureAlgorithm::rotate(matrix, Angle_90));
+    rotate90.write("rotate90.jpg");
+
+    JPEGData rotate180;
+    rotate180.setRGBMatrix(*PictureAlgorithm::rotate(matrix, Angle_180));
+    rotate180.write("rotate180.jpg");
+
+    JPEGData rotate270;
+    rotate270.setRGBMatrix(*PictureAlgorithm::rotate(matrix, Angle_270));
+    rotate270.write("rotate270.jpg");
+
+    cout << dec << clock() - startTime << "ms" << endl;
+
+}
+
+
 int main() {
-    //     jpeg2bmp();
-    //     bmp2bmp();
-    //     jpeg2bmpGray();
-    //     bmp2bmpGray();
-    //     bmp2jpeg();
-    //     jpeg2jpeg();
-//    png2jpeg();
-    png2png();
-    jpeg2png();
+//jpeg2bmp();
+//bmp2bmp();
+//jpeg2bmpGray();
+//bmp2bmpGray();
+//bmp2jpeg();
+//jpeg2jpeg();
+//png2jpeg();
+//png2png();
+//jpeg2png();
+PictureTest();
     return 0;
 }

@@ -75,6 +75,8 @@ public:
         return out;
     }
     Matrix<double> Pow(int n);
+    // 转置
+    void transpose();
     //魔方矩阵
     static Matrix<double> Magic(int n);
     //单位矩阵
@@ -338,6 +340,18 @@ inline Matrix<double> Matrix<double>::Pow(int n){
         n>>=1;
     }
     return res;
+}
+
+template<typename T>
+void Matrix<T>::transpose() {
+    if (row != col) return;
+    for(uint32_t i=0;i<row;i++){
+        for(uint32_t j =i+1;j<col;j++){
+            T temp = getValue(i, j);
+            setValue(i, j, getValue(j, i));
+            setValue(j, i, temp);
+        }
+    }
 }
 
 #endif

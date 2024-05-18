@@ -324,6 +324,8 @@ ostream& JsonNode::getString(ostream& os, uint32_t tab) {
 
 void JsonNode::setKey(const char* begin, size_t length) {
     //    if (_parent == nullptr) return;
+    CHECK_NULL_VOID(begin)
+    if (length == 0) length = std::strlen(begin);
     if (_memKey) _doc->removeMemory(_key.getPtr());
     _memKey = true;
     _key.setPtr(_doc->insertMemory(begin, length));
@@ -331,14 +333,32 @@ void JsonNode::setKey(const char* begin, size_t length) {
 }
 
 void JsonNode::setValue(const char* begin, size_t length) {
+    CHECK_NULL_VOID(begin)
+    if (length == 0) length = std::strlen(begin);
     if (_memVal) _doc->removeMemory(_value.getPtr());
     _memVal = true;
     _value.setPtr(_doc->insertMemory(begin, length));
     _value.setLength(length);
 }
 
+void JsonNode::setAttr(const char* key, const char* value) {
+    CHECK_NULL_VOID(key)
+    CHECK_NULL_VOID(value)
+    setKey(key);
+    setValue(value);
+}
+
+JsonNode::JsonAttr JsonNode::getAttr() const { return {getKey(), getValue()}; }
+
 void JsonNode::addChild(JsonNode* node) {
     node->setParent(this);
+    _children.emplace_back(node);
+}
+
+void JsonNode::addChild(const char* key, const char* value, JsonType type) {
+    auto* node = new JsonNode(_doc, this, type);
+    node->setKey(key, std::strlen(key));
+    node->setValue(value, std::strlen(value));
     _children.emplace_back(node);
 }
 

@@ -100,6 +100,9 @@ private:
 
 class JsonNode {
 public:
+    using JsonAttr = std::pair<std::string, std::string>;
+
+public:
     JsonNode() = default;
     JsonNode(const JsonNode&) noexcept;
     JsonNode(JsonNode&& obj) noexcept;
@@ -110,20 +113,25 @@ public:
 
     JsonStatus Load(char*& begin);
     void setDocument(JsonDocument* doc) noexcept {
-        CHECK_NULL_VOID(doc);
+        CHECK_NULL_VOID(doc)
         _doc = doc;
     }
 
-    void setKey(const char* begin, size_t length);
-    void setValue(const char* begin, size_t length);
+    void setKey(const char* begin, size_t length = 0);
+    void setValue(const char* begin, size_t length = 0);
     void setNext(JsonNode* node) { _next = node; }
     void setParent(JsonNode* node) { _parent = node; }
+    void setAttr(const char* key, const char* value);
+    void setType(JsonType type) { _type = type; }
     [[nodiscard]] string getKey() const { return _key.getValue(); }
     [[nodiscard]] string getValue() const { return _value.getValue(); }
-    [[nodiscard]] JsonNode* getNext() const { return _next; }
-    [[nodiscard]] JsonNode* getParent() const { return _parent; }
+    [[nodiscard]] const JsonNode* getNext() const { return _next; }
+    [[nodiscard]] const JsonNode* getParent() const { return _parent; }
+    [[nodiscard]] JsonAttr getAttr() const;
     [[nodiscard]] JsonStatus getStatus() const { return _status; }
+    [[nodiscard]] JsonType getType() const { return _type; }
     void addChild(JsonNode* node);
+    void addChild(const char* key, const char* value, JsonType type);
     void removeChild(size_t index);
 
     [[nodiscard]] float toFloat(float defaultValue = 0) const;

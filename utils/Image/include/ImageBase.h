@@ -28,6 +28,11 @@ public:
     virtual void setHeight(int32_t height) = 0;
     [[nodiscard]] virtual Matrix<RGB> getRGBMatrix() const = 0; // 获取通用的RGB数据
     virtual void setRGBMatrix(const Matrix<RGB>&) = 0; // 设置通用的RGB数据
+
+//    /**
+//     * 转置
+//     */
+//    virtual void transpose() = 0;
 protected:
     /**
      * check picture format. if format correct is true, else false

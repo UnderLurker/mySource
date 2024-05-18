@@ -74,12 +74,17 @@ REGISTER_REFLEX_FIELD(A, C, bcd)
 void JsonParseTest1() {
     JsonDocument doc("../../../sample/test.json");
     cout << doc.getNode().getStatus() << endl;
-    auto node = doc.CreateNode(String);
-    node->setKey("abc", 3);
-    node->setValue("123", 3);
+    auto node = doc.CreateNode(Number);
+    node->setKey("abc");
+    node->setValue("123");
     doc.getNode().addChild(node);
+    doc.getNode().addChild("new addChild", "321.311", String);
     doc.getNode()[1].setKey("123", 3);
+    doc.getNode()["abc"].setValue("456");
+    doc.getNode()["abc"].setType(String);
     doc.getNode().getString(cout);
+    auto attr = doc.getNode()["new addChild"].getAttr();
+    cout << doc.getNode()["new addChild"].toString() << endl;
 }
 
 void JsonParseTest2() {
@@ -126,10 +131,10 @@ void JsonParseTest5() {
     cout << setprecision(10) << a->bcd->b << endl;
 }
 int main() {
-    // JsonParseTest1();
+     JsonParseTest1();
     // JsonParseTest2();
     // JsonParseTest3();
     // JsonParseTest4();
-    JsonParseTest5();
+//    JsonParseTest5();
     return 0;
 }

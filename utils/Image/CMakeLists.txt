@@ -1,11 +1,9 @@
 cmake_minimum_required(VERSION 3.5.0)
 project(Image VERSION 0.1.0)
-file(GLOB IMAGE_SOURCE_FILE src/bmp.cpp)
+file(GLOB IMAGE_SOURCE_FILE src/*.cpp)
 file(GLOB QRCODE_SOURCE_FILE ./src/QrEncode.cpp)
 
-add_library(Image_static STATIC ${IMAGE_SOURCE_FILE}
-        ./src/jpeg.cpp
-        ./src/png.cpp)
+add_library(Image_static STATIC ${IMAGE_SOURCE_FILE})
 target_link_libraries(Image_static Util_static zlibstatic)
 target_include_directories(Image_static PUBLIC
         include
