@@ -5,16 +5,21 @@
 #ifndef _WIDGET_H
 
 #include <GLFW/glfw3.h>
+#include <map>
+#include <memory>
 #include <string>
 
+#include "abstractComponent.h"
 #include "abstractWidget.h"
 #include "graphic2DType.h"
+
+using namespace graphics2D::components;
 
 namespace graphics2D::window {
 
 class Widget : public virtual AbstractWidget {
 public:
-    Widget() = delete;
+    Widget() = default;
     Widget(const Widget& obj);
     Widget(Widget&& obj) noexcept;
     explicit Widget(Widget* parent);
@@ -36,6 +41,8 @@ private:
     Widget* _parent {nullptr};
     std::string _title {WIDGET_TITLE};
     GLFWwindow* _window {nullptr};
+    // ID
+    std::map<size_t, std::shared_ptr<AbstractComponent>> _childComponents;
 };
 
 } // namespace graphics2D::window

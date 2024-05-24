@@ -5,12 +5,15 @@
 #ifndef _ABSTRACTBUTTON_H
 #define _ABSTRACTBUTTON_H
 
+#include "abstractComponent.h"
 #include "widget.h"
 
 namespace graphics2D::components {
-class AbstractButton : public virtual window::Widget {
-public:
 
+class AbstractButton : public virtual window::Widget, public virtual AbstractComponent{
+public:
+    AbstractButton();
+    void print();
 private:
 
 };

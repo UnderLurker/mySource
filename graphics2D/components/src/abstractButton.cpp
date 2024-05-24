@@ -3,3 +3,15 @@
 //
 
 #include "abstractButton.h"
+
+namespace graphics2D::components {
+
+AbstractButton::AbstractButton() {
+
+}
+
+void AbstractButton::print() {
+
+}
+
+}
