@@ -27,7 +27,7 @@ add_subdirectory(utils/Video)
 add_subdirectory(utils/DataCompress)
 add_subdirectory(utils/Shader)
 add_subdirectory(${THIRD_PART}/zlib)
-add_subdirectory(graphics2D)
+add_subdirectory(ULGui)
 
 add_executable(MAIN main.cpp)
 add_executable(OpencvTest ${UTILS_TEST_PATH}/Opencv_test.cpp)

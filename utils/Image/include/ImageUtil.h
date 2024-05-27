@@ -65,9 +65,7 @@ struct CalcRGB {
         return {red - obj.red, green - obj.green, blue - obj.blue, alpha - obj.alpha};
     }
 
-    CalcRGB operator*(int32_t index) const {
-        return {red * index, green * index, blue * index, alpha * index};
-    }
+    CalcRGB operator*(int32_t index) const { return {red * index, green * index, blue * index, alpha * index}; }
 
     [[nodiscard]] initializer_list<uint16_t> RGB() const {
         auto limitRange = [](int32_t input) {
@@ -88,9 +86,9 @@ struct RGB {
         : red(r), green(g), blue(b), alpha(a) {}
     RGB(const initializer_list<uint16_t>& initList) {
         assert(initList.size() == 3 || initList.size() == 4);
-        red = *initList.begin();
+        red   = *initList.begin();
         green = *(initList.begin() + 1);
-        blue = *(initList.begin() + 2);
+        blue  = *(initList.begin() + 2);
         alpha = *(initList.begin() + 3);
     }
 

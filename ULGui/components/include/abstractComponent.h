@@ -5,7 +5,7 @@
 #ifndef _ABSTRACTCOMPONENT_H
 #define _ABSTRACTCOMPONENT_H
 
-namespace graphics2D::components {
+namespace ULGui::components {
 
 class AbstractComponent {
 public:

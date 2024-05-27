@@ -8,7 +8,7 @@
 #include "abstractComponent.h"
 #include "widget.h"
 
-namespace graphics2D::components {
+namespace ULGui::components {
 
 class AbstractButton : public virtual window::Widget, public virtual AbstractComponent{
 public:

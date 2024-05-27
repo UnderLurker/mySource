@@ -5,7 +5,7 @@
 
 #include <GL/gl.h>
 
-namespace graphics2D::base {
+namespace ULGui::base {
 
 GUint32 AbstractAbility::_count = 0;
 

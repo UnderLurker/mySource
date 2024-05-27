@@ -11,11 +11,11 @@
 
 #include "abstractComponent.h"
 #include "abstractWidget.h"
-#include "graphic2DType.h"
+#include "ULGuiType.h"
 
-using namespace graphics2D::components;
+using namespace ULGui::components;
 
-namespace graphics2D::window {
+namespace ULGui::window {
 
 class Widget : public virtual AbstractWidget {
 public:
@@ -26,21 +26,10 @@ public:
     explicit Widget(const GUint32& width, const GUint32& height, Widget* parent = nullptr);
     virtual ~Widget();
 
-    const Widget* Parent() const { return _parent; }
-    const char* Title() const { return _title.c_str(); }
-    void setParent(Widget* parent) { _parent = parent; }
-    void setTitle(char* title);
-    void setTitle(const std::string& title);
 
-    bool show();
-
-protected:
-    bool init();
+    bool show() override { return AbstractWidget::show(); };
 
 private:
-    Widget* _parent {nullptr};
-    std::string _title {WIDGET_TITLE};
-    GLFWwindow* _window {nullptr};
     // ID
     std::map<size_t, std::shared_ptr<AbstractComponent>> _childComponents;
 };

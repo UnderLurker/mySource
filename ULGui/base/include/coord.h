@@ -2,14 +2,14 @@
 // Created by XW on 2024/5/23.
 //
 
-#ifndef _COORD_H
-#define _COORD_H
+#ifndef _G_COORD_H
+#define _G_COORD_H
 
 #include <cassert>
 
-#include "graphic2DType.h"
+#include "ULGuiType.h"
 
-namespace graphics2D::base {
+namespace ULGui::base {
 
 struct Point {
     double x {.0f};
@@ -46,15 +46,14 @@ public:
     void setHeight(const GUint32& height) { _height = height; }
 
     /**
-     * »ñÈ¡ÔÚÊÓ¿ÚÖĞµÄ×ø±ê
-     * @return ·µ»ØÊÓ¿Ú×ø±ê·¶Î§{[-1, 1], [-1, 1], 0}
+     * è·å–åœ¨è§†å£ä¸­çš„åæ ‡
+     * @return è¿”å›è§†å£åæ ‡èŒƒå›´{[-1, 1], [-1, 1], 0}
      */
     Point toViewPort() const { return {toViewPort(_pos.x, _width), -1 * toViewPort(_pos.y, _height)}; }
     /**
-     * »ñÈ¡ÔÚÊÓ¿ÚÖĞµÄ×ø±ê
-     * @param input ÊäÈë×ø±ê
-     * @return ·µ»ØÊÓ¿Ú×ø±ê·¶Î§{[-1, 1], [-1, 1]}
-
+     * è·å–åœ¨è§†å£ä¸­çš„åæ ‡
+     * @param input è¾“å…¥åæ ‡
+     * @return è¿”å›è§†å£åæ ‡èŒƒå›´{[-1, 1], [-1, 1]}
      */
     Point toViewPort(const Point& input) { return {toViewPort(input.x, _width), -1 * toViewPort(input.y, _height)}; }
     static double toViewPort(const double& val, const double& base) { return val * 2 / base - 1; }
@@ -72,4 +71,4 @@ private:
 
 } // namespace graphics2D
 
-#endif // _COORD_H
+#endif // _G_COORD_H

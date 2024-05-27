@@ -3,7 +3,7 @@
 //
 #include "coord.h"
 
-namespace graphics2D::base {
+namespace ULGui::base {
 
 Coord Coord::operator+(const Coord& coord) const {
     Coord result(*this);

@@ -7,7 +7,7 @@
 
 #include "coord.h"
 
-namespace graphics2D::base {
+namespace ULGui::base {
 
 class AbstractAbility {
 public:

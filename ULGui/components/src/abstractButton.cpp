@@ -4,7 +4,7 @@
 
 #include "abstractButton.h"
 
-namespace graphics2D::components {
+namespace ULGui::components {
 
 AbstractButton::AbstractButton() {
 
