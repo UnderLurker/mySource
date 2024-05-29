@@ -16,6 +16,8 @@ struct Point {
     double y {.0f};
     double z {.0f};
 
+    Point() = default;
+    Point(const Point& obj) = default;
     Point(double X, double Y, double Z = 0)
         : x(X), y(Y), z(Z) {}
 

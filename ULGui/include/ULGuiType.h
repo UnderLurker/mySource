@@ -8,6 +8,7 @@
 #include <cassert>
 #include <cstdint>
 #include <initializer_list>
+#include <cstring>
 
 #include "ULGuiMacro.h"
 
@@ -27,13 +28,15 @@ __ULGUI_DECLARE class GVec {
 public:
     GVec() = default;
     GVec(const GVec<T, size>& vec) {
-        _size = vec._size;
+        delete[] _ptr;
+        _size = size;
         _ptr  = new T[_size];
-        memcpy(_ptr, vec._ptr, _size);
+        memcpy(_ptr, vec._ptr, sizeof(T) * _size);
     }
     GVec(GVec<T, size>&& vec) noexcept {
+        delete[] _ptr;
         _ptr      = vec._ptr;
-        _size     = vec._size;
+        _size     = size;
         vec._size = 0;
         vec._ptr  = nullptr;
     }
@@ -45,8 +48,8 @@ public:
     GVec(const std::initializer_list<T>& list)
         : _size(size) {
         if (list.size() == 0 || list.size() != size) return;
-        _ptr = new T[_size] {T()};
-        memcpy(_ptr, list.begin(), _size);
+        _ptr = new T[_size];
+        memcpy(_ptr, list.begin(), sizeof(T) * _size);
     }
     ~GVec() {
         delete[] _ptr;
@@ -61,6 +64,15 @@ public:
         assert(idx >= 0 && idx < _size);
         return _ptr[idx];
     }
+
+    GVec<T, size>& operator=(const GVec<T, size>& vec) {
+        delete[] _ptr;
+        _ptr = new T[_size];
+        memcpy(_ptr, vec._ptr, sizeof(T) * _size);
+        return *this;
+    }
+
+    const T* rawPtr() const { return _ptr; }
 
 private:
     T* _ptr {nullptr};

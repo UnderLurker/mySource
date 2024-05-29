@@ -3,6 +3,7 @@
 //
 
 #include "widget.h"
+#include "baseGraphics.h"
 
 #include <cstring>
 
@@ -38,10 +39,10 @@ void Widget::paintEvent(event::PaintEvent* event) {
     setLineMode(base::LINE_LOOP);
     lineTo({
         {20, 0},
-        base::Point(width() / 2, height() / 2)
+        base::Point(width() / 2 + 10, height() / 2)
     });
     lineTo({
-        base::Point(width() / 4, height() / 2), {0, 20}
+        base::Point(width() / 8, height() / 2), {0, 20}
     });
     lineTo({
         {40, 0 },
@@ -49,6 +50,13 @@ void Widget::paintEvent(event::PaintEvent* event) {
         {0,  20}
     });
     point(base::Point {10, 20});
+    base::Triangle tri({
+        {80, 0 },
+        base::Point(width() / 4, height() / 2),
+        {20,  20}});
+    tri.setCoordSize(width(), height());
+    tri.paintEvent(event);
+
 }
 
 } // namespace graphics2D::window

@@ -30,9 +30,6 @@ public:
     bool show() override { return AbstractWidget::show(); };
     void paintEvent(event::PaintEvent* event) override;
 
-private:
-    // ID
-    std::map<size_t, std::shared_ptr<AbstractComponent>> _childComponents;
 };
 
 } // namespace graphics2D::window

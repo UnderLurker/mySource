@@ -3,11 +3,18 @@
 //
 #include "abstractWidget.h"
 
-#include <functional>
+#include <chrono>
 #include <GL/gl.h>
+#include <thread>
 
 namespace ULGui {
+namespace {
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) { glViewport(0, 0, width, height); }
+} // namespace
+
+void AbstractWidget::addChild(AbstractWidget* widget) {
+    widget->setCoordSize(width(), height()), _childWidget[_childWidget.size()] = widget;
+}
 
 bool AbstractWidget::init() { return glfwInit(); }
 
@@ -29,7 +36,12 @@ bool AbstractWidget::show() {
         event::PaintEvent event;
         paintEvent(&event);
 
+        for (const auto& item : _childWidget) {
+            item.second->paintEvent(&event);
+        }
+
         glFlush();
+        stableFrameRate();
         glfwSwapBuffers(_window);
         glfwPollEvents();
     }
@@ -55,5 +67,18 @@ void AbstractWidget::updateFrameSize() {
     setCoordSize(_size[0], _size[1]);
     setWidth(_size[0]);
     setHeight(_size[1]);
+}
+
+void AbstractWidget::stableFrameRate() {
+    _sleep(FRAME_TIME - glfwGetTime() + _lastime);
+    _lastime = glfwGetTime();
+}
+
+void AbstractWidget::_sleep(double time) {
+    static constexpr std::chrono::duration<double> MinSleepDuration(0);
+    std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
+    while (std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start).count() < time) {
+        std::this_thread::sleep_for(MinSleepDuration);
+    }
 }
 } // namespace ULGui

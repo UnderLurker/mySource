@@ -7,6 +7,7 @@ add_library(BaseGraphics SHARED ${BASE_SOURCE})
 target_include_directories(BaseGraphics
         PUBLIC include
         PUBLIC base/include
+        PUBLIC events/include
         PUBLIC ${THIRD_PART}/glm)
 target_link_libraries(BaseGraphics
         opengl32)

@@ -6,6 +6,8 @@
 #define _ABSTRACTWIDGET_H
 
 #include <GLFW/glfw3.h>
+#include <map>
+#include <memory>
 #include <string>
 
 #include "abstractAbility.h"
@@ -45,6 +47,8 @@ public:
     void setTitle(char* title);
     void setTitle(const std::string& title);
 
+    void addChild(AbstractWidget* widget);
+
     bool init();
     virtual bool show();
     virtual void paintEvent(event::PaintEvent* event) {}
@@ -54,15 +58,19 @@ protected:
     void updateFrameSize();
 
 private:
+    void stableFrameRate();
+    static void _sleep(double time);
+
+private:
     AbstractWidget* _parent {nullptr};
     std::string _title {DEFAULT_WIDGET_TITLE};
     GLFWwindow* _window {nullptr};
-    // {width, height}
-    GVec2i _size {DEFAULT_WIDGET_WIDTH, DEFAULT_WIDGET_HEIGHT};
-    // {left, top} or {x, y}
-    GVec2i _location {0, 0};
+    GVec2i _size {DEFAULT_WIDGET_WIDTH, DEFAULT_WIDGET_HEIGHT}; // {width, height}
+    GVec2i _location {0, 0};                                    // {left, top} or {x, y}
     GraphicRGBA _background {255, 255, 255};
     bool _smooth {true};
+    std::map<size_t, AbstractWidget*> _childWidget;
+    double _lastime {0};
 };
 
 } // namespace ULGui

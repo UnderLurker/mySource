@@ -19,8 +19,7 @@ void AbstractAbility::lineTo(const Coord& start, const Coord& end) {
 }
 
 void AbstractAbility::lineTo(const std::vector<Point>& pointList) {
-    glLineWidth(_style.width);
-    glColor4f(_style.color.red, _style.color.green, _style.color.blue, _style.color.alpha);
+    updateStyle();
     if (_style.type == Stipple) {
         glEnable(GL_LINE_STIPPLE);
         glLineStipple(_style.stippleStyle.factor, _style.stippleStyle.pattern);
@@ -50,5 +49,10 @@ void AbstractAbility::point(const Coord& position) {
     auto temp = position.toViewPort();
     glVertex3f(temp.x, temp.y, temp.z);
     glEnd();
+}
+
+void AbstractAbility::updateStyle() {
+    glLineWidth(_style.width);
+    glColor4f(_style.color.red, _style.color.green, _style.color.blue, _style.color.alpha);
 }
 } // namespace ULGui::base

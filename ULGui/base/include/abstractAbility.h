@@ -63,6 +63,9 @@ public:
     void point(const Point& position);
     void point(const Coord& position);
 
+protected:
+    void updateStyle();
+
 public:
     static GUint32 _count;
 

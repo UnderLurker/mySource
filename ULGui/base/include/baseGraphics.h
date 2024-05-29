@@ -5,26 +5,50 @@
 #ifndef _BASE_GRAPHICS_H
 #define _BASE_GRAPHICS_H
 
+#include <utility>
+
 #include "abstractAbility.h"
+#include "paintEvent.h"
 #include "ULGuiType.h"
 
 namespace ULGui::base {
+using TriPosition = GVec<Point, 3>;
 
-class Rectangle : public virtual AbstractAbility {
+class BaseGraphic : public virtual AbstractAbility {
 public:
-    float& top() { return _data[0]; }
-    float& left() { return _data[1]; }
-    float& bottom() { return _data[2]; }
-    float& right() { return _data[3]; }
-    explicit operator GVec4f() {
-        return _data;
-    }
-
-private:
-    // {top, left, bottom, right}
-    GVec4f _data;
+    BaseGraphic()          = default;
+    virtual ~BaseGraphic() = default;
+    virtual void paintEvent(event::PaintEvent* event) {}
+    bool fill {false};
 };
 
-} // namespace graphics2D::base
+class Triangle : public BaseGraphic {
+public:
+    Triangle() = default;
+    explicit Triangle(const TriPosition& pos)
+        : _pos(pos) {}
+    const TriPosition& point() const { return _pos; }
+    void setPoint(const TriPosition& point) { _pos = point; }
+    void paintEvent(event::PaintEvent* event) override;
+
+private:
+    TriPosition _pos;
+};
+
+class Rectangle : public BaseGraphic {
+public:
+    Rectangle() = default;
+    void paintEvent(event::PaintEvent* event) override;
+
+    explicit operator GVec4f() const noexcept { return GVec4f {top, left, bottom, right}; }
+
+public:
+    float top {0};
+    float left {0};
+    float bottom {0};
+    float right {0};
+};
+
+} // namespace ULGui::base
 
 #endif // _BASE_GRAPHICS_H

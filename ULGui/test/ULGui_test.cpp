@@ -5,6 +5,15 @@
 
 #include "baseGraphics.h"
 #include "widget.h"
+#include "abstractWidget.h"
+
+using namespace ULGui;
+class TriComponent : public virtual base::Triangle, public virtual AbstractWidget {
+public:
+    void paintEvent(event::PaintEvent *event) override {
+        base::Triangle::paintEvent(event);
+    }
+};
 
 int main() {
     ULGui::window::Widget widget(600, 300);
@@ -12,6 +21,13 @@ int main() {
     widget.setTitle(str);
     widget.setBackground(ULGui::GraphicRGBA(122, 61, 61));
     widget.setLocation(100, 100);
+
+    TriComponent tri;
+    tri.setPoint({
+        {300, 0 },
+        base::Point(280, 200),
+        {150,  20}});
+    widget.addChild(&tri);
     widget.show();
 
     glfwTerminate();

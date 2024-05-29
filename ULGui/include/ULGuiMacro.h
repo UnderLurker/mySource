@@ -15,6 +15,8 @@
 // widget default value
 #define DEFAULT_WIDGET_WIDTH    200
 #define DEFAULT_WIDGET_HEIGHT   150
+#define DEFAULT_FRAME_COUNT     60
+#define FRAME_TIME              1.0 / DEFAULT_FRAME_COUNT
 
 #define DEFAULT_WIDGET_TITLE    "title"
 
