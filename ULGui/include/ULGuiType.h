@@ -13,17 +13,17 @@
 
 namespace ULGui {
 
-__GRAPHIC_2D_DECLARE typedef signed char GInt8;
-__GRAPHIC_2D_DECLARE typedef unsigned char GUint8;
-__GRAPHIC_2D_DECLARE typedef short GInt16;
-__GRAPHIC_2D_DECLARE typedef unsigned short GUint16;
-__GRAPHIC_2D_DECLARE typedef int GInt32;
-__GRAPHIC_2D_DECLARE typedef unsigned GUint32;
-__GRAPHIC_2D_DECLARE typedef long long GInt64;
-__GRAPHIC_2D_DECLARE typedef unsigned long long GUint64;
+__ULGUI_2D_DECLARE typedef signed char GInt8;
+__ULGUI_2D_DECLARE typedef unsigned char GUint8;
+__ULGUI_2D_DECLARE typedef short GInt16;
+__ULGUI_2D_DECLARE typedef unsigned short GUint16;
+__ULGUI_2D_DECLARE typedef int GInt32;
+__ULGUI_2D_DECLARE typedef unsigned GUint32;
+__ULGUI_2D_DECLARE typedef long long GInt64;
+__ULGUI_2D_DECLARE typedef unsigned long long GUint64;
 
 template<typename T, size_t size>
-__GRAPHIC_DECLARE class GVec {
+__ULGUI_DECLARE class GVec {
 public:
     GVec() = default;
     GVec(const GVec<T, size>& vec) {
@@ -45,6 +45,7 @@ public:
     GVec(const std::initializer_list<T>& list)
         : _size(size) {
         if (list.size() == 0 || list.size() != size) return;
+        _ptr = new T[_size] {T()};
         memcpy(_ptr, list.begin(), _size);
     }
     ~GVec() {
@@ -66,17 +67,20 @@ private:
     size_t _size {size};
 };
 
-__GRAPHIC_DECLARE typedef GVec<GUint32, 2> GVec2u;
-__GRAPHIC_DECLARE typedef GVec<GUint32, 3> GVec3u;
-__GRAPHIC_DECLARE typedef GVec<GUint32, 4> GVec4u;
-__GRAPHIC_DECLARE typedef GVec<GInt32, 2> GVec2i;
-__GRAPHIC_DECLARE typedef GVec<GInt32, 3> GVec3i;
-__GRAPHIC_DECLARE typedef GVec<GInt32, 4> GVec4i;
-__GRAPHIC_DECLARE typedef GVec<float, 2> GVec2f;
-__GRAPHIC_DECLARE typedef GVec<float, 3> GVec3f;
-__GRAPHIC_DECLARE typedef GVec<float, 4> GVec4f;
+__ULGUI_DECLARE typedef GVec<GUint32, 2> GVec2u;
+__ULGUI_DECLARE typedef GVec<GUint32, 3> GVec3u;
+__ULGUI_DECLARE typedef GVec<GUint32, 4> GVec4u;
+__ULGUI_DECLARE typedef GVec<GInt32, 2> GVec2i;
+__ULGUI_DECLARE typedef GVec<GInt32, 3> GVec3i;
+__ULGUI_DECLARE typedef GVec<GInt32, 4> GVec4i;
+__ULGUI_DECLARE typedef GVec<float, 2> GVec2f;
+__ULGUI_DECLARE typedef GVec<float, 3> GVec3f;
+__ULGUI_DECLARE typedef GVec<float, 4> GVec4f;
+__ULGUI_DECLARE typedef GVec<double, 2> GVec2d;
+__ULGUI_DECLARE typedef GVec<double, 3> GVec3d;
+__ULGUI_DECLARE typedef GVec<double, 4> GVec4d;
 
-__GRAPHIC_DECLARE struct GraphicRGBA {
+__ULGUI_DECLARE struct GraphicRGBA {
     float red {255.0f};
     float green {255.0f};
     float blue {255.0f};
@@ -84,6 +88,6 @@ __GRAPHIC_DECLARE struct GraphicRGBA {
     explicit GraphicRGBA(float r, float g, float b, float a = 255.0f)
         : red(r), green(g), blue(b), alpha(a) {}
 };
-} // namespace graphics2D
+} // namespace ULGui
 
 #endif // _GRAPHIC2DTYPE_H

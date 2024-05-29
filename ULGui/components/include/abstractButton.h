@@ -10,7 +10,7 @@
 
 namespace ULGui::components {
 
-class AbstractButton : public virtual window::Widget, public virtual AbstractComponent{
+class AbstractButton : public virtual AbstractComponent{
 public:
     AbstractButton();
     void print();

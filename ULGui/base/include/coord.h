@@ -31,19 +31,19 @@ struct Point {
 class Coord {
 public:
     Coord() = default;
-    explicit Coord(const GUint32& width, const GUint32& height, double x = 0, double y = 0, double z = 0)
+    explicit Coord(const GInt32& width, const GInt32& height, double x = 0, double y = 0, double z = 0)
         : _width(width), _height(height), _pos({x, y, z}) {}
 
     const Point& position() const { return _pos; }
     double X() const { return _pos.x; }
     double Y() const { return _pos.y; }
     double Z() const { return _pos.z; }
-    GUint32 width() const { return _width; }
-    GUint32 height() const { return _height; }
+    GInt32 width() const { return _width; }
+    GInt32 height() const { return _height; }
 
     void setPosition(const Point& pos) { _pos = pos; }
-    void setWidth(const GUint32& width) { _width = width; }
-    void setHeight(const GUint32& height) { _height = height; }
+    void setWidth(const GInt32& width) { _width = width; }
+    void setHeight(const GInt32& height) { _height = height; }
 
     /**
      * 获取在视口中的坐标
@@ -65,8 +65,8 @@ public:
 
 private:
     Point _pos {0, 0, 0};
-    GUint32 _width {0};
-    GUint32 _height {0};
+    GInt32 _width {0};
+    GInt32 _height {0};
 };
 
 } // namespace graphics2D

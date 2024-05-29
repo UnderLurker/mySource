@@ -9,29 +9,37 @@
 #include <string>
 
 #include "abstractAbility.h"
+#include "paintEvent.h"
 #include "ULGuiType.h"
 
 namespace ULGui {
 
 class AbstractWidget : public virtual base::AbstractAbility {
 public:
-    GUint32 width() const { return _width; }
-    GUint32 height() const { return _height; }
+    GInt32 width() const { return _size[0]; }
+    GInt32 height() const { return _size[1]; }
+    GInt32 x() const { return _location[0]; }
+    GInt32 y() const { return _location[1]; }
+    GVec2i location() const { return _location; }
     GraphicRGBA background() const { return _background; }
     /**
      * @return { width, height }
      */
-    GVec2u size() const { return {_width, _height}; }
+    GVec2i size() const { return _size; }
     bool smooth() const { return _smooth; }
     AbstractWidget* parent() const { return _parent; }
     const char* title() const { return _title.c_str(); }
-    void setWidth(const GUint32& width) { _width = width, setCoordSize(_width, _height); }
-    void setHeight(const GUint32& height) { _height = height, setCoordSize(_width, _height); }
+
+    void setWidth(const GInt32& width) { _size[0] = width, setCoordSize(_size[0], _size[1]); }
+    void setHeight(const GInt32& height) { _size[1] = height, setCoordSize(_size[0], _size[1]); }
+    void setX(const GInt32& xPos) { _location[0] = xPos; }
+    void setY(const GInt32& yPos) { _location[1] = yPos; }
+    void setLocation(const GInt32& xPos, const GInt32& yPos) { _location[0] = xPos, _location[1] = yPos; }
     void setBackground(const GraphicRGBA& background) { _background = background; }
     /**
      * @param size { width, height }
      */
-    void resize(const GVec2u& size) { _width = size[0], _height = size[1]; }
+    void resize(const GVec2i& size) { _size[0] = size[0], _size[1] = size[1]; }
     void setSmooth(bool smooth) { _smooth = smooth; }
     void setParent(AbstractWidget* parent) { _parent = parent; }
     void setTitle(char* title);
@@ -39,16 +47,22 @@ public:
 
     bool init();
     virtual bool show();
+    virtual void paintEvent(event::PaintEvent* event) {}
+
+protected:
+    static void setSmooth();
+    void updateFrameSize();
 
 private:
     AbstractWidget* _parent {nullptr};
-    std::string _title {WIDGET_TITLE};
+    std::string _title {DEFAULT_WIDGET_TITLE};
     GLFWwindow* _window {nullptr};
-    GUint32 _width {WIDGET_WIDTH};
-    GUint32 _height {WIDGET_HEIGHT};
-    GraphicRGBA _background {1, 1, 1};
-    bool _smooth{true};
-
+    // {width, height}
+    GVec2i _size {DEFAULT_WIDGET_WIDTH, DEFAULT_WIDGET_HEIGHT};
+    // {left, top} or {x, y}
+    GVec2i _location {0, 0};
+    GraphicRGBA _background {255, 255, 255};
+    bool _smooth {true};
 };
 
 } // namespace ULGui

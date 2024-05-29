@@ -23,11 +23,12 @@ public:
     Widget(const Widget& obj);
     Widget(Widget&& obj) noexcept;
     explicit Widget(Widget* parent);
-    explicit Widget(const GUint32& width, const GUint32& height, Widget* parent = nullptr);
+    explicit Widget(const GInt32& width, const GInt32& height, Widget* parent = nullptr);
     virtual ~Widget();
 
 
     bool show() override { return AbstractWidget::show(); };
+    void paintEvent(event::PaintEvent* event) override;
 
 private:
     // ID

@@ -7,11 +7,11 @@
 #include "widget.h"
 
 int main() {
-//    graphics2D::base::Rectangle a;
     ULGui::window::Widget widget(600, 300);
     std::string str = "this is a title";
     widget.setTitle(str);
-    widget.setBackground(ULGui::GraphicRGBA(0.5, 0.2, 0.3));
+    widget.setBackground(ULGui::GraphicRGBA(122, 61, 61));
+    widget.setLocation(100, 100);
     widget.show();
 
     glfwTerminate();

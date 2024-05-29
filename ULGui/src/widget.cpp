@@ -24,11 +24,31 @@ Widget::Widget(Widget* parent) {
     if (parent) setParent(parent);
 }
 
-Widget::Widget(const GUint32& width, const GUint32& height, Widget* parent){
+Widget::Widget(const GInt32& width, const GInt32& height, Widget* parent){
     setWidth(width);
     setHeight(height);
 }
 
 Widget::~Widget() = default;
+
+void Widget::paintEvent(event::PaintEvent* event) {
+    setPenWidth(1);
+    setStippleStyle({4, 0xAAAA});
+    setLineType(base::Stipple);
+    setLineMode(base::LINE_LOOP);
+    lineTo({
+        {20, 0},
+        base::Point(width() / 2, height() / 2)
+    });
+    lineTo({
+        base::Point(width() / 4, height() / 2), {0, 20}
+    });
+    lineTo({
+        {40, 0 },
+        base::Point(width() / 4, height() / 2),
+        {0,  20}
+    });
+    point(base::Point {10, 20});
+}
 
 } // namespace graphics2D::window
