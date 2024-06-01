@@ -19,8 +19,8 @@ void print(int number, const char* content) {
 }
 
 void clogTest() {
-    CLOG_TYPE(print, WARNING)
-    thread th(print, 5, "this is µÄ·¢Éäµã0/");
+    CLOG_TYPE(print, ERROR)
+    thread th(print, 5, "this is 0/");
     thread th1(print, 5, "this is 1/");
     thread th2(print, 5, "this is 2/");
     thread th3(print, 5, "this is 3/");

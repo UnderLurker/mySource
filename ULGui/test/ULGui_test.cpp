@@ -15,6 +15,13 @@ public:
     }
 };
 
+class RectComponent : public virtual base::Rectangle, public virtual AbstractWidget {
+public:
+    void paintEvent(event::PaintEvent *event) override {
+        base::Rectangle::paintEvent(event);
+    }
+};
+
 int main() {
     ULGui::window::Widget widget(600, 300);
     std::string str = "this is a title";
@@ -27,7 +34,12 @@ int main() {
         {300, 0 },
         base::Point(280, 200),
         {150,  20}});
+
+    RectComponent rect;
+    rect.setPosition({100, 500, 290, 300});
+
     widget.addChild(&tri);
+    widget.addChild(&rect);
     widget.show();
 
     glfwTerminate();

@@ -13,7 +13,8 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) { glVi
 } // namespace
 
 void AbstractWidget::addChild(AbstractWidget* widget) {
-    widget->setCoordSize(width(), height()), _childWidget[_childWidget.size()] = widget;
+    widget->setCoordSize(width(), height());
+    _childWidget[_childWidget.size()] = widget;
 }
 
 bool AbstractWidget::init() { return glfwInit(); }

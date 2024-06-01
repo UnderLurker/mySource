@@ -5,6 +5,7 @@
 #ifndef _BASE_GRAPHICS_H
 #define _BASE_GRAPHICS_H
 
+#include <cmath>
 #include <utility>
 
 #include "abstractAbility.h"
@@ -12,7 +13,8 @@
 #include "ULGuiType.h"
 
 namespace ULGui::base {
-using TriPosition = GVec<Point, 3>;
+using TriPosition  = GVec<Point, 3>;
+using RectPosition = GVec4f;
 
 class BaseGraphic : public virtual AbstractAbility {
 public:
@@ -38,9 +40,13 @@ private:
 class Rectangle : public BaseGraphic {
 public:
     Rectangle() = default;
+    explicit Rectangle(const RectPosition& pos)
+        : top(pos[0]), right(pos[1]), bottom(pos[2]), left(pos[3]) {}
+    RectPosition position() const { return RectPosition {top, right, bottom, left}; }
+    void setPosition(const RectPosition& pos);
     void paintEvent(event::PaintEvent* event) override;
 
-    explicit operator GVec4f() const noexcept { return GVec4f {top, left, bottom, right}; }
+    explicit operator GVec4f() const noexcept { return GVec4f {top, right, bottom, left}; }
 
 public:
     float top {0};
@@ -49,6 +55,19 @@ public:
     float right {0};
 };
 
+class Circle : public BaseGraphic {
+public:
+    Circle() = default;
+    explicit Circle(const Point& c, float r, float start = 0, float end = 360)
+        : center(c), radius(r), startAngle(start), endAngle(end) {}
+    void paintEvent(event::PaintEvent* event) override;
+
+public:
+    Point center {0, 0};
+    float radius {0};
+    float startAngle {0};
+    float endAngle {0};
+};
 } // namespace ULGui::base
 
 #endif // _BASE_GRAPHICS_H
