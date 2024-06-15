@@ -6,6 +6,7 @@
 #define _ABSTRACTCOMPONENT_H
 
 #include "abstractWidget.h"
+#include "refPtr.h"
 
 namespace ULGui::components {
 

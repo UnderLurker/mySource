@@ -8,6 +8,18 @@
 #define __ULGUI_DECLARE
 #define __ULGUI_2D_DECLARE
 
+#define CHECK_NULL_VOID(ptr) \
+    do {                     \
+        if (ptr == nullptr)  \
+            return;          \
+    } while (false);
+
+#define CHECK_NULL_RETURN(ptr, value) \
+    do {                              \
+        if (ptr == nullptr)           \
+            return value;             \
+    } while (false);
+
 // glfw init version
 #define WINDOW_VERSION_MAJOR     3
 #define WINDOW_VERSION_MINOR     3
