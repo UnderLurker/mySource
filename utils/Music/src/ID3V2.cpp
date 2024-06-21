@@ -3,6 +3,7 @@
 //
 #include "ID3V2.h"
 
+#include <cmath>
 #include <iostream>
 
 namespace myUtil {
@@ -25,28 +26,59 @@ uint32_t convertSize(uint32_t size) {
            ((size >> 24) & 0xFF) * (1 << 8);
 }
 
+template<typename source_type, typename target_type>
+target_type setByteValue(const source_type* data, size_t length, size_t bit = 8) {
+    assert(data != nullptr);
+    target_type result = 0;
+    for (size_t i = 0; i < length; i++) {
+        result = (result << bit) | (data[i] & ((uint32_t)pow(2, bit) - 1));
+    }
+    return result;
+}
+
+void TagHeader::setValue(const uint8_t* data, size_t length) {
+    assert(length == 10);
+    header   = setByteValue<uint8_t, uint32_t>(data, 3);
+    ver      = *(data + 3);
+    revision = *(data + 4);
+    flag     = *(data + 5);
+    size     = setByteValue<uint8_t, uint32_t>(data + 6, 4);
+}
+
 void ID3V2::readData(std::fstream& file) {
-    file.read((char*)&_header, sizeof(_header));
+    std::unique_ptr<uint8_t[]> tagHeader = std::make_unique<uint8_t[]>(10);
+    file.read((char*)tagHeader.get(), 10);
+    _header.setValue(tagHeader.get(), 10);
+    tagHeader.reset();
     uint32_t curPos = 0;
-    while (curPos < _header.size()) {
+    while (curPos < _header.size) {
         uint8_t preview = file.get();
         file.seekg(-1, std::ios::cur);
         if (preview == 0) break;
-        TagFrame frame;
-        file.read((char*)&frame._header, sizeof(frame._header));
-        convert32(frame._header.size);
-        convert32(frame._header.id);
-        frame._header.size = convertSize(frame._header.size);
-        file.read((char*)&frame._flags, sizeof(uint16_t));
-        convert16(frame._flags);
-        frame._content = new int8_t[frame._header.size + 1];
-        for (int32_t i = 0; i < frame._header.size; i++) {
-            frame._content[i] = static_cast<int8_t>(file.get());
-        }
-        frame._content[frame._header.size] = '\0';
+        TagFrame frame = std::move(getTagFrame(file));
         _frame.push_back(frame);
-        curPos += sizeof(frame._header) + sizeof(uint16_t) + frame._header.size;
+        curPos += 10 + frame._header.size;
     }
-    file.seekg(static_cast<uint32_t>(sizeof(TagHeader)) + _header.size(), std::ios::beg);
+    file.seekg(static_cast<uint32_t>(sizeof(TagHeader)) + _header.size, std::ios::beg);
+}
+
+TagFrame ID3V2::getTagFrame(std::fstream& file) {
+    TagFrame frame;
+    file.read((char*)&frame._header, sizeof(frame._header));
+    convert32(frame._header.size);
+    convert32(frame._header.id);
+    frame._header.size = convertSize(frame._header.size);
+    file.read((char*)&frame._flags, sizeof(uint16_t));
+    convert16(frame._flags);
+    frame._content = new int8_t[frame._header.size + 1];
+    uint32_t size  = 0;
+    while (file.get() == 0)
+        size++;
+    file.seekg(-1, std::ios::cur);
+    for (int32_t i = 0; i < frame._header.size - size; i++) {
+        frame._content[i] = static_cast<int8_t>(file.get());
+    }
+    frame._content[frame._header.size] = '\0';
+    return frame;
 }
 } // namespace myUtil

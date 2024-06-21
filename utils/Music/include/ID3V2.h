@@ -5,6 +5,7 @@
 #ifndef _ID3V2_H
 #define _ID3V2_H
 
+#include <cassert>
 #include <cstdint>
 #include <cstring>
 #include <fstream>
@@ -16,24 +17,15 @@ namespace myUtil {
 #define IDV3 0x494433
 
 struct TagHeader {
-    uint8_t header1;
-    uint8_t header2;
-    uint8_t header3;
-    uint8_t ver;
-    uint8_t revision;
-    uint8_t flag;
-    uint8_t size1;
-    uint8_t size2;
-    uint8_t size3;
-    uint8_t size4;
-    [[nodiscard]] uint32_t size() const {
-        return (size1 & 0x7F) * (1 << (7 * 3)) + (size2 & 0x7F) * (1 << (7 * 2)) + (size3 & 0x7F) * (1 << (7 * 1)) +
-               (size4 & 0x7F);
-    }
-    [[nodiscard]] uint32_t header() const { return (((header1 << 8) + header2) << 8) + header3; }
+    uint32_t header {0};
+    uint32_t size {0};
+    uint8_t ver {0};
+    uint8_t revision {0};
+    uint8_t flag {0};
     [[nodiscard]] bool unsynchronisation() const { return (flag & 0x80) == 0x80; }
     [[nodiscard]] bool extension() const { return (flag & 0x40) == 0x40; }
     [[nodiscard]] bool test() const { return (flag & 0x40) == 0x40; }
+    void setValue(const uint8_t* data, size_t length);
 };
 
 class TagFrame {
@@ -48,6 +40,12 @@ public:
         _flags   = obj._flags;
         _content = new int8_t[obj._header.size + 1];
         memcpy_s(_content, obj._header.size, obj._content, obj._header.size);
+    }
+    TagFrame(TagFrame&& obj) noexcept {
+        _header      = obj._header;
+        _flags       = obj._flags;
+        _content     = obj._content;
+        obj._content = nullptr;
     }
     ~TagFrame() {
         delete[] _content;
@@ -71,6 +69,9 @@ public:
     ID3V2()  = default;
     ~ID3V2() = default;
     void readData(std::fstream& file);
+
+private:
+    TagFrame getTagFrame(std::fstream& file);
 
 public:
     TagHeader _header {};

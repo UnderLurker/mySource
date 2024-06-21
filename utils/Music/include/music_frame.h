@@ -31,33 +31,30 @@ public:
     [[nodiscard]] bool crc() const { return (_header.data2 & 0b00000001) == 0; }
     [[nodiscard]] uint8_t bitRateIndex() const { return _header.data3 >> 4; }
     [[nodiscard]] uint8_t samplingRateIndex() const { return (_header.data3 & 0b00001100) >> 2; }
-    [[nodiscard]] bool padding() const { return (_header.data3 & 0b00000010) == 0b00000010; }
+    [[nodiscard]] uint8_t padding() const { return (_header.data3 & 0b00000010) >> 1; }
     [[nodiscard]] MusicChannel channel() const { return static_cast<MusicChannel>((_header.data4 & 0b11000000) >> 6); }
     [[nodiscard]] uint8_t extensionIndex() const { return (_header.data4 & 0b00110000) >> 4; }
     [[nodiscard]] bool copyright() const { return (_header.data4 & 0b00001000) == 0b00001000; }
     [[nodiscard]] bool original() const { return (_header.data4 & 0b00000100) == 0b00000100; }
     [[nodiscard]] MusicEmphasis emphasis() const { return static_cast<MusicEmphasis>(_header.data4 & 0b00000011); }
-    [[nodiscard]] int16_t bitRate() const {
-        return bitRateMap.at({
-            {version(), layer()},
-            bitRateIndex()
-        });
-    }
     [[nodiscard]] float samplingRate() const { return MusicSamplingRateMap.at({version(), samplingRateIndex()}); }
-    [[nodiscard]] MusicExtension extension() const {
-        assert(channel() == JOINT_STEREO);
-        return MusicExtensionMap.at(extensionIndex());
-    }
-    [[nodiscard]] uint32_t frameSize() const {
-        uint16_t sampleCount = MusicSamplingCountMap.at({version(), layer()});
-        uint32_t fillSize    = 0;
-        if (layer() == LAYER1) { fillSize = 0 * 4; }
-        return ((sampleCount / 8 * (bitRate() * 1000)) / (uint32_t)(samplingRate() * 1000)) + fillSize;
-    }
-    [[nodiscard]] uint32_t time() const {
-        uint16_t sampleCount = MusicSamplingCountMap.at({version(), layer()});
-        return static_cast<uint32_t>((float)(sampleCount * 1000) / samplingRate());
-    }
+    /**
+     * 帧大小，即每帧采样数
+     * @return
+     */
+    [[nodiscard]] uint16_t frameSize() const { return MusicSamplingCountMap.at({version(), layer()}); }
+    [[nodiscard]] MusicExtension extension() const;
+    [[nodiscard]] int16_t bitRate() const;
+    /**
+     * 帧长度，不同版本的长度不同
+     * @return
+     */
+    [[nodiscard]] uint32_t frameLength() const;
+    /**
+     * 每帧持续时间
+     * @return 保留整数
+     */
+    [[nodiscard]] uint32_t frameTime() const;
 
 public:
     FrameHeader _header {};

@@ -8,6 +8,7 @@ namespace ULGui::utils {
 template<typename T, typename deleter>
 void TreeNode<T, deleter>::addNode(node_pointer pointer) {
     CHECK_NULL_VOID(pointer)
+    pointer->_parent = this;
     node_pointer temp = _leftChild;
     if (temp == nullptr) {
         _leftChild = pointer;
@@ -26,15 +27,16 @@ void TreeNode<T, deleter>::addNode(Args&&... args) {
     auto* node = new TreeNode<T, deleter>(data);
     addNode(node);
 }
-#include <vector>
+
 template<typename T, typename deleter>
 void TreeNode<T, deleter>::addBroNode(node_pointer pointer) {
     CHECK_NULL_VOID(pointer)
-    node_pointer temp = _leftChild;
+    pointer->_parent = _parent;
+    node_pointer temp = this;
     while (temp->_rightChild != nullptr) {
         temp = temp->_rightChild;
     }
-    _leftChild = pointer;
+    temp->_rightChild = pointer;
 }
 
 template<typename T, typename deleter>
@@ -53,6 +55,18 @@ size_t TreeNode<T, deleter>::broCount() const {
     while (temp != nullptr) {
         temp = temp->_rightChild;
         result++;
+    }
+    return result;
+}
+
+template<typename T, typename deleter>
+size_t TreeNode<T, deleter>::depth() const {
+    if (_leftChild == nullptr) return 0;
+    size_t result = 0;
+    node_pointer temp = _leftChild;
+    while(temp != nullptr) {
+        result = std::max(result, temp->depth() + 1);
+        temp = temp->_rightChild;
     }
     return result;
 }

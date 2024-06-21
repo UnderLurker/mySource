@@ -8,7 +8,7 @@
 #include <functional>
 #include <map>
 
-#include "ULGuiMacro.h"
+#include "..\include\ULGuiMacro.h"
 
 namespace ULGui::utils {
 
@@ -27,7 +27,7 @@ struct TreeDeleter {
 //      │     root     │
 //      └──────────────┘
 //         /             \
-//┌────────────┐    ┌──────────┐
+// ┌────────────┐    ┌──────────┐
 // │root's child│    │root's bro│
 // └────────────┘    └──────────┘
 //
@@ -97,7 +97,7 @@ public:
     size_t broCount() const;
     // if depth large more than stack, crash
     // not implement at the moment
-    // size_t depth() const;
+    size_t depth() const;
 
 private:
     node_pointer _parent {nullptr};
@@ -118,6 +118,7 @@ public:
 
     node_reference root() { return _root; }
     node_reference root() const { return _root; }
+    size_t depth() const { return _root.depth(); }
 
 private:
     TreeNode<T, deleter> _root;

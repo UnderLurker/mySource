@@ -5,6 +5,7 @@
 
 #include <utility>
 
+#include "ID3V1.h"
 #include "ID3V2.h"
 #include "music_base.h"
 #include "music_frame.h"
@@ -22,6 +23,7 @@ public:
     MusicStatus analysis() override;
 
 public:
+    ID3V1 _id3v1;
     ID3V2 _id3v2;
     vector<MusicFrame> _frames;
 };
