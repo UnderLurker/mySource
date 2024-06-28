@@ -20,4 +20,9 @@ include_directories(${UTILS_PATH}/Util/include
 #add_test(Json_Test JsonTest)
 
 add_executable(JsonParseTest test/json_test.cpp)
+target_link_libraries(JsonParseTest
+    gtest)
+target_include_directories(JsonParseTest
+    PUBLIC ${THIRD_PART}/googletest/googletest/include)
+
 add_test(JsonParse_Test JsonTest)

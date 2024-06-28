@@ -10,3 +10,6 @@
 [submodule "third_part/zlib"]
 	path = third_part/zlib
 	url = https://github.com/madler/zlib.git
+[submodule "third_part/googletest"]
+	path = third_part/googletest
+	url = https://github.com/UnderLurker/googletest.git

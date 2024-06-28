@@ -62,6 +62,7 @@ public:
     void lineTo(const std::vector<Point>& pointList);
     void point(const Point& position);
     void point(const Coord& position);
+    void circle(const Point& center, int32_t radius);
 
 protected:
     void updateStyle();

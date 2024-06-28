@@ -5,8 +5,10 @@
 // #include "JsonSerialize.h"
 #include "JsonParse.h"
 #include "Reflex.h"
+#include <gtest/gtest.h>
 using namespace std;
 using namespace myUtil;
+using namespace testing;
 
 class C : public RObject {
 public:
@@ -130,11 +132,29 @@ void JsonParseTest5() {
     cout << a->bcd->a << endl;
     cout << setprecision(10) << a->bcd->b << endl;
 }
-int main() {
-     JsonParseTest1();
-    // JsonParseTest2();
-    // JsonParseTest3();
-    // JsonParseTest4();
-//    JsonParseTest5();
-    return 0;
+
+class JsonTest : public testing::Test {
+public:
+    void SetUp() override {}
+
+    void TearDown() override {}
+};
+
+TEST_F(JsonTest, json001) {
+    JsonDocument doc("../../../sample/test.json");
+    EXPECT_EQ(doc.getNode().getStatus(), 0);
+
+    auto node = doc.CreateNode(Number);
+    node->setKey("abc");
+    node->setValue("123");
+    auto attr = node->getAttr();
+    EXPECT_EQ(attr.first, node->getKey());
+    EXPECT_EQ(attr.second, node->getValue());
+
+}
+
+int main(int argc, char** argv)
+{
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }

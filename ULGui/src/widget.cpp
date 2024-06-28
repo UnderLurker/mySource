@@ -58,7 +58,7 @@ void Widget::paintEvent(event::PaintEvent* event) {
     tri.paintEvent(event);
 
     base::Circle circle({width() / 2.0, height() / 2.0}, height() / 2.0, 0, 20);
-    circle.setPenWidth(20);
+    circle.setPenWidth(0.5);
     circle.setCoordSize(width(), height());
     circle.paintEvent(event);
 }

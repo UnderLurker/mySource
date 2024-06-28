@@ -6,6 +6,36 @@
 #include <GL/gl.h>
 
 namespace ULGui::base {
+namespace {
+
+void putpixel(const Point& center, int32_t x, int32_t y, const Coord& coord) {
+    auto temp = coord.toViewPort({center.x + x, center.y + y});
+    glVertex3f(temp.x, temp.y, temp.z);
+}
+
+void Circle(const Point& center, int32_t x, int32_t y, const Coord& coord) {
+    putpixel(center, x, y, coord);
+    putpixel(center, y, x, coord);
+    putpixel(center, -y, x, coord);
+    putpixel(center, -x, y, coord);
+    putpixel(center, -x, -y, coord);
+    putpixel(center, -y, -x, coord);
+    putpixel(center, y, -x, coord);
+    putpixel(center, x, -y, coord);
+}
+
+void MidBresenhamCircle(const Point& center, int32_t r, const Coord& coord) {
+    int32_t x = 0;
+    int32_t y = r;
+    int32_t d = 1 - r;
+    while (x <= y) {
+        Circle(center, x, y, coord);
+        if (d < 0) d += 2 * x + 3;
+        else d += 2 * (x - y--) + 5;
+        x++;
+    }
+}
+} // namespace
 
 GUint32 AbstractAbility::_count = 0;
 
@@ -14,9 +44,7 @@ void AbstractAbility::setCoordSize(const GInt32& width, const GInt32& height) {
     _coord.setHeight(height);
 }
 
-void AbstractAbility::lineTo(const Coord& start, const Coord& end) {
-    lineTo({start.position(), end.position()});
-}
+void AbstractAbility::lineTo(const Coord& start, const Coord& end) { lineTo({start.position(), end.position()}); }
 
 void AbstractAbility::lineTo(const std::vector<Point>& pointList) {
     updateStyle();
@@ -51,8 +79,16 @@ void AbstractAbility::point(const Coord& position) {
     glEnd();
 }
 
+void AbstractAbility::circle(const Point& center, int32_t radius) {
+    updateStyle();
+    glBegin(GL_POINTS);
+    MidBresenhamCircle(center, radius, _coord);
+    glEnd();
+}
+
 void AbstractAbility::updateStyle() {
     glLineWidth(_style.width);
+    glPointSize(_style.width);
     glColor4f(_style.color.red, _style.color.green, _style.color.blue, _style.color.alpha);
 }
 } // namespace ULGui::base

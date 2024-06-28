@@ -31,13 +31,6 @@ void Rectangle::paintEvent(event::PaintEvent* event) {
 }
 
 void Circle::paintEvent(event::PaintEvent* event) {
-    setLineMode(base::LINE_STRIP);
-    auto size = (size_t)std::round((endAngle - startAngle) / DEFAULT_CIRCLE_PRECISION);
-    std::vector<Point> pointList(size);
-    for (size_t i = 0; i < size; i++) {
-        double temp  = (startAngle + i * DEFAULT_CIRCLE_PRECISION) * M_PI / 180.0f;
-        pointList[i] = {center.x + radius * cos(temp), center.y - radius * sin(temp)};
-    }
-    lineTo(pointList);
+    circle(center, radius);
 }
 } // namespace ULGui::base

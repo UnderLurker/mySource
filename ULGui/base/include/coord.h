@@ -57,7 +57,7 @@ public:
      * @param input 输入坐标
      * @return 返回视口坐标范围{[-1, 1], [-1, 1]}
      */
-    Point toViewPort(const Point& input) { return {toViewPort(input.x, _width), -1 * toViewPort(input.y, _height)}; }
+    Point toViewPort(const Point& input) const { return {toViewPort(input.x, _width), -1 * toViewPort(input.y, _height)}; }
     static double toViewPort(const double& val, const double& base) { return val * 2 / base - 1; }
 
     Coord operator+(const Coord& coord) const;
