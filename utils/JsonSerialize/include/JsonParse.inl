@@ -10,7 +10,32 @@
 #include "Util.h"
 
 NAME_SPACE_START(myUtil)
+namespace {
+constexpr char null[] = "null";
 
+bool JsonStrEqual(const JsonStr& left, const JsonStr& right) {
+    CHECK_NULL_RETURN(left.getPtr(), false)
+    CHECK_NULL_RETURN(right.getPtr(), false)
+    if (left.getLength() != right.getLength()) return false;
+    for (size_t i = 0; i < left.getLength(); i++) {
+        if (*(left.getPtr() + i) != *(right.getPtr() + i)) return false;
+    }
+    return true;
+}
+
+bool JsonNodeEqual(const JsonNode& left, const JsonNode& right) {
+    if (left.getKey() != right.getKey() || left.getValue() != right.getValue() || left.getType() != right.getType() ||
+        left.getChildren().size() != right.getChildren().size())
+        return false;
+    if (left.getChildren().empty()) return true;
+    auto it1 = left.getChildren().begin();
+    auto it2 = right.getChildren().begin();
+    for (; it1 != left.getChildren().end() && it2 != right.getChildren().end(); it1++, it2++) {
+        if (**it1 != **it2) return false;
+    }
+    return true;
+}
+} // namespace
 ////////////////////////////////////////////////////
 //               JsonDocument                     //
 ////////////////////////////////////////////////////
@@ -98,13 +123,20 @@ void JsonStr::setValue(char* start, size_t length) {
 
 string JsonStr::getValue() const {
     if (!_ptr) return "";
-    return string(_ptr, _length);
+    return {_ptr, _length};
 }
+
+bool JsonStr::operator==(const JsonStr& obj) const { return JsonStrEqual(*this, obj); }
+
+bool JsonStr::operator==(JsonStr&& obj) const { return JsonStrEqual(*this, obj); }
+
+bool JsonStr::operator!=(const JsonStr& obj) const { return !JsonStrEqual(*this, obj); }
+
+bool JsonStr::operator!=(JsonStr&& obj) const { return !JsonStrEqual(*this, obj); }
 
 ////////////////////////////////////////////////////
 //                    JsonNode                    //
 ////////////////////////////////////////////////////
-constexpr static char null[] = "null";
 JsonNode::JsonNode(const JsonNode& obj) noexcept {
     _key    = obj._key;
     _value  = obj._value;
@@ -378,7 +410,7 @@ JsonNode& JsonNode::at(size_t index) const {
             if (i == index) return **it;
     } else {
         auto it = _children.rbegin();
-        for (int32_t i = _children.size() - 1; i >= 0; i--, it++)
+        for (size_t i = _children.size() - 1; i >= 0; i--, it++)
             if (i == index) return **it;
     }
     return result;
@@ -394,6 +426,14 @@ JsonNode& JsonNode::at(const string& index) const {
 JsonNode& JsonNode::operator[](size_t index) const { return at(index); }
 
 JsonNode& JsonNode::operator[](const string& index) const { return at(index); }
+
+bool JsonNode::operator==(const JsonNode& obj) const { return JsonNodeEqual(*this, obj); }
+
+bool JsonNode::operator==(JsonNode&& obj) const { return JsonNodeEqual(*this, obj); }
+
+bool JsonNode::operator!=(const JsonNode& obj) const { return !JsonNodeEqual(*this, obj); }
+
+bool JsonNode::operator!=(JsonNode&& obj) const { return !JsonNodeEqual(*this, obj); }
 
 float JsonNode::toFloat(float defaultValue) const {
     assert(_type == Number);

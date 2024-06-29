@@ -73,21 +73,6 @@ REGISTER_REFLEX_FIELD(A, C, bcd)
 //     //    wcout<<b->type<<L"\t"<<b->program<<L"\t"<<b->request<<endl;
 // }
 
-void JsonParseTest1() {
-    JsonDocument doc("../../../sample/test.json");
-    cout << doc.getNode().getStatus() << endl;
-    auto node = doc.CreateNode(Number);
-    node->setKey("abc");
-    node->setValue("123");
-    doc.getNode().addChild(node);
-    doc.getNode().addChild("new addChild", "321.311", String);
-    doc.getNode()[1].setKey("123", 3);
-    doc.getNode()["abc"].setValue("456");
-    doc.getNode()["abc"].setType(String);
-    doc.getNode().getString(cout);
-    auto attr = doc.getNode()["new addChild"].getAttr();
-    cout << doc.getNode()["new addChild"].toString() << endl;
-}
 
 void JsonParseTest2() {
     JsonDocument doc("../../../sample/test.json");
@@ -140,7 +125,7 @@ public:
     void TearDown() override {}
 };
 
-TEST_F(JsonTest, json001) {
+TEST_F(JsonTest, JsonBaseTest001) {
     JsonDocument doc("../../../sample/test.json");
     EXPECT_EQ(doc.getNode().getStatus(), 0);
 
@@ -151,6 +136,21 @@ TEST_F(JsonTest, json001) {
     EXPECT_EQ(attr.first, node->getKey());
     EXPECT_EQ(attr.second, node->getValue());
 
+    doc.getNode().addChild(node);
+    doc.getNode().addChild("new addChild", "321.311", String);
+    doc.getNode()[1].setKey("123");
+    doc.getNode()["abc"].setValue("456");
+    doc.getNode()["abc"].setType(String);
+    auto newNode = doc.CreateNode(String);
+    newNode->setKey("new addChild");
+    newNode->setValue("321.311");
+    auto old = doc.getNode()["new addChild"];
+    bool isEqual = old == *newNode;
+    EXPECT_EQ(isEqual, true);
+    delete newNode;
+    EXPECT_EQ(doc.getNode()[1].getKey(), "123");
+    EXPECT_EQ(doc.getNode()["abc"].getValue(), "456");
+    EXPECT_EQ(doc.getNode()["abc"].getType(), String);
 }
 
 int main(int argc, char** argv)

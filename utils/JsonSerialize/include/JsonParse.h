@@ -36,8 +36,6 @@ enum JsonStatus {
 };
 
 class JsonNode;
-class JsonKey;
-class JsonValue;
 
 class JsonDocument {
 public:
@@ -92,6 +90,10 @@ public:
     [[nodiscard]] size_t getLength() const { return _length; }
 
     JsonStr& operator=(const JsonStr& obj) = default;
+    bool operator==(const JsonStr& obj) const;
+    bool operator==(JsonStr&& obj) const;
+    bool operator!=(const JsonStr& obj) const;
+    bool operator!=(JsonStr&& obj) const;
 
 private:
     char* _ptr {nullptr};
@@ -130,6 +132,7 @@ public:
     [[nodiscard]] JsonAttr getAttr() const;
     [[nodiscard]] JsonStatus getStatus() const { return _status; }
     [[nodiscard]] JsonType getType() const { return _type; }
+    [[nodiscard]] list<JsonNode*> getChildren() const { return _children; }
     void addChild(JsonNode* node);
     void addChild(const char* key, const char* value, JsonType type);
     void removeChild(size_t index);
@@ -157,6 +160,10 @@ public:
     [[nodiscard]] JsonNode& at(const string& index) const;
     JsonNode& operator[](size_t index) const;
     JsonNode& operator[](const string& index) const;
+    bool operator==(const JsonNode& obj) const;
+    bool operator==(JsonNode&& obj) const;
+    bool operator!=(const JsonNode& obj) const;
+    bool operator!=(JsonNode&& obj) const;
 
 private:
     JsonStatus parseValue(char*& begin, const char* end);
