@@ -39,7 +39,7 @@
 #define RGBA_RED                 GraphicRGBA(255, 0, 0, 255)
 #define RGBA_GREEN               GraphicRGBA(0, 255, 0, 255)
 #define RGBA_BLUE                GraphicRGBA(0, 0, 255, 255)
-#define RGBA_TRANSPARENT         GraphicRGBA(0, 0, 0, 255)
+#define RGBA_TRANSPARENT         GraphicRGBA(0, 0, 0, 0)
 
 #define DEFAULT_STIPPLE_FACTOR   2
 #define DEFAULT_STIPPLE_PATTERN  0xAAAA

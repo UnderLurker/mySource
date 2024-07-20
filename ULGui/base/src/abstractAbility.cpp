@@ -80,9 +80,18 @@ void AbstractAbility::point(const Coord& position) {
 }
 
 void AbstractAbility::circle(const Point& center, int32_t radius) {
+    auto temp = _coord.toViewPort({center.x, center.y});
     updateStyle();
+    glPointSize(static_cast<float>(radius) * 2);
     glBegin(GL_POINTS);
-    MidBresenhamCircle(center, radius, _coord);
+    // MidBresenhamCircle(center, radius, _coord);
+    glVertex3f(temp.x, temp.y, temp.z);
+    glEnd();
+
+    glPointSize((static_cast<float>(radius) - 100.0) * 2);
+    glBegin(GL_POINTS);
+    glColor3f(255, 0, 255);
+    glVertex3f(temp.x +0.5, temp.y, temp.z);
     glEnd();
 }
 

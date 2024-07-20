@@ -1,11 +1,12 @@
+#include <iomanip>
 #include <iostream>
 #include <string>
 #include <vector>
-#include <iomanip>
 // #include "JsonSerialize.h"
+#include <gtest/gtest.h>
+
 #include "JsonParse.h"
 #include "Reflex.h"
-#include <gtest/gtest.h>
 using namespace std;
 using namespace myUtil;
 using namespace testing;
@@ -73,7 +74,6 @@ REGISTER_REFLEX_FIELD(A, C, bcd)
 //     //    wcout<<b->type<<L"\t"<<b->program<<L"\t"<<b->request<<endl;
 // }
 
-
 void JsonParseTest2() {
     JsonDocument doc("../../../sample/test.json");
     cout << doc.getNode().getStatus() << endl;
@@ -127,11 +127,9 @@ public:
 
 TEST_F(JsonTest, JsonBaseTest001) {
     JsonDocument doc("../../../sample/test.json");
-    EXPECT_EQ(doc.getNode().getStatus(), 0);
+    ASSERT_EQ(doc.getNode().getStatus(), 0);
 
-    auto node = doc.CreateNode(Number);
-    node->setKey("abc");
-    node->setValue("123");
+    auto node = doc.CreateNode(Number, "abc", "123");
     auto attr = node->getAttr();
     EXPECT_EQ(attr.first, node->getKey());
     EXPECT_EQ(attr.second, node->getValue());
@@ -141,20 +139,15 @@ TEST_F(JsonTest, JsonBaseTest001) {
     doc.getNode()[1].setKey("123");
     doc.getNode()["abc"].setValue("456");
     doc.getNode()["abc"].setType(String);
-    auto newNode = doc.CreateNode(String);
-    newNode->setKey("new addChild");
-    newNode->setValue("321.311");
-    auto old = doc.getNode()["new addChild"];
-    bool isEqual = old == *newNode;
-    EXPECT_EQ(isEqual, true);
-    delete newNode;
+    shared_ptr<JsonNode> newNode(doc.CreateNode(String, "new addChild", "321.311"));
+    EXPECT_EQ(doc.getNode()["new addChild"] == *newNode, true);
     EXPECT_EQ(doc.getNode()[1].getKey(), "123");
     EXPECT_EQ(doc.getNode()["abc"].getValue(), "456");
     EXPECT_EQ(doc.getNode()["abc"].getType(), String);
+    EXPECT_TRUE(doc.getNode() == doc.getNode());
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

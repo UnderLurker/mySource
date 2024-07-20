@@ -46,7 +46,8 @@ public:
 
     JsonStatus Load(const char* filePath);
     [[nodiscard]] JsonNode& getNode() const;
-    JsonNode* CreateNode(JsonType type);
+    [[nodiscard]] const char* getRawData() const { return _cache; }
+    JsonNode* CreateNode(JsonType type, const char* key = nullptr, const char* value = nullptr);
     void save(const char* filePath = nullptr);
 
 private:
@@ -132,7 +133,7 @@ public:
     [[nodiscard]] JsonAttr getAttr() const;
     [[nodiscard]] JsonStatus getStatus() const { return _status; }
     [[nodiscard]] JsonType getType() const { return _type; }
-    [[nodiscard]] list<JsonNode*> getChildren() const { return _children; }
+    [[nodiscard]] const list<JsonNode*>& getChildren() const { return _children; }
     void addChild(JsonNode* node);
     void addChild(const char* key, const char* value, JsonType type);
     void removeChild(size_t index);

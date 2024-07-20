@@ -28,10 +28,19 @@ bool JsonNodeEqual(const JsonNode& left, const JsonNode& right) {
         left.getChildren().size() != right.getChildren().size())
         return false;
     if (left.getChildren().empty()) return true;
-    auto it1 = left.getChildren().begin();
-    auto it2 = right.getChildren().begin();
-    for (; it1 != left.getChildren().end() && it2 != right.getChildren().end(); it1++, it2++) {
-        if (**it1 != **it2) return false;
+    if (left.getType() == Array) {
+        auto it1 = left.getChildren().begin();
+        auto it2 = right.getChildren().begin();
+        for (; it1 != left.getChildren().end() && it2 != right.getChildren().end(); it1++, it2++) {
+            if (**it1 != **it2) return false;
+        }
+    } else {
+        auto it = left.getChildren().begin();
+        for (; it != left.getChildren().end(); it++) {
+            if (**it != right[(*it)->getKey()]) {
+                return false;
+            }
+        }
     }
     return true;
 }
@@ -80,7 +89,12 @@ JsonNode& JsonDocument::getNode() const {
     return *_node;
 }
 
-JsonNode* JsonDocument::CreateNode(JsonType type) { return new JsonNode(this, nullptr, type); }
+JsonNode* JsonDocument::CreateNode(JsonType type, const char* key, const char* value) {
+    auto result = new JsonNode(this, nullptr, type);
+    result->setKey(key);
+    result->setValue(value);
+    return result;
+}
 
 void JsonDocument::save(const char* filePath) {
     fstream file(filePath ? filePath : _filePath, ios::out);
@@ -402,8 +416,8 @@ void JsonNode::removeChild(size_t index) {
 }
 
 JsonNode& JsonNode::at(size_t index) const {
-    static JsonNode result;
-    if (index >= _children.size()) return result;
+    auto *result = new JsonNode();
+    if (index >= _children.size()) return *result;
     if (_children.size() / 2 > index) {
         auto it = _children.begin();
         for (uint32_t i = 0; i < _children.size(); i++, it++)
@@ -413,14 +427,14 @@ JsonNode& JsonNode::at(size_t index) const {
         for (size_t i = _children.size() - 1; i >= 0; i--, it++)
             if (i == index) return **it;
     }
-    return result;
+    return *result;
 }
 
 JsonNode& JsonNode::at(const string& index) const {
-    static JsonNode result;
+    auto *result = new JsonNode();
     for (auto& item : _children)
         if (strncmp(item->_key.getPtr(), index.c_str(), index.size()) == 0) return *item;
-    return result;
+    return *result;
 }
 
 JsonNode& JsonNode::operator[](size_t index) const { return at(index); }
