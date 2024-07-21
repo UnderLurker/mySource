@@ -1,15 +1,15 @@
 [submodule "third_part/glm"]
 	path = third_part/glm
-	url = https://github.com/g-truc/glm.git
+	url = https://github.com/UnderLurker/glm.git
 [submodule "third_part/std"]
 	path = third_part/std
-	url = https://github.com/nothings/stb.git
+	url = https://github.com/UnderLurker/stb.git
 [submodule "third_part/glfw"]
 	path = third_part/glfw
-	url = https://github.com/glfw/glfw.git
+	url = https://github.com/UnderLurker/glfw.git
 [submodule "third_part/zlib"]
 	path = third_part/zlib
-	url = https://github.com/madler/zlib.git
+	url = https://github.com/UnderLurker/zlib.git
 [submodule "third_part/googletest"]
 	path = third_part/googletest
 	url = https://github.com/UnderLurker/googletest.git
