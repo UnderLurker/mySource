@@ -45,7 +45,7 @@ public:
     AbstractAbility() = default;
     LineType lineType() const { return _style.type; }
     float penWidth() const { return _style.width; }
-    GraphicRGBA penColor() const { return _style.color; }
+    uint32_t penColor() const { return (uint32_t)_style.color; }
     StippleStyle stippleStyle() const { return _style.stippleStyle; }
     LineMode lineMode() const { return _style.mode; }
     LineStyle lineStyle() const { return _style; }
@@ -53,6 +53,7 @@ public:
     void setLineType(LineType type) { _style.type = type; }
     void setPenWidth(float width) { assert(width >= 0), _style.width = width; }
     void setPenColor(const GraphicRGBA& color) { _style.color = color; }
+    void setPenColor(const uint32_t& color) { _style.color = color; }
     void setStippleStyle(const StippleStyle& style) { _style.stippleStyle = style; }
     void setLineMode(const LineMode& mode) { _style.mode = mode; }
     void setLineStyle(const LineStyle& style) { _style = style; }
@@ -62,7 +63,8 @@ public:
     void lineTo(const std::vector<Point>& pointList);
     void point(const Point& position);
     void point(const Coord& position);
-    void circle(const Point& center, int32_t radius);
+    void circle(const Point& center, double radius, bool fill = false);
+    void arc(const Point& center, double radius, float startAngle, float endAngle);
 
 protected:
     void updateStyle();

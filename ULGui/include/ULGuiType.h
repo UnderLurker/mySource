@@ -7,8 +7,8 @@
 
 #include <cassert>
 #include <cstdint>
-#include <initializer_list>
 #include <cstring>
+#include <initializer_list>
 
 #include "ULGuiMacro.h"
 
@@ -92,13 +92,33 @@ __ULGUI_DECLARE typedef GVec<double, 2> GVec2d;
 __ULGUI_DECLARE typedef GVec<double, 3> GVec3d;
 __ULGUI_DECLARE typedef GVec<double, 4> GVec4d;
 
-__ULGUI_DECLARE struct GraphicRGBA {
+__ULGUI_DECLARE class GraphicRGBA {
+public:
     float red {255.0f};
     float green {255.0f};
     float blue {255.0f};
     float alpha {255.0f};
     explicit GraphicRGBA(float r, float g, float b, float a = 255.0f)
         : red(r), green(g), blue(b), alpha(a) {}
+    explicit GraphicRGBA(uint32_t color) {
+        blue  = static_cast<float>(color & 0xFF);
+        green = static_cast<float>((color & 0xFF00) >> 8);
+        red   = static_cast<float>((color & 0xFF0000) >> 16);
+        alpha = static_cast<float>((color & 0xFF000000) >> 24);
+    }
+
+    GraphicRGBA& operator=(const uint32_t& color) {
+        blue  = static_cast<float>(color & 0xFF);
+        green = static_cast<float>((color & 0xFF00) >> 8);
+        red   = static_cast<float>((color & 0xFF0000) >> 16);
+        alpha = static_cast<float>((color & 0xFF000000) >> 24);
+        return *this;
+    }
+
+    explicit operator uint32_t() const {
+        return (static_cast<unsigned int>(alpha) << 24) + (static_cast<unsigned int>(red) << 16) +
+               (static_cast<unsigned int>(green) << 8) + (static_cast<unsigned int>(blue));
+    }
 };
 } // namespace ULGui
 

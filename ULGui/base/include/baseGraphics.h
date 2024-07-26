@@ -58,8 +58,8 @@ public:
 class Circle : public BaseGraphic {
 public:
     Circle() = default;
-    explicit Circle(const Point& c, float r, float start = 0, float end = 360)
-        : center(c), radius(r), startAngle(start), endAngle(end) {}
+    explicit Circle(const Point& c, float r, float start = 0, float end = 360, bool fill = false)
+        : center(c), radius(r), startAngle(start), endAngle(end), fill(fill) {}
     void paintEvent(event::PaintEvent* event) override;
 
 public:
@@ -67,6 +67,7 @@ public:
     float radius {0};
     float startAngle {0};
     float endAngle {0};
+    bool fill {false};
 };
 } // namespace ULGui::base
 

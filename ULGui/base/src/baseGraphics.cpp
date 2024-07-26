@@ -31,6 +31,10 @@ void Rectangle::paintEvent(event::PaintEvent* event) {
 }
 
 void Circle::paintEvent(event::PaintEvent* event) {
-    circle(center, radius);
+    if (abs(endAngle - startAngle) == 360) {
+        circle(center, radius, fill);
+    } else {
+        arc(center, radius, startAngle, endAngle);
+    }
 }
 } // namespace ULGui::base

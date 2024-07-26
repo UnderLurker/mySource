@@ -3,6 +3,7 @@
 //
 #include "abstractAbility.h"
 
+#include <cmath>
 #include <GL/gl.h>
 
 namespace ULGui::base {
@@ -35,6 +36,8 @@ void MidBresenhamCircle(const Point& center, int32_t r, const Coord& coord) {
         x++;
     }
 }
+
+double floatToPI(float value) { return (value / 180.0) * M_PI; }
 } // namespace
 
 GUint32 AbstractAbility::_count = 0;
@@ -79,19 +82,39 @@ void AbstractAbility::point(const Coord& position) {
     glEnd();
 }
 
-void AbstractAbility::circle(const Point& center, int32_t radius) {
-    auto temp = _coord.toViewPort({center.x, center.y});
+void AbstractAbility::circle(const Point& center, double radius, bool fill) {
+    if (radius <= 0) return;
     updateStyle();
-    glPointSize(static_cast<float>(radius) * 2);
-    glBegin(GL_POINTS);
-    // MidBresenhamCircle(center, radius, _coord);
-    glVertex3f(temp.x, temp.y, temp.z);
+    glBegin(fill ? GL_POLYGON : GL_QUAD_STRIP);
+    const double angle = asin(_style.width / (radius));
+    for (double start = 0; start < floatToPI(360);) {
+        Point temp(radius * cos(start) + center.x, radius * sin(start) + center.y);
+        Point largeTemp((radius + _style.width) * cos(start) + center.x,
+                        (radius + _style.width) * sin(start) + center.y);
+        const auto t1 = _coord.toViewPort(temp);
+        const auto t2 = _coord.toViewPort(largeTemp);
+        glVertex3f(t1.x, t1.y, t1.z);
+        glVertex3f(t2.x, t2.y, t2.z);
+        start += angle;
+    }
     glEnd();
+}
 
-    glPointSize((static_cast<float>(radius) - 100.0) * 2);
-    glBegin(GL_POINTS);
-    glColor3f(255, 0, 255);
-    glVertex3f(temp.x +0.5, temp.y, temp.z);
+void AbstractAbility::arc(const Point& center, double radius, float startAngle, float endAngle) {
+    if (radius <= 0) return;
+    updateStyle();
+    glBegin(GL_QUAD_STRIP);
+    const double angle = asin(_style.width / (radius));
+    for (double start = floatToPI(startAngle); start < floatToPI(endAngle);) {
+        Point temp(radius * cos(start) + center.x, -radius * sin(start) + center.y);
+        Point largeTemp((radius + _style.width) * cos(start) + center.x,
+                        -(radius + _style.width) * sin(start) + center.y);
+        const auto t1 = _coord.toViewPort(temp);
+        const auto t2 = _coord.toViewPort(largeTemp);
+        glVertex3f(t1.x, t1.y, t1.z);
+        glVertex3f(t2.x, t2.y, t2.z);
+        start += angle;
+    }
     glEnd();
 }
 

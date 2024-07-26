@@ -5,4 +5,16 @@
 #ifndef _PEN_H
 #define _PEN_H
 
+namespace ULGui::base {
+
+class ULPen {
+public:
+    ULPen() = default;
+
+private:
+
+};
+
+}
+
 #endif // _PEN_H
