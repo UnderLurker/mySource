@@ -2,6 +2,8 @@
 #include <string>
 #include <cstring>
 #include <memory>
+#include <functional>
+#include <map>
 using namespace std;
 
 int length = 10;
@@ -44,10 +46,32 @@ void print(double a){
     cout<<a<<endl;
 }
 
+template<class T, T val>
+struct one_constant {
+    constexpr static T value = val;
+    explicit operator T() { return val; }
+    const T& operator()() { return val; }
+};
+
+using false_constant = one_constant<bool, false>;
+using true_constant = one_constant<bool, true>;
+
+template<class T1, class T2>
+struct _is_same : public false_constant {};
+
+template<class T1>
+struct _is_same<T1, T1> : public true_constant {};
+
+template<class X, class Y>
+inline constexpr bool is_same_my = _is_same<X, Y>::value;
+
 int main(){
 //    test();
-    errno_t a = EOK;
-    print(12);
-    print(12.0);
+    cout << _is_same<int, float>::value << endl;
+    cout << _is_same<int, int>::value << endl;
+    cout << is_same_my<int, float> << endl;
+    cout << is_same_my<int, int> << endl;
+    auto a = _is_same<int, int>();
+    cout << bool(a) << endl;
     return 0;
 }
