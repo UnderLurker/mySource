@@ -7,45 +7,41 @@
 
 #include <list>
 #include <memory>
+#include <string>
+
+#include "XmlType.h"
 
 namespace myUtil {
-class XmlElement;
-class XmlDocument {
-public:
-    XmlDocument()                              = delete;
-    virtual ~XmlDocument()                     = default;
-    XmlDocument& operator=(const XmlDocument&) = delete;
-
-private:
-    char* cache_ {nullptr};
-    std::shared_ptr<XmlElement> root_ {nullptr};
-};
-
-struct XmlString {
-    uintptr_t address {0};
-    uint32_t length {0};
-    std::string operator()() const {
-        auto start = reinterpret_cast<char*>(address);
-        return {start, start + length};
-    }
-};
-
-struct XmlAttributes {
-    std::shared_ptr<XmlString> name;
-    std::shared_ptr<XmlString> value;
-};
-
+class XmlDocument;
 class XmlElement {
 public:
     XmlElement()                             = delete;
     virtual ~XmlElement()                    = default;
     XmlElement& operator=(const XmlElement&) = delete;
 
+    [[nodiscard]] XmlString& InnerText() const;
+
 private:
+    std::shared_ptr<XmlDocument> doc_;
     std::list<XmlElement> children_;
     std::list<XmlAttributes> attribute_;
     std::shared_ptr<XmlString> name_ {nullptr};
+    std::unique_ptr<XmlString> text_ {nullptr};
 };
+
+class XmlDocument {
+public:
+    XmlDocument()                              = delete;
+    virtual ~XmlDocument()                     = default;
+    XmlDocument& operator=(const XmlDocument&) = delete;
+
+    [[nodiscard]] XmlString& InnerText() const;
+
+private:
+    char* cache_ {nullptr};
+    std::weak_ptr<XmlElement> root_;
+};
+
 } // namespace myUtil
 
 #endif // _XML_SERIALIZER_H
