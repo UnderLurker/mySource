@@ -25,8 +25,8 @@ private:
     std::shared_ptr<XmlDocument> doc_;
     std::list<XmlElement> children_;
     std::list<XmlAttributes> attribute_;
-    std::shared_ptr<XmlString> name_ {nullptr};
-    std::unique_ptr<XmlString> text_ {nullptr};
+    std::shared_ptr<XmlString> tagName_ {nullptr};
+    std::unique_ptr<XmlString> innerText_ {nullptr};
 };
 
 class XmlDocument {

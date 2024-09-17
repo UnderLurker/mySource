@@ -5,7 +5,7 @@
 
 namespace myUtil {
 
-XmlString& XmlElement::InnerText() const { return *(text_); }
+XmlString& XmlElement::InnerText() const { return *(innerText_); }
 
 XmlString& XmlDocument::InnerText() const {
     std::shared_ptr<XmlElement> shared(root_);

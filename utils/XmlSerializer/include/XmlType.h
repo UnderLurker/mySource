@@ -65,11 +65,18 @@ using XmlInt32  = XmlType<int32_t>;
 using XmlUInt32 = XmlType<uint32_t>;
 using XmlInt64  = XmlType<int64_t>;
 using XmlUInt64 = XmlType<uint64_t>;
+using XmlFloat  = XmlType<float>;
+using XmlDouble = XmlType<double>;
 using XmlBool   = XmlType<bool>;
 
 struct XmlAttributes {
     std::shared_ptr<XmlString> name;
     std::shared_ptr<XmlString> value;
+};
+
+struct XmlHeader {
+    XmlAttributes version;
+    XmlAttributes encoding;
 };
 
 } // namespace myUtil
