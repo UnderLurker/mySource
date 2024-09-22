@@ -7,6 +7,7 @@
 #include <map>
 #include <utility>
 
+#include "BTree.h"
 #include "heap.h"
 #include "RBTree.h"
 #include "SingleLinkList.h"
