@@ -47,7 +47,9 @@ set(CMAKE_BUILD_TYPE Debug)
 # find_package(OpenCV REQUIRED)
 
 addAllDirectory(${UTILS_PATH})
-
+add_subdirectory(${THIRD_PART}/zlib)
+add_subdirectory(${THIRD_PART}/googletest)
+add_subdirectory(ULGui)
 add_executable(MAIN main.cpp)
 add_executable(OpencvTest ${UTILS_TEST_PATH}/Opencv_test.cpp)
 
