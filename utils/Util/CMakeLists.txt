@@ -7,8 +7,9 @@ add_library(Util_static STATIC
         src/Ini.cpp
         src/MD5.cpp)
 target_include_directories(Util_static PUBLIC include
-                                        PUBLIC src)
+        PUBLIC src
+        PUBLIC ${THIRD_PART}/googletest/googletest/include)
 
 add_executable(UtilTest test/Util_test.cpp)
-target_link_libraries(UtilTest Util_static)
+target_link_libraries(UtilTest Util_static gtest)
 add_test(Util_Test UtilTest)
