@@ -2,10 +2,11 @@
 // Created by 常笑男 on 2024/9/15.
 //
 
-#ifndef _XMLTYPE_H
-#define _XMLTYPE_H
+#ifndef _XML_TYPE_H
+#define _XML_TYPE_H
 
 #include <cstdint>
+#include <cstring>
 #include <memory>
 #include <string>
 
@@ -15,9 +16,9 @@ struct XmlType;
 
 class XmlTypeBase {
 public:
-    XmlTypeBase()                              = delete;
-    XmlTypeBase(const XmlTypeBase&)            = delete;
-    XmlTypeBase& operator=(const XmlTypeBase&) = delete;
+    XmlTypeBase()                              = default;
+    XmlTypeBase(const XmlTypeBase&)            = default;
+    XmlTypeBase& operator=(const XmlTypeBase&) = default;
     explicit XmlTypeBase(uintptr_t address, uint32_t length)
         : address_(address), length_(length) {}
     XmlTypeBase(XmlTypeBase&& obj) noexcept {
@@ -52,11 +53,21 @@ struct XmlType : public XmlTypeBase {
 
 template<>
 struct XmlType<std::string> : public XmlTypeBase {
+    XmlType() = default;
+    explicit XmlType(const char* address, uint32_t length)
+        : XmlTypeBase(reinterpret_cast<uintptr_t>(address), length) {}
     explicit XmlType(uintptr_t address, uint32_t length)
         : XmlTypeBase(address, length) {}
     std::string operator()() const {
         auto start = reinterpret_cast<char*>(address_);
         return {start, start + length_};
+    }
+    bool operator==(const XmlType& obj) const {
+        auto start1 = reinterpret_cast<char*>(address_);
+        auto start2 = reinterpret_cast<char*>(obj.address_);
+        bool result = strncmp(start1, start2, std::min(length_, obj.length_)) == 0;
+        if (result && length_ == obj.length_) { return true; }
+        return false;
     }
 };
 
@@ -79,6 +90,26 @@ struct XmlHeader {
     XmlAttributes encoding;
 };
 
+enum NodeType {
+    NONE = 0,
+    ELEMENT_NODE,
+    ATTRIBUTE_NODE,
+    TEXT_NODE,
+    CDATA_SECTION_NODE,
+    ENTITY_REFERENCE_NODE,
+    ENTITY_NODE,
+    PROCESSING_INSTRUCTION_NODE,
+    COMMENT_NODE,
+    DOCUMENT_NODE,
+    DOCUMENT_TYPE_NODE,
+    DOCUMENT_FRAGMENT_NODE,
+    NOTATION_NODE
+};
+
 } // namespace myUtil
 
-#endif // _XMLTYPE_H
+template<>
+struct std::hash<myUtil::XmlString> {
+    size_t operator()(const myUtil::XmlString& s) const noexcept { return hash<std::string>()(s()); }
+};
+#endif // _XML_TYPE_H
