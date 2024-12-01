@@ -25,6 +25,7 @@ public:
      * @return
      */
     NamedNodeMap& Attribute() { return _attribute; }
+    bool hasAttributes() const override { return _attribute.Length() > 0; }
 
 private:
     NamedNodeMap _attribute;
