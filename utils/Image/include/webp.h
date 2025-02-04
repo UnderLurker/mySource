@@ -30,12 +30,14 @@ public:
     ImageStatus write(const char* filePath) override;
 
 private:
-    ImageStatus processChunk();
+    ImageStatus processData();
+    ImageStatus processHeader();
 
 private:
     uint8_t* _cache {nullptr};
     uint32_t _fileSize {0};
     uint32_t _position {0};
+    bool _loss {false};
 };
 } // namespace myUtil
 

@@ -6,6 +6,8 @@
 #include <cmath>
 #include <iostream>
 
+#include "Util.h"
+
 namespace myUtil {
 void convert16(uint16_t& value) {
     uint16_t value1 = value & 0x00ff;
@@ -28,7 +30,7 @@ uint32_t convertSize(uint32_t size) {
 
 template<typename source_type, typename target_type>
 target_type setByteValue(const source_type* data, size_t length, size_t bit = 8) {
-    assert(data != nullptr);
+    MYASSERT(data != nullptr);
     target_type result = 0;
     for (size_t i = 0; i < length; i++) {
         result = (result << bit) | (data[i] & ((uint32_t)pow(2, bit) - 1));
@@ -37,29 +39,35 @@ target_type setByteValue(const source_type* data, size_t length, size_t bit = 8)
 }
 
 void TagHeader::setValue(const uint8_t* data, size_t length) {
-    assert(length == 10);
+    MYASSERT(length == 10);
     header   = setByteValue<uint8_t, uint32_t>(data, 3);
     ver      = *(data + 3);
     revision = *(data + 4);
     flag     = *(data + 5);
-    size     = setByteValue<uint8_t, uint32_t>(data + 6, 4);
+    // size字段的每个字节的最高位不使用，恒为0
+    size     = ((data[6] & 0x7F) << 21) + ((data[7] & 0x7F) << 14) + ((data[8] & 0x7F) << 7) + (data[9] & 0x7F);
 }
 
 void ID3V2::readData(std::fstream& file) {
-    std::unique_ptr<uint8_t[]> tagHeader = std::make_unique<uint8_t[]>(10);
-    file.read((char*)tagHeader.get(), 10);
-    _header.setValue(tagHeader.get(), 10);
+    constexpr uint32_t headerSize = 10;
+    std::unique_ptr<uint8_t[]> tagHeader = std::make_unique<uint8_t[]>(headerSize);
+    file.read((char*)tagHeader.get(), headerSize);
+    _header.setValue(tagHeader.get(), headerSize);
     tagHeader.reset();
     uint32_t curPos = 0;
     while (curPos < _header.size) {
         uint8_t preview = file.get();
         file.seekg(-1, std::ios::cur);
         if (preview == 0) break;
-        TagFrame frame = std::move(getTagFrame(file));
-        _frame.push_back(frame);
-        curPos += 10 + frame._header.size;
+        _frame.push_back(std::move(getTagFrame(file)));
+        LOGI("content:%s", _frame.back()._content);
+        curPos += headerSize + _frame.back()._header.size;
     }
-    file.seekg(static_cast<uint32_t>(sizeof(TagHeader)) + _header.size, std::ios::beg);
+    // 默认认为size中包含header，然后向后搜索首帧信息，直到找到为止，为了兼容不符合规范的
+    file.seekg(_header.size, std::ios::beg);
+    uint8_t tmp;
+    while(tmp = file.get(), tmp == 0) {}
+    file.seekg(-1, std::ios::cur);
 }
 
 TagFrame ID3V2::getTagFrame(std::fstream& file) {

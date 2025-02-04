@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.5.0)
 project(DataCompress CXX)
+file(GLOB SOURCE_FILE src/*.cpp)
 
-add_library(dataCompress_static STATIC src/compress.cpp)
+add_library(dataCompress_static STATIC ${SOURCE_FILE})
 
 target_include_directories(dataCompress_static
         PUBLIC include

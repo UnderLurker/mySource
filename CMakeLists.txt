@@ -34,6 +34,10 @@ function(getAllCpp path parentDir exclude)
     set(path ${LOCAL_LIST} PARENT_SCOPE)
 endfunction()
 
+if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+    add_definitions(-DUTIL_DEBUG)
+endif ()
+
 # 添加opencv引用
 set(OpenGL_DIR ${PROJECT_SOURCE_DIR} CACHE PATH "" FORCE)
 set(OpenCV_DIR  F:/opencv/build/x64/vc16/lib CACHE PATH "" FORCE)
@@ -41,9 +45,19 @@ set(UTILS_PATH ${PROJECT_SOURCE_DIR}/utils CACHE PATH "" FORCE)
 set(UTILS_TEST_PATH ${PROJECT_SOURCE_DIR}/test CACHE PATH "" FORCE)
 set(THIRD_PART ${PROJECT_SOURCE_DIR}/third_part CACHE PATH "" FORCE)
 set(LIB_DIR ${PROJECT_SOURCE_DIR}/lib CACHE PATH "" FORCE)
+set(LOG_FILE_PATH ON CACHE BOOL "choose OFF to disable" FORCE)
+set(LOG_TIME ON CACHE BOOL "choose OFF to disable" FORCE)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_BUILD_TYPE Debug)
+
+if (${LOG_TIME} STREQUAL "ON")
+    add_definitions(-DLOG_TIME)
+endif ()
+
+if (${LOG_FILE_PATH} STREQUAL "ON")
+    add_definitions(-DLOG_FILE_PATH)
+endif ()
 # find_package(OpenCV REQUIRED)
 
 addAllDirectory(${UTILS_PATH})

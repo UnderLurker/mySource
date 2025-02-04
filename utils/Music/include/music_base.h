@@ -18,7 +18,7 @@ public:
     MusicBase() = default;
     explicit MusicBase(const char* filePath) {
         CHECK_NULL_VOID(filePath)
-        assert(_filePath == nullptr);
+        MYASSERT(_filePath == nullptr);
         uint32_t len = strlen(filePath) + 1;
         _filePath    = new char[len];
         memcpy_s(_filePath, len - 1, filePath, len - 1);

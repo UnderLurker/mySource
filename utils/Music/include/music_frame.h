@@ -69,7 +69,7 @@ public:
     }
     MusicFrameChannelInfo(MusicFrameChannelInfo&& obj) noexcept { _info = std::move(obj._info); }
     ~MusicFrameChannelInfo() = default;
-    void readData(std::fstream& file);
+    void readData(const uint8_t* info, size_t& length);
 
 public:
     std::unique_ptr<uint8_t[]> _info;
@@ -79,7 +79,8 @@ class MusicFrame {
 public:
     MusicFrame()  = default;
     ~MusicFrame() = default;
-    void readData(std::fstream& file);
+    // return true 表示当前帧是正确的，返回false表明当前不是数据帧
+    bool readData(std::fstream& file);
 
 public:
     MusicFrameHeader _header;

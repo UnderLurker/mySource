@@ -7,6 +7,7 @@
 
 #include <cassert>
 
+#include "music_const.h"
 #include "Util.h"
 
 NAME_SPACE_START(myUtil)
@@ -16,30 +17,30 @@ NAME_SPACE_START(myUtil)
 class ID3V1 {
 public:
     void setValue(const uint8_t* data, size_t length) {
-        assert(length == ID3V1_LEN);
-        setValue(data, _tagFlag, 3);
-        setValue(data + 3, _title, 30);
-        setValue(data + 33, _artist, 30);
-        setValue(data + 63, _album, 30);
-        setValue(data + 93, _years, 4);
-        setValue(data + 97, _comment, 30);
-        _school = *(data + 127);
+        MYASSERT(length == ID3V1_LEN);
+        memcpy(tagFlag, data, 3);
+        memcpy(title, data + 3, 30);
+        memcpy(artist, data + 33, 30);
+        memcpy(album, data + 63, 30);
+        memcpy(years, data + 93, 4);
+        memcpy(comment, data + 97, 28);
+        reserve = *(data + 125);
+        track   = *(data + 126);
+        genre   = *(data + 127);
     }
 
-protected:
-    void setValue(const uint8_t* source, char* target, size_t len) {
-        for (uint32_t i = 0; i < len; i++)
-            target[i] = static_cast<char>(source[i]);
-    }
+    [[nodiscard]] std::string getGenre() const { return GenreMap[genre]; }
 
 public:
-    char _tagFlag[3];
-    char _title[30];
-    char _artist[30];
-    char _album[30];
-    char _years[4];
-    char _comment[30];
-    uint8_t _school;
+    char tagFlag[3];
+    char title[30];
+    char artist[30];
+    char album[30];
+    char years[4];
+    char comment[28];
+    uint8_t reserve;
+    uint8_t track;
+    uint8_t genre;
 };
 
 NAME_SPACE_END()
