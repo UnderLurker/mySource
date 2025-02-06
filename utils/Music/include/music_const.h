@@ -6,6 +6,7 @@
 #define _MUSIC_CONST_H
 
 #include <map>
+#include <unordered_map>
 
 namespace myUtil {
 
@@ -233,7 +234,7 @@ enum MusicEmphasis {
     CCITT_J17        = 3
 };
 
-std::unordered_map<uint8_t, std::string> GenreMap {
+static std::unordered_map<uint8_t, std::string> GenreMap {
     {0,   "Blues"                }, {1,   "ClassicRock"          }, {2,   "Country"              },
     {3,   "Dance"                }, {4,   "Disco"                }, {5,   "Funk"                 },
     {6,   "Grunge"               }, {7,   "Hip-Hop"              }, {8,   "Jazz"                 },
