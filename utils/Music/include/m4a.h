@@ -14,10 +14,10 @@
 
 namespace myUtil {
 
-#define BOX_HEADER_LEN 16
+#define BOX_HEADER_LEN 8
 #define CONVERT(a)     (((int32_t)(#a[0]) << 24) + ((int32_t)(#a[1]) << 16) + ((int32_t)(#a[2]) << 8) + (int32_t)(#a[3]))
 
-enum BoxType {
+enum BoxType : uint32_t {
     DINF = CONVERT(dinf),
     DREF = CONVERT(dref),
     FTYP = CONVERT(ftyp),
@@ -28,6 +28,7 @@ enum BoxType {
     MINF = CONVERT(minf),
     MOOF = CONVERT(moof),
     MOOV = CONVERT(moov),
+    MVHD = CONVERT(mvhd),
     STBL = CONVERT(stbl),
     STCO = CONVERT(stco),
     STSC = CONVERT(stsc),
@@ -39,17 +40,13 @@ enum BoxType {
     VMHD = CONVERT(vmhd),
 };
 
-class BoxHeader {
-public:
-    [[nodiscard]] uint64_t Size() const { return _size == 1 ? _largeSize : _size; }
-    [[nodiscard]] BoxType Type() const { return (BoxType)_type; }
-    [[nodiscard]] std::string TypeToString() const;
-    void ReadData(const uint8_t* data, size_t length);
-
-private:
-    uint32_t _size;
-    uint32_t _type;
-    uint64_t _largeSize;
+struct BoxHeader {
+    uint64_t size {0};
+    BoxType type;
+    std::string TypeToString() const;
+    void SetValue(const uint8_t* data, size_t length);
+    void SetBigSize(const uint8_t* data, size_t length);
+    uint64_t BodySize() const { return size > UINT32_MAX ? size - BOX_HEADER_LEN * 2 : size - BOX_HEADER_LEN; }
 };
 
 class Box {
@@ -61,7 +58,11 @@ public:
         try {
             auto data = new uint8_t[BOX_HEADER_LEN];
             file.read((char*)data, BOX_HEADER_LEN);
-            _header.ReadData(data, BOX_HEADER_LEN);
+            _header.SetValue(data, BOX_HEADER_LEN);
+            if (_header.size == 1) {
+                file.read((char*)data, BOX_HEADER_LEN);
+                _header.SetBigSize(data, BOX_HEADER_LEN);
+            }
             delete[] data;
         } catch (...) { return ERROR_UNKNOWN; }
         return SUCCESS;
@@ -70,26 +71,43 @@ public:
 public:
     BoxHeader _header {};
 };
+using BoxPair = std::pair<BoxType, std::shared_ptr<Box>>;
 
 struct FtypBox : public Box {
-    MusicStatus GetData(std::fstream& file) override;
     uint32_t majorBrand;
     uint32_t minorVersion;
     std::vector<uint32_t> compatibleBrands;
+    MusicStatus GetData(std::fstream& file) override;
+};
+
+struct MvhdBox : public Box {
+    uint8_t version;
+    uint32_t flags: 24;
+    uint32_t createTime;
+    uint32_t modificationTime;
+    uint32_t timeScale;
+    uint32_t duration;
+    uint32_t rate;
+    uint16_t volume;
+    uint8_t reserved[10];
+    uint8_t matrix[36];
+    uint8_t preDefined[24];
+    uint32_t nextTrackId;
+    MusicStatus GetData(std::fstream& file) override;
+};
+
+struct MoovBox : public Box {
+    std::list<BoxPair> boxes;
+    MusicStatus GetData(std::fstream& file) override;
 };
 
 class M4a : public MusicBase {
-    using BoxPair = std::pair<BoxType, std::shared_ptr<Box>>;
-
 public:
     explicit M4a(const char* filePath)
         : MusicBase(filePath) {
         _status = analysis();
     }
     MusicStatus analysis() override;
-
-protected:
-    MusicStatus ProcessBox();
 
 private:
     std::list<BoxPair> _boxes;
