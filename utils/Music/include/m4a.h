@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <fstream>
 #include <list>
+#include <map>
 
 #include "music_base.h"
 #include "Util.h"
@@ -20,9 +21,13 @@ namespace myUtil {
 #define CONVERT(a)     (((int32_t)(#a[0]) << 24) + ((int32_t)(#a[1]) << 16) + ((int32_t)(#a[2]) << 8) + (int32_t)(#a[3]))
 
 enum BoxType : uint32_t {
+    CSLG = CONVERT(cslg),
+    CTTS = CONVERT(ctts),
     DINF = CONVERT(dinf),
     DREF = CONVERT(dref),
+    EDTS = CONVERT(edts),
     ELNG = CONVERT(elng),
+    ELST = CONVERT(elst),
     FREE = CONVERT(free),
     FTYP = CONVERT(ftyp),
     HDLR = CONVERT(hdlr),
@@ -35,13 +40,18 @@ enum BoxType : uint32_t {
     MVHD = CONVERT(mvhd),
     NMHD = CONVERT(nmhd),
     PDIN = CONVERT(pdin),
+    SDTP = CONVERT(sdtp),
     SKIP = CONVERT(skip),
     STBL = CONVERT(stbl),
     STCO = CONVERT(stco),
     STDP = CONVERT(stdp),
     STSC = CONVERT(stsc),
     STSD = CONVERT(stsd),
+    STSH = CONVERT(stsh),
+    STSS = CONVERT(stss),
+    STSZ = CONVERT(stsz),
     STTS = CONVERT(stts),
+    STZ2 = CONVERT(stz2),
     TKHD = CONVERT(tkhd),
     TRAK = CONVERT(trak),
     TREF = CONVERT(tref),
@@ -66,9 +76,10 @@ struct BoxHeader {
 // Container
 class Box {
 public:
-    using BoxPair = std::pair<BoxType, std::shared_ptr<Box>>;
-    Box()         = default;
-    virtual ~Box() { delete[] userType; }
+    using BoxList   = std::list<std::shared_ptr<Box>>;
+    using SubBoxMap = std::map<BoxType, BoxList>;
+    Box()           = default;
+    virtual ~Box() { delete[] _userType; }
 
     virtual MusicStatus ProcessHeader(std::fstream& file);
     // Analyze Box with SubBox
@@ -76,10 +87,15 @@ public:
     virtual bool ProcessFullBox(std::fstream& file) { return false; }
     virtual bool ProcessFullBox(const uint8_t* body, size_t length) { return false; }
 
+    uint32_t Count(BoxType type) const;
+    uint32_t ParentCount(BoxType type) const;
+    BoxList GetBoxList(BoxType type);
+
 public:
     BoxHeader _header {};
-    std::list<BoxPair> boxes;
-    uint8_t* userType {};
+    SubBoxMap _boxes;
+    uint8_t* _userType {};
+    std::weak_ptr<Box> _parent;
 };
 
 // Container
@@ -101,7 +117,7 @@ protected:
      * @param body file data(exclude BoxHeader)
      * @param length
      * @return
-     */
+ */
     virtual MusicStatus OnProcessData(const uint8_t* body, size_t length) { return SUCCESS; }
 };
 
@@ -228,6 +244,66 @@ struct TimeToSampleBox : public LeafFullBox {
     std::unique_ptr<uint32_t[]> sampleDelta;
     MusicStatus OnProcessData(const uint8_t* body, size_t length) override;
 };
+struct CompositionOffsetBox : public LeafFullBox {
+    uint32_t entryCount;
+    std::unique_ptr<uint32_t[]> sampleCount;
+    std::unique_ptr<uint32_t[]> sampleOffsetU;
+    std::unique_ptr<int32_t[]> sampleOffset;
+    MusicStatus OnProcessData(const uint8_t* body, size_t length) override;
+};
+struct CompositionToDecodeBox : public LeafFullBox {
+    int64_t compositionToDTSShift;
+    int64_t leastDecodeToDisplayDelta;
+    int64_t greatestDecodeToDisplayDelta;
+    int64_t compositionStartTime;
+    int64_t compositionEndTime;
+    MusicStatus OnProcessData(const uint8_t* body, size_t length) override;
+};
+struct SyncSampleBox : public LeafFullBox {
+    uint32_t entryCount;
+    std::unique_ptr<uint32_t[]> sampleNumber;
+    MusicStatus OnProcessData(const uint8_t* body, size_t length) override;
+};
+struct ShadowSyncSampleBox : public LeafFullBox {
+    uint32_t entryCount;
+    std::unique_ptr<uint32_t[]> shadowedSampleNumber;
+    std::unique_ptr<uint32_t[]> syncSampleNumber;
+    MusicStatus OnProcessData(const uint8_t* body, size_t length) override;
+};
+struct SampleDependencyTypeBox : public LeafFullBox {
+    struct SampleDependencyTypeInfo {
+        uint8_t isLeading           : 2;
+        uint8_t sampleDependsOn     : 2;
+        uint8_t sampleIsDependedOn  : 2;
+        uint8_t sampleHasRedundancy : 2;
+    };
+    std::unique_ptr<SampleDependencyTypeInfo[]> infos;
+    MusicStatus OnProcessData(const uint8_t* body, size_t length) override;
+};
+struct SampleSizeBox : public LeafFullBox {
+    uint32_t sampleSize;
+    uint32_t sampleCount;
+    std::unique_ptr<uint32_t[]> entrySize;
+    MusicStatus OnProcessData(const uint8_t* body, size_t length) override;
+};
+struct CompactSampleSizeBox : public LeafFullBox {
+    uint8_t fieldSize;
+    uint32_t sampleCount;
+    std::unique_ptr<uint8_t[]> entrySize;
+    // 未实现获取指定位置的entrySize
+    MusicStatus OnProcessData(const uint8_t* body, size_t length) override;
+};
+struct EditBox : public Box {};
+struct EditListBox : public LeafFullBox {
+    uint32_t entryCount;
+    std::unique_ptr<uint64_t[]> segmentDuration64;
+    std::unique_ptr<uint32_t[]> segmentDuration32;
+    std::unique_ptr<int64_t[]> mediaTime64;
+    std::unique_ptr<int32_t[]> mediaTime32;
+    std::unique_ptr<int16_t[]> mediaRateInteger;
+    std::unique_ptr<int16_t[]> mediaRateFraction;
+    MusicStatus OnProcessData(const uint8_t* body, size_t length) override;
+};
 
 class M4a : public MusicBase {
 public:
@@ -238,7 +314,7 @@ public:
     MusicStatus analysis() override;
 
 private:
-    std::list<Box::BoxPair> _boxes;
+    Box::SubBoxMap _boxes;
 };
 
 } // namespace myUtil
