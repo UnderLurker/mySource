@@ -11,12 +11,7 @@ Texture::Texture(myUtil::TextureType type) {
     _type = type;
 }
 
-void Texture::setParam(uint32_t name, int32_t value) const {
-    glBindTexture(_type, _textureId);
-    glTexParameteri(_type, name, value);
-}
-
-void Texture::bindTexture(uint32_t texture) const {
+void Texture::drawTexture(uint32_t texture) const {
     glActiveTexture(texture);
     glBindTexture(_type, _textureId);
 }

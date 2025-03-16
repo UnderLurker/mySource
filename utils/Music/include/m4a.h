@@ -21,6 +21,7 @@ namespace myUtil {
 #define CONVERT(a)     (((int32_t)(#a[0]) << 24) + ((int32_t)(#a[1]) << 16) + ((int32_t)(#a[2]) << 8) + (int32_t)(#a[3]))
 
 enum BoxType : uint32_t {
+    CO64 = CONVERT(co64),
     CSLG = CONVERT(cslg),
     CTTS = CONVERT(ctts),
     DINF = CONVERT(dinf),
@@ -56,6 +57,8 @@ enum BoxType : uint32_t {
     TRAK = CONVERT(trak),
     TREF = CONVERT(tref),
     TRGR = CONVERT(trgr),
+    URL  = CONVERT(url),
+    URN  = CONVERT(urn),
     UUID = CONVERT(uuid),
     VMHD = CONVERT(vmhd),
 };
@@ -82,6 +85,7 @@ public:
     virtual ~Box() { delete[] _userType; }
 
     virtual MusicStatus ProcessHeader(std::fstream& file);
+    virtual MusicStatus ProcessHeader(const uint8_t* body, size_t length);
     // Analyze Box with SubBox
     virtual MusicStatus ProcessData(std::fstream& file);
     virtual bool ProcessFullBox(std::fstream& file) { return false; }
@@ -302,6 +306,36 @@ struct EditListBox : public LeafFullBox {
     std::unique_ptr<int32_t[]> mediaTime32;
     std::unique_ptr<int16_t[]> mediaRateInteger;
     std::unique_ptr<int16_t[]> mediaRateFraction;
+    MusicStatus OnProcessData(const uint8_t* body, size_t length) override;
+};
+struct DataInformationBox : public Box {};
+struct DataEntryUrlBox : public LeafFullBox { // type = 'url '
+    std::string location;
+    MusicStatus OnProcessData(const uint8_t* body, size_t length) override;
+};
+struct DataEntryUrnBox : public LeafFullBox { // type = 'urn '
+    std::string name;
+    std::string location;
+    MusicStatus OnProcessData(const uint8_t* body, size_t length) override;
+};
+struct DataReferenceBox : public FullBox {
+    MusicStatus ProcessData(std::fstream& file) override;
+};
+struct SampleToChunkBox : public LeafFullBox {
+    uint32_t entryCount;
+    std::unique_ptr<uint32_t[]> firstChunk;
+    std::unique_ptr<uint32_t[]> samplesPerChunk;
+    std::unique_ptr<uint32_t[]> sampleDescriptionIndex;
+    MusicStatus OnProcessData(const uint8_t* body, size_t length) override;
+};
+struct ChunkOffsetBox : public LeafFullBox {
+    uint32_t entryCount;
+    std::unique_ptr<uint32_t[]> chunkOffset;
+    MusicStatus OnProcessData(const uint8_t* body, size_t length) override;
+};
+struct ChunkLargeOffsetBox : public LeafFullBox {
+    uint32_t entryCount;
+    std::unique_ptr<uint64_t[]> chunkOffset;
     MusicStatus OnProcessData(const uint8_t* body, size_t length) override;
 };
 

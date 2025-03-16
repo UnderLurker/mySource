@@ -45,6 +45,13 @@ std::map<BoxType, std::function<std::shared_ptr<Box>()>> BoxMap = {
     {myUtil::BoxType::STZ2, []() { return std::make_shared<CompactSampleSizeBox>(); }      },
     {myUtil::BoxType::EDTS, []() { return std::make_shared<EditBox>(); }                   },
     {myUtil::BoxType::ELST, []() { return std::make_shared<EditListBox>(); }               },
+    {myUtil::BoxType::DINF, []() { return std::make_shared<DataInformationBox>(); }        },
+    {myUtil::BoxType::DREF, []() { return std::make_shared<DataReferenceBox>(); }          },
+    {myUtil::BoxType::URL,  []() { return std::make_shared<DataEntryUrlBox>(); }           },
+    {myUtil::BoxType::URN,  []() { return std::make_shared<DataEntryUrnBox>(); }           },
+    {myUtil::BoxType::STSC, []() { return std::make_shared<SampleToChunkBox>(); }          },
+    {myUtil::BoxType::STCO, []() { return std::make_shared<ChunkOffsetBox>(); }            },
+    {myUtil::BoxType::CO64, []() { return std::make_shared<ChunkLargeOffsetBox>(); }       },
 };
 } // namespace
 
@@ -84,9 +91,27 @@ MusicStatus Box::ProcessHeader(std::fstream& file) {
         }
         if (_header.type == myUtil::BoxType::UUID) {
             _userType = new uint8_t[USER_TYPE_LEN];
-            file.read((char*)_userType, 16);
+            file.read((char*)_userType, USER_TYPE_LEN);
         }
         delete[] data;
+    } catch (...) { return ERROR_UNKNOWN; }
+    return SUCCESS;
+}
+
+MusicStatus Box::ProcessHeader(const uint8_t* body, size_t length) {
+    try {
+        _header.SetValue(body, BOX_HEADER_LEN);
+        body    = body + BOX_HEADER_LEN;
+        length -= BOX_HEADER_LEN;
+        if (_header.size == 1 && length >= BOX_HEADER_LEN) {
+            _header.SetBigSize(body, BOX_HEADER_LEN);
+            body    = body + BOX_HEADER_LEN;
+            length -= BOX_HEADER_LEN;
+        }
+        if (_header.type == myUtil::BoxType::UUID && length >= USER_TYPE_LEN) {
+            _userType = new uint8_t[USER_TYPE_LEN];
+            memcpy_s(_userType, USER_TYPE_LEN, body, USER_TYPE_LEN);
+        }
     } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;
 }
@@ -493,6 +518,63 @@ MusicStatus EditListBox::OnProcessData(const uint8_t* body, size_t length) {
         mediaRateInteger[i]  = GetValue<int16_t>(tmpBody);
         mediaRateFraction[i] = GetValue<int16_t>(tmpBody + 2);
         tmpBody              = tmpBody + 4;
+    }
+    return SUCCESS;
+}
+
+MusicStatus DataEntryUrlBox::OnProcessData(const uint8_t* body, size_t length) {
+    location = std::string(length, STRING_FILL);
+    memcpy_s(location.data(), length, body, length);
+    return SUCCESS;
+}
+
+MusicStatus DataEntryUrnBox::OnProcessData(const uint8_t* body, size_t length) {
+    size_t pos = length;
+    for (size_t i = 0; i < length; i++) {
+        if (*(body + i) == '\0') {
+            pos = i;
+            break;
+        }
+    }
+    name     = std::string(pos, STRING_FILL);
+    location = std::string(length - pos - 1, STRING_FILL);
+    memcpy_s(name.data(), pos, body, pos);
+    memcpy_s(location.data(), length - pos - 1, body + pos + 1, length - pos - 1);
+    return SUCCESS;
+}
+
+MusicStatus DataReferenceBox::ProcessData(std::fstream& file) {
+    file.seekg(sizeof(uint32_t), std::ios::cur);
+    return FullBox::ProcessData(file);
+}
+
+MusicStatus SampleToChunkBox::OnProcessData(const uint8_t* body, size_t length) {
+    entryCount             = GetValue<uint32_t>(body);
+    firstChunk             = std::make_unique<uint32_t[]>(entryCount);
+    samplesPerChunk        = std::make_unique<uint32_t[]>(entryCount);
+    sampleDescriptionIndex = std::make_unique<uint32_t[]>(entryCount);
+    for (size_t i = 0; i < entryCount; i++) {
+        firstChunk[i]             = GetValue<uint32_t>(body + 4 + 12 * i);
+        samplesPerChunk[i]        = GetValue<uint32_t>(body + 8 + 12 * i);
+        sampleDescriptionIndex[i] = GetValue<uint32_t>(body + 12 + 12 * i);
+    }
+    return SUCCESS;
+}
+
+MusicStatus ChunkOffsetBox::OnProcessData(const uint8_t* body, size_t length) {
+    entryCount  = GetValue<uint32_t>(body);
+    chunkOffset = std::make_unique<uint32_t[]>(entryCount);
+    for (size_t i = 0; i < entryCount; i++) {
+        chunkOffset[i] = GetValue<uint32_t>(body + 4 + 4 * i);
+    }
+    return SUCCESS;
+}
+
+MusicStatus ChunkLargeOffsetBox::OnProcessData(const uint8_t* body, size_t length) {
+    entryCount  = GetValue<uint32_t>(body);
+    chunkOffset = std::make_unique<uint64_t[]>(entryCount);
+    for (size_t i = 0; i < entryCount; i++) {
+        chunkOffset[i] = GetValue<uint64_t>(body + 4 + 8 * i);
     }
     return SUCCESS;
 }

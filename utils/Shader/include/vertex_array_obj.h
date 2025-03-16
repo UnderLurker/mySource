@@ -11,6 +11,8 @@
 
 NAME_SPACE_START(myUtil)
 
+class Progrm;
+
 enum DataType {
     BYTE           = 0x1400,
     UNSIGNED_BYTE  = 0x1401,
@@ -35,7 +37,11 @@ public:
         DYNAMIC_COPY = 0x88EA
     };
     VertexArrayObj() { glGenVertexArrays(1, &_id); }
-    virtual ~VertexArrayObj() = default;
+    virtual ~VertexArrayObj() {
+        if (_id != 0) glDeleteVertexArrays(1, &_id);
+        if (_vertexEleObj != 0) glDeleteBuffers(1, &_vertexEleObj);
+        if (_vertexBufferObj != 0) glDeleteBuffers(1, &_vertexBufferObj);
+    }
 
     template<typename T>
     void setArrayBuffer(const vector<T>& data, BufferUsage usage) {
@@ -43,6 +49,18 @@ public:
         glBindVertexArray(_id);
         glBindBuffer(GL_ARRAY_BUFFER, _vertexBufferObj);
         glBufferData(GL_ARRAY_BUFFER, sizeof(T) * data.size(), data.data(), usage);
+    }
+    template<typename T>
+    void setArrayBuffer(size_t size, BufferUsage usage) {
+        glGenBuffers(1, &_vertexBufferObj);
+        glBindVertexArray(_id);
+        glBindBuffer(GL_ARRAY_BUFFER, _vertexBufferObj);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(T) * size, nullptr, usage);
+    }
+    void setGlyphArrayBuffer() {
+        setArrayBuffer<float>(4 * 6, myUtil::VertexArrayObj::DYNAMIC_DRAW);
+        glEnableVertexAttribArray(0);
+        setVertexAttribPointer<float>(4, myUtil::FLOAT, 4, 0);
     }
 
     void setEleArrayBuffer(const vector<uint32_t>& data, BufferUsage usage);
@@ -58,10 +76,20 @@ public:
         enableVertexArrayByIndex(index);
     }
 
+    void updateVertexData(std::vector<float>&& data, uint32_t index = 0) const {
+        updateVertexData(std::forward<std::vector<float>&>(data), index);
+    }
+    void updateVertexData(const std::vector<float>& data, uint32_t index = 0) const {
+        glBindBuffer(GL_ARRAY_BUFFER, _vertexBufferObj);
+        glBufferSubData(GL_ARRAY_BUFFER, index, data.size() * sizeof(float), data.data());
+    }
+
     void enableVertexArrayByIndex(uint32_t index) const;
     void disableVertexArrayByIndex(uint32_t index) const;
     void use() const;
-    void deleteVAO();
+    uint32_t getVAO() const { return _id; }
+    uint32_t getVBO() const { return _vertexBufferObj; }
+    uint32_t getVEO() const { return _vertexEleObj; }
 
 private:
     uint32_t _id {0};

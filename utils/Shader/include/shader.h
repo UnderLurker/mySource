@@ -10,7 +10,6 @@
 #include "Util.h"
 
 NAME_SPACE_START(myUtil)
-#define MSG_SIZE 512
 
 class Shader {
 public:
@@ -27,7 +26,7 @@ public:
 
 private:
     bool loadSource(const std::string& filePath, ShaderType shaderType);
-    bool compile(const string& source);
+    bool compile(const string& source, const std::string& filePath);
 
 public:
     bool _status {true};

@@ -32,10 +32,4 @@ void VertexArrayObj::disableVertexArrayByIndex(uint32_t index) const {
 
 void VertexArrayObj::use() const { glBindVertexArray(_id); }
 
-void VertexArrayObj::deleteVAO() {
-    if (_id != 0) glDeleteVertexArrays(1, &_id);
-    if (_vertexEleObj != 0) glDeleteBuffers(1, &_vertexEleObj);
-    if (_vertexBufferObj != 0) glDeleteBuffers(1, &_vertexBufferObj);
-}
-
 NAME_SPACE_END()

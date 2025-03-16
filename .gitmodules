@@ -13,3 +13,6 @@
 [submodule "third_part/googletest"]
 	path = third_part/googletest
 	url = https://github.com/UnderLurker/googletest.git
+[submodule "third_part/freetype-windows-binaries"]
+	path = third_part/freetype-windows-binaries
+	url = git@github.com:UnderLurker/freetype-windows-binaries.git

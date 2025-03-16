@@ -8,8 +8,10 @@
 #include <glad/glad.h>
 #include <vector>
 
+#include "glyph.h"
 #include "shader.h"
 #include "Util.h"
+#include "vertex_array_obj.h"
 using namespace std;
 
 NAME_SPACE_START(myUtil)
@@ -26,14 +28,18 @@ public:
     void use() const;
     void push_back(Shader* shader);
     bool linkProgram();
-    void deleteProgram();
+    void deleteProgram() const;
     // uniform工具函数
     void setBool(const std::string& name, bool value) const;
     void setInt(const std::string& name, int value) const;
     void setUInt(const std::string& name, uint32_t value) const;
     void setFloat(const std::string& name, float value) const;
     void set4Float(const std::string& name, float x, float y, float z, float w) const;
-    void setMatrix4fv(const std::string& name, float* array) const;
+    void setMatrix4fv(const std::string& name, const float* array) const;
+    void setVec3fv(const std::string& name, const float* array) const;
+    void setColor(const std::string& name, const Color& color) const;
+
+    void renderGlyph(const std::string& context, const GlyphConfiguration& config, const VertexArrayObj& vao) const;
 
 private:
     void create(const char* filePath, Shader::ShaderType type);
@@ -55,7 +61,6 @@ public:
 private:
     vector<Shader*> _vertexShaderList;
     vector<Shader*> _fragmentShaderList;
-    char _msg[MSG_SIZE] {};
 };
 
 NAME_SPACE_END()

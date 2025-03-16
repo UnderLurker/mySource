@@ -6,6 +6,8 @@
 #include <glad/glad.h>
 #include <sstream>
 
+#include "shader_macro.h"
+
 NAME_SPACE_START(myUtil)
 
 Shader::Shader(const char* filePath, ShaderType shaderType) {
@@ -34,19 +36,21 @@ bool Shader::loadSource(const std::string& filePath, ShaderType shaderType) {
         cout << "loadSource failed: " << e.what() << endl;
         return false;
     }
-    return compile(_source);
+    return compile(_source, filePath);
 }
 
-bool Shader::compile(const string& source) {
+bool Shader::compile(const string& source, const std::string& filePath) {
     int32_t success;
-    char _msg[MSG_SIZE];
     const char* _source = source.c_str();
     glShaderSource(_shaderId, 1, &_source, nullptr);
     glCompileShader(_shaderId);
     glGetShaderiv(_shaderId, GL_COMPILE_STATUS, &success);
     if (!success) {
-        glGetShaderInfoLog(_shaderId, MSG_SIZE, nullptr, const_cast<char*>(_msg));
-        cout << "shader compile error: " << _msg << endl;
+        char* msg = new char[MSG_SIZE];
+        glGetShaderInfoLog(_shaderId, MSG_SIZE, nullptr, msg);
+        // shader compile error
+        LOGE("filePath: %s msg: %s", filePath.c_str(), msg);
+        delete[] msg;
         _status = false;
         return false;
     }
@@ -56,12 +60,14 @@ bool Shader::compile(const string& source) {
 void Shader::deleteShader() const {
     if (_shaderId == 0 || !_status) return;
     int32_t success;
-    char _msg[MSG_SIZE];
     glDeleteShader(_shaderId);
     glGetShaderiv(_shaderId, GL_DELETE_STATUS, &success);
     if (!success) {
-        glGetShaderInfoLog(_shaderId, MSG_SIZE, nullptr, _msg);
-        cout << "shader compiler delete failed: " << _msg << endl;
+        char* msg = new char[MSG_SIZE];
+        glGetShaderInfoLog(_shaderId, MSG_SIZE, nullptr, msg);
+        // shader compiler delete failed
+        LOGE("%s", msg);
+        delete[] msg;
     }
 }
 
