@@ -40,7 +40,8 @@ endif ()
 
 # 添加opencv引用
 set(OpenGL_DIR ${PROJECT_SOURCE_DIR} CACHE PATH "" FORCE)
-set(OpenCV_DIR  F:/opencv/build/x64/vc16/lib CACHE PATH "" FORCE)
+set(ENV{Path} ${PROJECT_SOURCE_DIR}/third_part/opencv-for-mingw-x64/x64/mingw/bin)
+set(OpenCV_DIR  ${PROJECT_SOURCE_DIR}/third_part/opencv-for-mingw-x64/x64/mingw/lib CACHE PATH "" FORCE)
 set(UTILS_PATH ${PROJECT_SOURCE_DIR}/utils CACHE PATH "" FORCE)
 set(UTILS_TEST_PATH ${PROJECT_SOURCE_DIR}/test CACHE PATH "" FORCE)
 set(THIRD_PART ${PROJECT_SOURCE_DIR}/third_part CACHE PATH "" FORCE)
@@ -58,16 +59,18 @@ endif ()
 if (${LOG_FILE_PATH} STREQUAL "ON")
     add_definitions(-DLOG_FILE_PATH)
 endif ()
-# find_package(OpenCV REQUIRED)
 
 addAllDirectory(${UTILS_PATH})
 add_subdirectory(${THIRD_PART}/zlib)
 add_subdirectory(${THIRD_PART}/googletest)
 add_subdirectory(ULGui)
 add_executable(MAIN main.cpp)
-add_executable(OpencvTest ${UTILS_TEST_PATH}/Opencv_test.cpp)
 
-include_directories(${OpenCV_INCLUDE_DIRS})
+
+find_package(OpenCV REQUIRED)
+add_executable(OpencvTest ${UTILS_TEST_PATH}/Opencv_test.cpp)
+target_include_directories(OpencvTest PUBLIC ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(OpencvTest ${OpenCV_LIBS})
 
 #target_link_libraries(MAIN Matrix_static logger_static Util_static)
 #target_link_libraries(MAIN Singleton_static)
@@ -75,7 +78,6 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 #target_link_libraries(MAIN JsonSerialize_static)
 #target_link_libraries(MAIN Server_static)
 
-target_link_libraries(OpencvTest ${OpenCV_LIBS})
 
 enable_testing()
 

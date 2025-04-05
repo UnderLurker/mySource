@@ -8,14 +8,11 @@
 #include <map>
 #include <unordered_map>
 
+#include "m4a/m4a_const.h"
+
 namespace myUtil {
 
-enum MusicStatus {
-    SUCCESS = 0,
-    ERROR_FILE_FORMAT,
-    ERROR_UNKNOWN,
-    ERROR_FILE_PATH
-};
+using MusicStatus = M4AStatus;
 
 enum MusicVersion {
     MPEG2_5 = 0,

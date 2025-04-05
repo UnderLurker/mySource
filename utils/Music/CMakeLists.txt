@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.5.0)
 project(Music VERSION 0.1.0)
 file(GLOB SOURCE_FILE ./src/*.cpp)
+file(GLOB M4A_FILE ./src/m4a/*.cpp)
 
-add_library(Music_static STATIC ${SOURCE_FILE})
+add_library(Music_static STATIC ${SOURCE_FILE} ${M4A_FILE})
 target_include_directories(Music_static
         PUBLIC include
         PUBLIC ${UTILS_PATH}/Util/include)

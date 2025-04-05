@@ -73,6 +73,7 @@ NAME_SPACE_START(myUtil)
     } while (false);
 
 #ifdef UTIL_DEBUG
+#include <cassert>
 #define MYASSERT(info) assert(info);
 #else
 #define MYASSERT(info) static_cast<void*>(0);
