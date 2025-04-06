@@ -20,6 +20,7 @@ public:
     }
     MusicStatus analysis() override;
 
+    ostringstream PrintTree(uint32_t tab, uint32_t count = 2);
 private:
     Box::SubBoxMap _boxes;
 };

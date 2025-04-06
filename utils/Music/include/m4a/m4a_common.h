@@ -76,6 +76,8 @@ enum BoxType : uint32_t {
     VMHD = CONVERT(vmhd),
 };
 
+std::string TypeToString(uint32_t type);
+
 struct BoxHeader {
     uint64_t size {0};
     BoxType type;
@@ -107,6 +109,8 @@ public:
     uint32_t Count(BoxType type) const;
     uint32_t ParentCount(BoxType type) const;
     BoxList GetBoxList(BoxType type);
+
+    ostringstream PrintTree(uint32_t tab, uint32_t count = 2);
 
 public:
     BoxHeader _header {};

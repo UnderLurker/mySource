@@ -9,6 +9,17 @@
 
 namespace myUtil {
 
+std::string TypeToString(uint32_t type) {
+    std::string res;
+    auto tmp = (uint32_t)type;
+    while (tmp) {
+        res.append({(char)(tmp & 0xFF)});
+        tmp >>= 8;
+    }
+    std::reverse(res.begin(), res.end());
+    return res;
+}
+
 std::string BoxHeader::TypeToString() const {
     std::string res;
     auto tmp = (uint32_t)type;
@@ -102,7 +113,7 @@ M4AStatus Box::ProcessData(std::fstream& file) {
                 _boxes[subBox->_header.type].emplace_back(subBox);
             }
         }
-        remainLen -= bodySize;
+        remainLen -= box._header.size;
     }
     return SUCCESS;
 }
@@ -118,6 +129,19 @@ uint32_t Box::ParentCount(BoxType type) const {
 Box::BoxList Box::GetBoxList(BoxType type) {
     if (Count(type)) return _boxes[type];
     return {};
+}
+
+ostringstream Box::PrintTree(uint32_t tab, uint32_t count) {
+    ostringstream ss;
+    for(const auto& item : _boxes) {
+        ss << std::string(count * tab, ' ') << TypeToString(item.first) << endl;
+        for(const auto& box : item.second) {
+            if (box) {
+                ss << box->PrintTree(tab + 1).str();
+            }
+        }
+    }
+    return ss;
 }
 
 bool FullBox::ProcessFullBox(std::fstream& file) {

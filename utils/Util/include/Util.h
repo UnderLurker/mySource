@@ -135,7 +135,7 @@ static void UtilPrint(LogLevel level,
     std::cout << CurrTime();
 #endif
 #ifdef LOG_FILE_PATH
-    std::cout << file << ":" << line << " ";
+    std::cout << file.substr(file.rfind('/') + 1) << ":" << line << " ";
 #endif
     std::cout << function << " ";
     std::cout << strLevel;
