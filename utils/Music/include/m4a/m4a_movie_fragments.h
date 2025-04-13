@@ -93,6 +93,43 @@ struct TrackFragmentRandomAccessBox : public LeafFullBox {
     std::unique_ptr<LengthSizeEntry[]> entries;
     M4AStatus OnProcessData(const uint8_t* body, size_t length) override;
 };
+// MFRO
+struct MovieFragmentRandomAccessOffsetBox : public LeafFullBox {
+    uint32_t size;
+    M4AStatus OnProcessData(const uint8_t* body, size_t length) override;
+};
+// TFDT
+struct TrackFragmentBaseMediaDecodeTimeBox : public LeafFullBox {
+    uint64_t baseMediaDecodeTime;
+    M4AStatus OnProcessData(const uint8_t* body, size_t length) override;
+};
+// LEVA
+struct LevelAssignmentBox : public LeafFullBox {
+    struct LevelInfo {
+        uint32_t trackId;
+        uint8_t paddingFlag    : 1;
+        uint8_t assignmentType : 7;
+        std::optional<uint32_t> groupingType;
+        std::optional<uint32_t> groupingTypeParameter;
+        std::optional<uint32_t> subTrackId;
+    };
+    uint8_t levelCount;
+    std::unique_ptr<LevelInfo[]> levelInfos;
+    M4AStatus OnProcessData(const uint8_t* body, size_t length) override;
+};
+// TREP
+struct TrackExtensionPropertiesBox : public LeafFullBox {
+    uint32_t trackId;
+    M4AStatus OnProcessData(const uint8_t* body, size_t length) override;
+};
+// ASSP
+struct AlternativeStartupSequencePropertiesBox : public LeafFullBox {
+    int32_t minInitialAltStartupOffset;                     // version == 0
+    uint32_t count;                                         // version == 1
+    std::unique_ptr<uint32_t[]> groupingTypeParameters;     // version == 1
+    std::unique_ptr<int32_t[]> minInitialAltStartupOffsets; // version == 1
+    M4AStatus OnProcessData(const uint8_t* body, size_t length) override;
+};
 } // namespace myUtil
 
 #endif // _M4A_MOVIE_FRAGMENTS_H

@@ -109,4 +109,68 @@ M4AStatus TrackFragmentRandomAccessBox::OnProcessData(const uint8_t* body, size_
     }
     return SUCCESS;
 }
+
+M4AStatus MovieFragmentRandomAccessOffsetBox::OnProcessData(const uint8_t* body, size_t length) {
+    size = GetValue<uint32_t>(body);
+    return SUCCESS;
+}
+
+M4AStatus TrackFragmentBaseMediaDecodeTimeBox::OnProcessData(const uint8_t* body, size_t length) {
+    if (_header.version == 1) baseMediaDecodeTime = GetValue<uint64_t>(body);
+    else baseMediaDecodeTime = GetValue<uint32_t>(body);
+    return SUCCESS;
+}
+
+M4AStatus LevelAssignmentBox::OnProcessData(const uint8_t* body, size_t length) {
+    levelCount = GetValue<uint8_t>(body);
+    if (levelCount == 0) return SUCCESS;
+    uint32_t pos = 1;
+    levelInfos   = std::make_unique<LevelInfo[]>(levelCount);
+    for (uint32_t i = 0; i < levelCount; i++) {
+        uint8_t byte                  = *(body + pos + 4);
+        levelInfos[i].trackId         = GetValue<uint32_t>(body + pos);
+        levelInfos[i].paddingFlag     = (byte >> 7) & 0x01;
+        levelInfos[i].assignmentType  = byte & 0x7F;
+        pos                          += 5;
+        switch (levelInfos[i].assignmentType) {
+            case 0:
+                ReadData(body, levelInfos[i].groupingType, pos);
+                break;
+            case 1:
+                ReadData(body, levelInfos[i].groupingType, pos);
+                ReadData(body, levelInfos[i].groupingTypeParameter, pos);
+                break;
+            case 4:
+                ReadData(body, levelInfos[i].subTrackId, pos);
+                break;
+            case 2:
+            case 3:
+            default:
+                break;
+        }
+    }
+    return SUCCESS;
+}
+
+M4AStatus TrackExtensionPropertiesBox::OnProcessData(const uint8_t* body, size_t length) {
+    trackId = GetValue<uint32_t>(body);
+    return SUCCESS;
+}
+
+M4AStatus AlternativeStartupSequencePropertiesBox::OnProcessData(const uint8_t* body, size_t length) {
+    if (_header.version == 0) {
+        minInitialAltStartupOffset = GetValue<int32_t>(body);
+        return SUCCESS;
+    }
+    // version == 1
+    count = GetValue<uint32_t>(body);
+    if (count == 0) return SUCCESS;
+    groupingTypeParameters      = std::make_unique<uint32_t[]>(count);
+    minInitialAltStartupOffsets = std::make_unique<int32_t[]>(count);
+    for (uint32_t i = 0; i < count; i++) {
+        groupingTypeParameters[i]      = GetValue<uint32_t>(body + 4 + 8 * i);
+        minInitialAltStartupOffsets[i] = GetValue<int32_t>(body + 8 + 8 * i);
+    }
+    return SUCCESS;
+}
 } // namespace myUtil
