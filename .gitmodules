@@ -19,3 +19,6 @@
 [submodule "third_part/opencv-for-mingw-x64"]
 	path = third_part/opencv-for-mingw-x64
 	url = https://github.com/UnderLurker/opencv-for-mingw-x64.git
+[submodule "third_part/libuv"]
+	path = third_part/libuv
+	url = https://github.com/UnderLurker/libuv.git

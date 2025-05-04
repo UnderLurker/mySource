@@ -131,13 +131,17 @@ Box::BoxList Box::GetBoxList(BoxType type) {
     return {};
 }
 
-ostringstream Box::PrintTree(uint32_t tab, uint32_t count) {
+ostringstream Box::PrintTree(uint32_t tab, const std::string& fill) {
     ostringstream ss;
     for(const auto& item : _boxes) {
-        ss << std::string(count * tab, ' ') << TypeToString(item.first) << endl;
+        auto tmp = tab;
+        while(tmp--) {
+            ss << fill;
+        }
+        ss << TypeToString(item.first) << endl;
         for(const auto& box : item.second) {
             if (box) {
-                ss << box->PrintTree(tab + 1).str();
+                ss << box->PrintTree(tab + 1, fill).str();
             }
         }
     }

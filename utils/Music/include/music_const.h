@@ -5,7 +5,9 @@
 #ifndef _MUSIC_CONST_H
 #define _MUSIC_CONST_H
 
+#include <cstdint>
 #include <map>
+#include <string>
 #include <unordered_map>
 
 #include "m4a/m4a_const.h"

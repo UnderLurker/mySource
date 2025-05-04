@@ -118,6 +118,7 @@ static std::string ToStrLevel(LogLevel level) {
     return strLevel;
 }
 
+#ifdef UTIL_DEBUG
 static void UtilPrint(LogLevel level,
                       const std::string& file,
                       uint32_t line,
@@ -142,8 +143,35 @@ static void UtilPrint(LogLevel level,
     std::cout << buffer;
     std::cout << std::endl;
 }
+//#include "client/include/log_client.h"
+//static void UtilPrint(LogLevel level,
+//                      const std::string& file,
+//                      uint32_t line,
+//                      const std::string& function,
+//                      const char* fmt,
+//                      ...) {
+//    va_list args;
+//    va_start(args, fmt);
+//    constexpr size_t bufferLen = 9999;
+//    char buffer[bufferLen];
+//    vsprintf(buffer, fmt, args);
+//    va_end(args);
+//    std::string strLevel = ToStrLevel(level);
+//    stringstream ss;
+//#ifdef LOG_TIME
+//    ss << CurrTime();
+//#endif
+//#ifdef LOG_FILE_PATH
+//    ss << file.substr(file.rfind('/') + 1) << ":" << line << " ";
+//#endif
+//    ss << function << " ";
+//    ss << strLevel;
+//    ss << buffer;
+//    ss << std::endl;
+//    auto client = myUtil::LogClient::GetInstance();
+//    client->Send(ss.str());
+//}
 
-#ifdef UTIL_DEBUG
 #define LOGE(fmt, ...) UtilPrint(LogLevel::ERROR, __FILE__, __LINE__, __FUNCTION__, fmt, ##__VA_ARGS__)
 #define LOGD(fmt, ...) UtilPrint(LogLevel::DEBUG, __FILE__, __LINE__, __FUNCTION__, fmt, ##__VA_ARGS__)
 #define LOGW(fmt, ...) UtilPrint(LogLevel::WARNING, __FILE__, __LINE__, __FUNCTION__, fmt, ##__VA_ARGS__)

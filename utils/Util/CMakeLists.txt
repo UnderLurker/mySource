@@ -8,6 +8,7 @@ add_library(Util_static STATIC
         src/MD5.cpp)
 target_include_directories(Util_static PUBLIC include
         PUBLIC src
+        PUBLIC ${UTILS_PATH}/Log
         PUBLIC ${THIRD_PART}/googletest/googletest/include)
 
 add_executable(UtilTest test/Util_test.cpp)

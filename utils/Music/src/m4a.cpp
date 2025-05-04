@@ -43,13 +43,13 @@ MusicStatus M4a::analysis() {
     return SUCCESS;
 }
 
-ostringstream M4a::PrintTree(uint32_t tab, uint32_t count) {
+ostringstream M4a::PrintTree(uint32_t tab, const std::string& fill) {
     ostringstream ss;
     for(const auto& item : _boxes) {
         ss << TypeToString(item.first) << endl;
         for(const auto& box : item.second) {
             if (box) {
-                ss << box->PrintTree(tab + 1, count).str();
+                ss << box->PrintTree(tab + 1, fill).str();
             }
         }
     }

@@ -20,7 +20,7 @@ public:
     }
     MusicStatus analysis() override;
 
-    ostringstream PrintTree(uint32_t tab, uint32_t count = 2);
+    ostringstream PrintTree(uint32_t tab, const std::string& fill = "  ");
 private:
     Box::SubBoxMap _boxes;
 };
