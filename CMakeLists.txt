@@ -34,8 +34,11 @@ function(getAllCpp path parentDir exclude)
     set(path ${LOCAL_LIST} PARENT_SCOPE)
 endfunction()
 
+set(LOG_INCLUDE "" CACHE PATH "" FORCE)
+
 if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
     add_definitions(-DUTIL_DEBUG)
+    list(APPEND LOG_INCLUDE ${UTILS_PATH}/Log)
 endif ()
 
 # 添加opencv引用

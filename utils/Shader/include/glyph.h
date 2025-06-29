@@ -8,6 +8,11 @@
 #include "color.h"
 #include "texture.h"
 
+#include <ft2build.h>
+#include FT_FREETYPE_H
+#define DEFAULT_FONT_SIZE 24
+#define DEFAULT_FONT_FAMILY "consola"
+
 namespace myUtil {
 
 template<typename T>
@@ -33,23 +38,41 @@ struct GlyphConfiguration {
 
 struct Character {
     std::shared_ptr<myUtil::Texture> texture; // 字形纹理的ID
-    SizeF size;                              // 字形大小
+    SizeF size;                               // 字形大小
     OffsetF bearing;                          // 从基准线到字形左部/顶部的偏移值
-    uint32_t advance;                           // 原点距下一个字形原点的距离
+    uint32_t advance;                         // 原点距下一个字形原点的距离
 };
 
-class CharacterManager {
+class FontManager {
 public:
-    static CharacterManager* GetInstance();
-    void Insert(const std::pair<GLchar, Character>& value);
-    Character& Get(GLchar index);
-    void Init(const std::string& fontName);
-    void Add(wchar_t index);
+    using CharCode = unsigned long;
+    ~FontManager() {
+        if (FT_Done_FreeType(_libFreeType)) {
+            LOGE("CharacterManager release libraryFreeType failed.");
+        }
+    }
+
+    static FontManager* GetInstance();
+    Character Get(CharCode code);
+    void Insert(const std::pair<CharCode, Character>& value);
+    void SetFontFamily(const std::string& fontFamily) { _fontFamily = fontFamily; }
+    const std::string& GetFontFamily() const { return _fontFamily; }
+
+protected:
+    bool AddCharCode(CharCode code);
+    bool InitFontLibrary() {
+        if (FT_Init_FreeType(&_libFreeType)) {
+            LOGE("CharacterManager: Could not init FreeType Library");
+            return false;
+        }
+        return true;
+    }
 
 private:
-    std::map<GLchar, myUtil::Character> _characters;
-    std::map<wchar_t, myUtil::Character> _wCharacters;
-    static thread_local std::unique_ptr<CharacterManager> _instance;
+    std::map<CharCode, myUtil::Character> _characters;
+    std::string _fontFamily   = DEFAULT_FONT_FAMILY;
+    FT_Library _libFreeType;
+    static thread_local std::unique_ptr<FontManager> _instance;
 };
 } // namespace myUtil
 

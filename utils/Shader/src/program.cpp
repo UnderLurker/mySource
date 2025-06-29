@@ -98,7 +98,7 @@ void Program::setColor(const std::string& name, const Color& color) const {
     set4Float(name, tmp[0], tmp[1], tmp[2], tmp[3]);
 }
 
-void Program::renderGlyph(const std::string& context,
+void Program::renderGlyph(const std::u16string& context,
                           const GlyphConfiguration& config,
                           const VertexArrayObj& vao) const {
     this->use();
@@ -106,20 +106,21 @@ void Program::renderGlyph(const std::string& context,
     vao.use();
     float x = config.position.x, y = config.position.y;
     for (auto item : context) {
-        Character ch = CharacterManager::GetInstance()->Get(item);
+        Character ch = FontManager::GetInstance()->Get(item);
+        if (!ch.texture) continue;
 
-        GLfloat xpos = x + ch.bearing.x * config.scale;
-        GLfloat ypos = y - (ch.size.height - ch.bearing.y) * config.scale;
+        GLfloat xPos = x + ch.bearing.x * config.scale;
+        GLfloat yPos = y - (ch.size.height - ch.bearing.y) * config.scale;
 
         GLfloat w = ch.size.width * config.scale;
         GLfloat h = ch.size.height * config.scale;
         ch.texture->drawTexture(GL_TEXTURE0);
-        vao.updateVertexData({xpos,     ypos + h, 0.0, 0.0,
-                              xpos,     ypos,     0.0, 1.0,
-                              xpos + w, ypos,     1.0, 1.0,
-                              xpos,     ypos + h, 0.0, 0.0,
-                              xpos + w, ypos,     1.0, 1.0,
-                              xpos + w, ypos + h, 1.0, 0.0});
+        vao.updateVertexData({xPos,     yPos + h, 0.0, 0.0,
+                              xPos,     yPos,     0.0, 1.0,
+                              xPos + w, yPos,     1.0, 1.0,
+                              xPos,     yPos + h, 0.0, 0.0,
+                              xPos + w, yPos,     1.0, 1.0,
+                              xPos + w, yPos + h, 1.0, 0.0});
         // 绘制四边形
         glDrawArrays(GL_TRIANGLES, 0, 6);
         // 更新位置到下一个字形的原点，注意单位是1/64像素

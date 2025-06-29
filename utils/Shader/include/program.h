@@ -39,7 +39,7 @@ public:
     void setVec3fv(const std::string& name, const float* array) const;
     void setColor(const std::string& name, const Color& color) const;
 
-    void renderGlyph(const std::string& context, const GlyphConfiguration& config, const VertexArrayObj& vao) const;
+    void renderGlyph(const std::u16string& context, const GlyphConfiguration& config, const VertexArrayObj& vao) const;
 
 private:
     void create(const char* filePath, Shader::ShaderType type);

@@ -87,51 +87,6 @@ int main() {
     myUtil::VertexArrayObj glyphVAO;
     glyphVAO.setGlyphArrayBuffer();
 
-    {
-//        // load and create a texture
-//        // -------------------------
-//        unsigned int texture1, texture2;
-//        unsigned char* data = nullptr;
-//        int width, height, nrChannels;
-//        //    stbi_set_flip_vertically_on_load(true);
-//        // texture 1
-//        // ---------
-//        glGenTextures(1, &texture1);
-//        glBindTexture(GL_TEXTURE_2D, texture1);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//        data = stbi_load("../../../img/Image/1.jpg", &width, &height, &nrChannels, 0);
-//        if (data) {
-//            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-//            glGenerateMipmap(GL_TEXTURE_2D);
-//        } else {
-//            std::cout << "Failed to load texture" << std::endl;
-//        }
-//        stbi_image_free(data);
-//        // texture 2
-//        // ---------
-//        glGenTextures(1, &texture2);
-//        glBindTexture(GL_TEXTURE_2D, texture2);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//        data = stbi_load("../../../img/Image/7.png", &width, &height, &nrChannels, 0);
-//        if (data) {
-//            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-//            glGenerateMipmap(GL_TEXTURE_2D);
-//        } else {
-//            std::cout << "Failed to load texture" << std::endl;
-//        }
-//        stbi_image_free(data);
-//        cubeProgram.use();
-//        cubeProgram.setInt("texture1", 0);
-//        cubeProgram.setInt("texture2", 1);
-    }
-
-    //    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
@@ -142,7 +97,7 @@ int main() {
                                      glm::vec3(1.3f, -2.0f, -2.5f),  glm::vec3(1.5f, 2.0f, -2.5f),
                                      glm::vec3(1.5f, 0.2f, -1.5f),   glm::vec3(-1.3f, 1.0f, -1.5f)};
 
-    myUtil::CharacterManager::GetInstance()->Init("consola");
+    myUtil::FontManager::GetInstance()->SetFontFamily("STXINGKA");
     glm::vec3 lightColor(1.0f);
     glm::vec3 cubeColor(.1f, 1.0f, .3f);
     glm::mat4 lightModel(1.0f);
@@ -202,8 +157,8 @@ int main() {
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
 
         textProgram.setMatrix4fv("project", glm::value_ptr(project));
-        textProgram.renderGlyph("This is sample text", configuration1, glyphVAO);
-        textProgram.renderGlyph("(C) LearnOpenGL.com", configuration2, glyphVAO);
+        textProgram.renderGlyph(u"This is sample text你好", configuration1, glyphVAO);
+        textProgram.renderGlyph(u"(C) LearnOpenGL.com", configuration2, glyphVAO);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

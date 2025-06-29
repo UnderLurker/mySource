@@ -15,12 +15,12 @@ file(GLOB LOG_BASE_SOURCE_FILE ./base/*.cpp)
 # LogClient_shared
 file(GLOB LOG_CLIENT_SOURCE_FILE ./client/src/*.cpp)
 add_library(LogClient_shared SHARED ${LOG_CLIENT_SOURCE_FILE} ${LOG_BASE_SOURCE_FILE})
-target_link_libraries(LogClient_shared uv)
+target_link_libraries(LogClient_shared PRIVATE uv)
 target_include_directories(LogClient_shared
         PUBLIC .
         PUBLIC ${THIRD_PART}/libuv/include)
 
-add_library(LogClient_static SHARED ${LOG_CLIENT_SOURCE_FILE} ${LOG_BASE_SOURCE_FILE})
+add_library(LogClient_static STATIC ${LOG_CLIENT_SOURCE_FILE} ${LOG_BASE_SOURCE_FILE})
 target_link_libraries(LogClient_static uv)
 target_include_directories(LogClient_static
         PUBLIC .
@@ -29,12 +29,12 @@ target_include_directories(LogClient_static
 # LogServer_shared
 file(GLOB LOG_SERVER_SOURCE_FILE ./server/src/*.cpp)
 add_library(LogServer_shared SHARED ${LOG_SERVER_SOURCE_FILE} ${LOG_BASE_SOURCE_FILE})
-target_link_libraries(LogServer_shared uv)
+target_link_libraries(LogServer_shared PRIVATE uv)
 target_include_directories(LogServer_shared
         PUBLIC .
-        PUBLIC ${THIRD_PART}/libuv/include)
+        PRIVATE ${THIRD_PART}/libuv/include)
 
-add_library(LogServer_static SHARED ${LOG_SERVER_SOURCE_FILE} ${LOG_BASE_SOURCE_FILE})
+add_library(LogServer_static STATIC ${LOG_SERVER_SOURCE_FILE} ${LOG_BASE_SOURCE_FILE})
 target_link_libraries(LogServer_static uv)
 target_include_directories(LogServer_static
         PUBLIC .

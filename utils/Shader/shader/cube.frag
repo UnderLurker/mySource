@@ -1,7 +1,5 @@
 #version 330 core
 
-out vec4 FragColor;
-
 in vec4 vertexColor;
 in vec3 normal;
 in vec3 FragPos;
@@ -15,9 +13,9 @@ uniform vec3 viewPos;
 
 void main()
 {
-//    FragColor = vertexColor;
-//     FragColor = texture(texture0, coord) * vertexColor;
-//     FragColor = mix(texture(texture1, coord), texture(texture2, coord), 0.2);
+//    gl_FragColor = vertexColor;
+//     gl_FragColor = texture(texture0, coord) * vertexColor;
+//     gl_FragColor = mix(texture(texture1, coord), texture(texture2, coord), 0.2);
     float ambientStrength = 0.1;
     float specularStrength = 0.5;
 
@@ -32,7 +30,6 @@ void main()
     vec3 ambient = ambientStrength * lightColor;
     vec3 diffuse = diff * lightColor;
     vec3 tmpColor = (ambient + diffuse + specular) * cubeColor;
-    FragColor = vec4(tmpColor, 1.0);
+    gl_FragColor = vec4(tmpColor, 1.0);
 
-//     FragColor = texture(texture1, coord);
 }
