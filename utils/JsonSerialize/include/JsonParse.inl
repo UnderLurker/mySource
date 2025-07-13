@@ -68,7 +68,7 @@ JsonStatus JsonDocument::Load(const char* filePath) {
     delete[] _filePath;
     uint32_t length = strlen(filePath);
     _filePath       = new char[length + 1];
-    memcpy_s(_filePath, sizeof(char) * length, filePath, length);
+    memcpy(_filePath, filePath, sizeof(char) * length);
     _filePath[length] = '\0';
 
     fstream file(filePath, ios::in | ios::binary);
@@ -104,7 +104,7 @@ void JsonDocument::save(const char* filePath) {
 
 char* JsonDocument::insertMemory(const char* begin, size_t length) {
     auto* tmp = new char[length + 1];
-    memcpy_s(tmp, length, begin, length);
+    memcpy(tmp, begin, length);
     tmp[length] = '\0';
     _memoryPool.emplace_back(tmp);
     return tmp;

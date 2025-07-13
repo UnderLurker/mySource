@@ -6,6 +6,7 @@
 #define _ID3V1_H
 
 #include <cassert>
+#include <cstring>
 
 #include "music_const.h"
 #include "Util.h"

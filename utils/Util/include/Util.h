@@ -135,11 +135,11 @@ static void UtilPrint(LogLevel level,
 #ifdef LOG_TIME
     std::cout << CurrTime();
 #endif
+    std::cout << strLevel;
 #ifdef LOG_FILE_PATH
     std::cout << file.substr(file.rfind('/') + 1) << ":" << line << " ";
 #endif
     std::cout << function << " ";
-    std::cout << strLevel;
     std::cout << buffer;
     std::cout << std::endl;
 }

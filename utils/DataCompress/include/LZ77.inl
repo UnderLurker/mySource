@@ -44,7 +44,7 @@ CompressStatus LZ77<T>::decode(const T* source, uint32_t sLength, T*& result, ui
             if (item._x == 0 && item._y == 0) {
                 result[curPos++] = *item._valStart;
             } else {
-                memcpy_s(result + curPos, item._y, result + curPos - item._x, item._y);
+                memcpy(result + curPos, result + curPos - item._x, item._y);
                 curPos += item._y;
             }
         }

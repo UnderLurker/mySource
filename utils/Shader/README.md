@@ -5,3 +5,5 @@ IDE: CLion 2023.2
 GLSL(support glsl)
 ## sample
 ![shaderIntroduce.png](../../img/doc/shaderIntroduce.png)
+
+## ubuntu环境请安装freetype

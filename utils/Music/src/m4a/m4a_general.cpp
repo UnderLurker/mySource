@@ -3,6 +3,8 @@
 //
 #include "m4a/m4a_general.h"
 
+#include <cstring>
+
 namespace myUtil {
 
 M4AStatus MediaDataBox::OnProcessData(const uint8_t* body, size_t length) {

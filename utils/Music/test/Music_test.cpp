@@ -5,7 +5,7 @@ using namespace myUtil;
 
 int main(){
 //    MP3 a("../../../Sounds/1.mp3");
-    M4a a("../../../Sounds/3.m4a");
+    M4a a("../../Sounds/3.m4a");
     cout << a.PrintTree(0, "| ").str();
     return 0;
 }

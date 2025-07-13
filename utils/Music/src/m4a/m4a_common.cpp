@@ -75,7 +75,7 @@ M4AStatus Box::ProcessHeader(const uint8_t* body, size_t length) {
         }
         if (_header.type == myUtil::BoxType::UUID && length >= USER_TYPE_LEN) {
             _userType = new uint8_t[USER_TYPE_LEN];
-            memcpy_s(_userType, USER_TYPE_LEN, body, USER_TYPE_LEN);
+            memcpy(_userType, body, USER_TYPE_LEN);
         }
     } catch (...) { return ERROR_UNKNOWN; }
     return SUCCESS;

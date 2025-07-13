@@ -1,9 +1,10 @@
 .vscode/*
 cmake-build-debug-mingw
 cmake-build-debug
-build
 .idea
 sample/test1.json
 .cache
 log
 .vim/
+out
+build/__pycache__

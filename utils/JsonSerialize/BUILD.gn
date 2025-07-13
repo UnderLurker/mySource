@@ -1,0 +1,25 @@
+import("//config.gni")
+import("//utils/test_config.gni")
+
+source_set("json_parse_source") {
+  sources = [
+    "include/JsonParse.h",
+    "include/JsonParse.inl"
+  ]
+}
+
+test_executable("JsonParseTest") {
+  include_dirs = [
+    "include",
+  ]
+  configs = [
+    "$utils_path/Reflex:reflex_config",
+  ]
+  sources = [
+    "test/json_test.cpp"
+  ]
+  deps = [
+    "$utils_path/Util:util_static",
+    "$third_part/googletest:gtest",
+  ]
+}

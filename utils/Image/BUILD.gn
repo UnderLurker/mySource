@@ -1,0 +1,61 @@
+import("//config.gni")
+import("//utils/test_config.gni")
+
+config("image_config") {
+  include_dirs = [ "include" ]
+}
+
+image_sources = [
+  "src/bmp.cpp",
+  "src/jpeg.cpp",
+  "src/picture_algorithm.cpp",
+  "src/png.cpp",
+  "src/webp.cpp",
+  "src/yuv.cpp",
+]
+
+qrcode_sources = [
+  "src/QrEncode.cpp",
+]
+
+static_library("Image_static") {
+  sources = image_sources
+  public_configs = [
+    ":image_config",
+    "$utils_path/Matrix:matrix_config",
+  ]
+  public_deps = [ "$utils_path/Util:util_static" ]
+}
+
+static_library("QRCode_static") {
+  sources = qrcode_sources
+  sources += image_sources
+  public_configs = [
+    ":image_config",
+    "$utils_path/Matrix:matrix_config",
+  ]
+  public_deps = [ "$utils_path/Util:util_static" ]
+}
+
+test_executable("ImageTest") {
+  configs = [
+    ":image_config",
+    "$utils_path/Matrix:matrix_config",
+  ]
+  sources = [ "test/Image_test.cpp" ]
+  deps = [ ":Image_static" ]
+  so_deps = [ "$third_part/zlib:shared_libz" ]
+}
+
+
+test_executable("QrCodeTest") {
+  configs = [
+    ":image_config",
+    "$utils_path/Matrix:matrix_config",
+  ]
+  sources = [ "test/QrCode_test.cpp" ]
+  deps = [
+    ":Image_static",
+    ":QRCode_static",
+  ]
+}

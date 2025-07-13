@@ -423,7 +423,7 @@ class ExtraFieldNTFS{
     };
 public:
     NTFSHead head;
-    list<NTFSTag> list;
+    list<NTFSTag> tagList;
     ExtraFieldNTFS() = default;
     ExtraFieldNTFS(fstream& file){
         file.read((char*)&head, sizeof(head));
@@ -431,7 +431,7 @@ public:
         while(count--){
             NTFSTag t;
             file.read((char*)&t, sizeof(t));
-            list.emplace_back(t);
+            tagList.emplace_back(t);
         }
     }
 };

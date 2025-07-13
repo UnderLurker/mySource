@@ -21,7 +21,7 @@ public:
         MYASSERT(_filePath == nullptr);
         uint32_t len = strlen(filePath) + 1;
         _filePath    = new char[len];
-        memcpy_s(_filePath, len - 1, filePath, len - 1);
+        memcpy(_filePath, filePath, len - 1);
         _filePath[len - 1] = '\0';
     }
     virtual ~MusicBase() {
@@ -37,7 +37,7 @@ public:
         _filePath    = nullptr;
         uint32_t len = strlen(filePath) + 1;
         _filePath    = new char[len];
-        memcpy_s(_filePath, len - 1, filePath, len - 1);
+        memcpy(_filePath, filePath, len - 1);
         _filePath[len - 1] = '\0';
     }
 

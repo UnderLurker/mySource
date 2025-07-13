@@ -1,0 +1,22 @@
+import("//config.gni")
+import("//utils/test_config.gni")
+
+config("dataCompress_config") {
+  include_dirs = [ "include" ]
+}
+
+dataComparess_sources = [
+  "src/compress.cpp",
+  "src/vp8.cpp",
+]
+
+static_library("dataCompress_static") {
+  sources = dataComparess_sources
+  public_configs = [ ":dataCompress_config" ]
+  public_deps = [ "$utils_path/Util:util_static" ]
+}
+
+test_executable("CompressTest") {
+  sources = [ "test/Compress_test.cpp" ]
+  deps = [ ":dataCompress_static" ]
+}

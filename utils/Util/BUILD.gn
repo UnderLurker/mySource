@@ -1,0 +1,29 @@
+import("//config.gni")
+import("//utils/test_config.gni")
+
+util_sources = [
+  "src/Ini.cpp",
+  "src/MD5.cpp",
+  "src/Util.cpp",
+]
+config("util_config") {
+  include_dirs = [ "include" ]
+}
+
+static_library("util_static") {
+  public_configs = [ ":util_config" ]
+  sources = util_sources
+}
+
+shared_library("util_shared") {
+  public_configs = [ ":util_config" ]
+  sources = util_sources
+}
+
+test_executable("UtilTest") {
+  sources = [ "test/Util_test.cpp" ]
+  deps = [
+    ":util_static",
+    "$third_part/googletest:gtest",
+  ]
+}

@@ -1,0 +1,42 @@
+# Copyright 2014 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//build/cxx_config.gni")
+
+cflags_cc = [
+  "-std=$cxx_standard",
+]
+
+print("is_debug = $is_debug")
+
+config("compiler_defaults") {
+  if (current_os == "linux") {
+    cflags = [
+      "-fPIC",
+      "-pthread",
+    ]
+  }
+  if (is_debug) {
+    defines = [
+      "LOG_FILE_PATH",
+      "LOG_TIME",
+      "UTIL_DEBUG",
+    ]
+  }
+}
+
+config("executable_ldconfig") {
+  ldflags = []
+  if (!is_mac) {
+    ldflags += [
+      "-Wl,-rpath=\$ORIGIN/",
+      "-Wl,-rpath-link=",
+    ]
+  }
+  if (!is_win) {
+    ldflags += [
+      "-pthread"
+    ]
+  }
+}

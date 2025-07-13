@@ -1,0 +1,21 @@
+group("all_utils") {
+  deps = [
+
+  ]
+}
+
+group("all_utils_test") {
+  testonly = true
+  deps = [
+    "DataCompress:CompressTest",
+    "Image:ImageTest",
+    "Image:QrCodeTest",
+    "JsonSerialize:JsonParseTest",
+    "Log:LogClientTest",
+    "Log:LogServerTest",
+    "Matrix:MatrixTest",
+    "Music:MusicTest",
+    "Shader:OpenGLTest",
+    "Util:UtilTest",
+  ]
+}

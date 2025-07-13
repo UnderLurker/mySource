@@ -61,11 +61,11 @@ int main() {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
-    myUtil::Program cubeProgram("../../../utils/Shader/shader/cube.vert", myUtil::Shader::VERTEX_SHADER,
-                            "../../../utils/Shader/shader/cube.frag", myUtil::Shader::FRAGMENT_SHADER);
+    myUtil::Program cubeProgram("shader/cube.vert", myUtil::Shader::VERTEX_SHADER,
+                            "shader/cube.frag", myUtil::Shader::FRAGMENT_SHADER);
     cubeProgram.linkProgram();
-    myUtil::Program lightProgram("../../../utils/Shader/shader/light.frag", myUtil::Shader::FRAGMENT_SHADER,
-                                 "../../../utils/Shader/shader/light.vert", myUtil::Shader::VERTEX_SHADER);
+    myUtil::Program lightProgram("shader/light.frag", myUtil::Shader::FRAGMENT_SHADER,
+                                 "shader/light.vert", myUtil::Shader::VERTEX_SHADER);
     lightProgram.linkProgram();
     myUtil::Program textProgram("shader/glyph.frag", myUtil::Shader::FRAGMENT_SHADER,
                                  "shader/glyph.vert", myUtil::Shader::VERTEX_SHADER);

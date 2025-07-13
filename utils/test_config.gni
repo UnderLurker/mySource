@@ -1,0 +1,101 @@
+import("//config.gni")
+
+template("test_executable") {
+  exe_sources = []
+  exe_include_dirs = []
+  exe_configs = [
+    "//build:compiler_defaults",
+    "//build:executable_ldconfig",
+  ]
+  exe_deps = []
+  exe_libs = []
+  exe_so_deps = []
+  exe_cflags = []
+  exe_output = "$target_gen_dir"
+  exe_target_name = target_name
+
+  if (defined(invoker.sources)) {
+    exe_sources += invoker.sources
+  }
+
+  if (defined(invoker.include_dirs)) {
+    exe_include_dirs += invoker.include_dirs
+  }
+
+  if (defined(invoker.configs)) {
+    exe_configs += invoker.configs
+  }
+
+  if (defined(invoker.deps)) {
+    exe_deps += invoker.deps
+  }
+
+  if (defined(invoker.libs)) {
+    exe_libs += invoker.libs
+  }
+
+  if (defined(invoker.so_deps)) {
+    exe_so_deps += invoker.so_deps
+  }
+
+  if (defined(invoker.output_dir)) {
+    exe_output = invoker.output_dir
+  }
+
+  if (defined(invoker.cflags)) {
+    exe_cflags = invoker.cflags
+  }
+
+  if (exe_so_deps != []) {
+    copy_target = "${target_name}_copy_so"
+    action(copy_target) {
+      script = "//build/copy.py"
+      inputs = []
+      outputs = []
+      deps = exe_so_deps
+      args = [
+        "--dest", rebase_path(exe_output, root_build_dir),
+      ]
+      foreach(so_target, exe_so_deps) {
+        so_name = get_label_info(so_target, "name")
+        so_output_name = so_name
+        if (defined(invoker.output_name)) {
+          so_output_name = invoker.output_name
+        }
+        so_filename = "lib${so_output_name}.so"
+        so_path = "${root_out_dir}/${so_filename}"
+        inputs += [ so_path ]
+        outputs += [ "${exe_output}/${so_filename}" ]
+        args += [
+          "--input", rebase_path(so_path, root_build_dir),
+          "--output", so_filename,
+        ]
+      }
+    }
+  }
+  executable(exe_target_name) {
+    testonly = true
+    sources = []
+    sources += exe_sources
+
+    include_dirs = []
+    include_dirs += exe_include_dirs
+
+    configs = []
+    configs += exe_configs
+
+    deps = []
+    deps += exe_deps
+    deps += exe_so_deps
+
+    libs = []
+    libs += exe_libs
+    output_dir = "$exe_output"
+
+    if (exe_so_deps != []) {
+      deps += [ ":$copy_target" ]
+    }
+    cflags = []
+    cflags += exe_cflags
+  }
+}

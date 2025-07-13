@@ -1,5 +1,6 @@
 #include "png.h"
 
+#include <cstring>
 #include <fstream>
 #include <sstream>
 #include <zlib.h>
@@ -726,18 +727,18 @@ ImageStatus iTXtChunk::encode(std::fstream& file) {
         write32(file, dataLen);
         file.write(CHUNK::typeMap[CHUNK::iTXt].c_str(), 4);
         auto ss = std::make_unique<uint8_t[]>(dataLen);
-        memcpy_s(ss.get(), strlen(keyWord), keyWord, strlen(keyWord));
+        memcpy(ss.get(), keyWord, strlen(keyWord));
         i       = strlen(keyWord);
         ss[i++] = 0;
         ss[i++] = compressFlag;
         ss[i++] = compressMethod;
-        memcpy_s(ss.get() + i, languageTag.size(), languageTag.c_str(), languageTag.size());
+        memcpy(ss.get() + i, languageTag.c_str(), languageTag.size());
         i       += languageTag.size();
         ss[i++]  = 0;
-        memcpy_s(ss.get() + i, translatedKeyWordLen, translatedKeyWord.get(), translatedKeyWordLen);
+        memcpy(ss.get() + i, translatedKeyWord.get(), translatedKeyWordLen);
         i       += translatedKeyWordLen;
         ss[i++]  = 0;
-        memcpy_s(ss.get() + i, textLen, text.get(), textLen);
+        memcpy(ss.get() + i, text.get(), textLen);
         file.write((char*)ss.get(), dataLen);
         crc.crc = createCRC(ss.get(), dataLen);
         write32(file, crc.crc);
@@ -934,7 +935,7 @@ ImageStatus sPLTChunk::encode(std::fstream& file) {
         write32(file, dataLen);
         file.write(CHUNK::typeMap[CHUNK::sPLT].c_str(), 4);
         auto ss = std::make_unique<uint8_t[]>(dataLen);
-        memcpy_s(ss.get(), paletteName.size(), paletteName.c_str(), paletteName.size());
+        memcpy(ss.get(), paletteName.c_str(), paletteName.size());
         i       += paletteName.size();
         ss[i++]  = 0;
         ss[i++]  = sampleDepth;
@@ -1163,7 +1164,7 @@ ImageStatus IDATChunk::encode(std::fstream& file, unique_ptr<uint8_t[]>& data, u
             write32(file, count);
             file.write(CHUNK::typeMap[CHUNK::IDAT].c_str(), 4);
             auto ss = std::make_unique<uint8_t[]>(count);
-            memcpy_s(ss.get(), count, data.get() + totalLen - dataLen, count);
+            memcpy(ss.get(), data.get() + totalLen - dataLen, count);
             file.write((char*)ss.get(), count);
             uint32_t crc = createCRC(ss.get(), count);
             write32(file, crc);
@@ -1521,7 +1522,7 @@ void PNGData::data2Matrix(unique_ptr<uint8_t[]>& uncompressData) {
             } else if (type == CHUNK::GREY_ALPHA) return RGB {temp[0], temp[0], temp[0], temp[1]};
             else if (type == CHUNK::RGBA) return RGB {temp[0], temp[1], temp[2], temp[3]};
         } else {
-            // ÔÝÎ´ÊµÏÖÎ»Éî¶ÈÎª1£¬2£¬4µÄGREY_SCALEºÍINDEXED_COLOUR
+            // ï¿½ï¿½Î´Êµï¿½ï¿½Î»ï¿½ï¿½ï¿½Îª1ï¿½ï¿½2ï¿½ï¿½4ï¿½ï¿½GREY_SCALEï¿½ï¿½INDEXED_COLOUR
             uint16_t temp = ((*pos) << curBit) >> (8 - bitDepth);
             if ((curBit + bitDepth) >= 8) pos++;
             curBit = (curBit + bitDepth) % 8;
@@ -1622,7 +1623,7 @@ void PNGData::matrix2Data(unique_ptr<uint8_t[]>& originData) {
                 }
             }
         } else {
-            // Î´ÊµÏÖÎ»Éî¶ÈÐ¡ÓÚ8µÄ·½·¨
+            // Î´Êµï¿½ï¿½Î»ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½8ï¿½Ä·ï¿½ï¿½ï¿½
         }
     };
     for (int32_t i = 0; i < _IHDR.height(); i++) {

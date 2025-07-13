@@ -40,7 +40,7 @@ void LZ77Test() {
     }
     {
         LZ77<char> lib;
-        char *input  = "123323123";
+        char input[]  = "123323123";
         char *output = nullptr;
         uint32_t len = 0;
         cout << lib.encode(input, 9, output, len) << endl;

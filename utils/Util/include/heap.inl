@@ -82,7 +82,7 @@ void heap<T, Compare>::push_back(const T& val)
         auto* tmp = _values;
         _maxLength = _maxLength == 0 ? 1 : AMPLIFY_NUM * _maxLength;
         _values = new T[_maxLength] { T() };
-        memcpy_s(_values, sizeof(T) * _curLength, tmp, sizeof(T) * _curLength);
+        memcpy(_values, tmp, sizeof(T) * _curLength);
         delete[] tmp;
     }
     _values[_curLength] = val;

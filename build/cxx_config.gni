@@ -1,0 +1,5 @@
+declare_args() {
+  cxx_standard = "c++17"
+  is_mingw = false
+  is_debug = true
+}

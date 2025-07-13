@@ -1,0 +1,7 @@
+import("//config.gni")
+config("reflex_config") {
+  include_dirs = [
+    "include",
+    "$utils_path/Singleton/include",
+  ]
+}

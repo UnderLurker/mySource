@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <bitset>
+#include <climits>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -261,7 +262,7 @@ vector<int> getErrorCurrentWords(int* coefficient,int cofLen,int ErrorCurrentTab
     int polynomialLen=ErrorCurrentTable[ErrorCurrentTableIndex][1]+1;
     int* coeff=new int[cofLen + polynomialLen - 1];
     memset(coeff, 0, sizeof(int)*(cofLen + polynomialLen - 1));
-    memcpy_s(coeff, sizeof(int)*cofLen, coefficient, sizeof(int)*cofLen);
+    memcpy(coeff, coefficient, sizeof(int)*cofLen);
     for(int i=0;i<cofLen;i++){
         // 1.Multiply the Generator Polynomial by the Lead Term of the XOR result from the previous step
         // 2.XOR the result with the result from step 14b

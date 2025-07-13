@@ -39,7 +39,7 @@ public:
         _header  = obj._header;
         _flags   = obj._flags;
         _content = new int8_t[obj._header.size + 1];
-        memcpy_s(_content, obj._header.size, obj._content, obj._header.size);
+        memcpy(_content, obj._content, obj._header.size);
     }
     TagFrame(TagFrame&& obj) noexcept {
         _header      = obj._header;

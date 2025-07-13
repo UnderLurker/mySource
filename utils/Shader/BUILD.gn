@@ -1,0 +1,69 @@
+import("//config.gni")
+import("//utils/test_config.gni")
+
+config("shader_config") {
+  include_dirs = [
+    "include",
+    "//include",
+    "$third_part/std",
+  ]
+  configs = [ "$third_part/glm:glm_config" ]
+  freetype_cflags = exec_script("//build/run_pkg_config.py", [ "--cflags", "freetype2" ], "list lines")
+  cflags = freetype_cflags
+}
+
+copy("shader_font") {
+  sources = [
+    "fonts/consola.ttf",
+    "fonts/consolab.ttf",
+    "fonts/consolai.ttf",
+    "fonts/consolaz.ttf",
+    "fonts/STXINGKA.TTF",
+  ]
+  outputs = [ "$target_gen_dir/fonts/{{source_name_part}}.ttf" ]
+}
+
+action("shader_glsl") {
+  script = "//build/copy.py"
+  inputs = [ "shader" ]
+  outputs = [ "$target_gen_dir/shader" ]
+  args = [
+    "--input", rebase_path("shader", root_build_dir),
+    "--dest", rebase_path("$target_gen_dir", root_build_dir),
+  ]
+}
+
+shared_library("shader_shared") {
+  sources = [
+    "src/camera.cpp",
+    "src/glyph.cpp",
+    "src/program.cpp",
+    "src/shader.cpp",
+    "src/texture.cpp",
+    "src/vertex_array_obj.cpp",
+  ]
+  configs += [
+    ":shader_config",
+  ]
+  libs = [ "freetype" ]
+  public_deps = [ "$utils_path/Util:util_static" ]
+}
+
+test_executable("OpenGLTest") {
+  configs = [ ":shader_config" ]
+  sources = [
+    "test/opengl_test.cpp",
+    "//src/glad.c",
+  ]
+  output_dir = "$target_gen_dir"
+  deps = [
+    ":shader_font",
+    ":shader_glsl",
+    "$utils_path/Util:util_static",
+  ]
+  libs = [ "dl" ]
+  so_deps = [
+    ":shader_shared",
+    "$third_part/glfw:glfw",
+  ]
+}

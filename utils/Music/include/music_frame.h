@@ -65,7 +65,7 @@ public:
     MusicFrameChannelInfo() = default;
     MusicFrameChannelInfo(const MusicFrameChannelInfo& obj) {
         _info = std::make_unique<uint8_t[]>(MUSIC_FRAME_CHANNEL_INFO_LEN);
-        memcpy_s(_info.get(), MUSIC_FRAME_CHANNEL_INFO_LEN, obj._info.get(), MUSIC_FRAME_CHANNEL_INFO_LEN);
+        memcpy(_info.get(), obj._info.get(), MUSIC_FRAME_CHANNEL_INFO_LEN);
     }
     MusicFrameChannelInfo(MusicFrameChannelInfo&& obj) noexcept { _info = std::move(obj._info); }
     ~MusicFrameChannelInfo() = default;

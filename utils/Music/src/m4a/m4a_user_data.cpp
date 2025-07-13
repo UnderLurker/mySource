@@ -11,7 +11,7 @@ M4AStatus CopyrightBox::OnProcessData(const uint8_t* body, size_t length) {
     language = GetValue<uint16_t>(body);
     if (length <= 2) return ERROR_FILE_FORMAT;
     notice.resize(length - 2);
-    memcpy_s(const_cast<char*>(notice.c_str()), notice.size(), body + 2, length - 2);
+    memcpy(const_cast<char*>(notice.c_str()), body + 2, length - 2);
     return SUCCESS;
 }
 
@@ -47,7 +47,7 @@ M4AStatus BinaryXMLBox::OnProcessData(const uint8_t* body, size_t length) {
     if (length == 0) return SUCCESS;
     len  = length;
     data = std::make_unique<uint8_t[]>(len);
-    memcpy_s(data.get(), len, body, length);
+    memcpy(data.get(), body, length);
     return SUCCESS;
 }
 
@@ -85,16 +85,16 @@ M4AStatus ItemLocationBox::OnProcessData(const uint8_t* body, size_t length) {
         }
         infos[i].extentOffset = std::make_unique<uint8_t[]>(offsetSize);
         infos[i].extentLength = std::make_unique<uint8_t[]>(lengthSize);
-        memcpy_s(infos[i].baseOffset.get(), baseOffsetSize, body + pos + 2, baseOffsetSize);
+        memcpy(infos[i].baseOffset.get(), body + pos + 2, baseOffsetSize);
         infos[i].extentCount  = GetValue<uint16_t>(body + pos + 2 + baseOffsetSize);
         pos                  += 2 + baseOffsetSize;
         for (uint32_t j = 0; j < infos[i].extentCount; j++) {
             if (infos[i].extentIndex) {
-                memcpy_s(infos[i].extentIndex.get(), indexSize, body + pos, indexSize);
+                memcpy(infos[i].extentIndex.get(), body + pos, indexSize);
                 pos += indexSize;
             }
-            memcpy_s(infos[i].extentOffset.get(), offsetSize, body + pos, offsetSize);
-            memcpy_s(infos[i].extentLength.get(), lengthSize, body + pos + offsetSize, lengthSize);
+            memcpy(infos[i].extentOffset.get(), body + pos, offsetSize);
+            memcpy(infos[i].extentLength.get(), body + pos + offsetSize, lengthSize);
             pos += offsetSize + lengthSize;
         }
     }

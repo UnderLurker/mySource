@@ -1,0 +1,14 @@
+group("third_party_all") {
+  testonly = true
+  deps = [
+    "glfw:glfw",
+    "googletest:gtest",
+    "googletest:gtest_main",
+    "googletest:gmock",
+    "googletest:gmock_main",
+    "libuv:uv",
+    "zlib:libz",
+    "zlib:libz_crc",
+    "zlib:shared_libz",
+  ]
+}

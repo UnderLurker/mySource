@@ -1,0 +1,45 @@
+import("//config.gni")
+import("//utils/test_config.gni")
+
+config("music_config") {
+  include_dirs = [
+    "include",
+    "$utils_path/Util/include"
+  ]
+}
+
+source_set("music_sources") {
+  sources = [
+    "src/ID3V2.cpp",
+    "src/m4a.cpp",
+    "src/mp3.cpp",
+    "src/music_frame.cpp",
+    "src/m4a/m4a_common.cpp",
+    "src/m4a/m4a_general.cpp",
+    "src/m4a/m4a_movie.cpp",
+    "src/m4a/m4a_movie_fragments.cpp",
+    "src/m4a/m4a_sample_group.cpp",
+    "src/m4a/m4a_sample_tables.cpp",
+    "src/m4a/m4a_track.cpp",
+    "src/m4a/m4a_track_data_layout.cpp",
+    "src/m4a/m4a_track_media.cpp",
+    "src/m4a/m4a_track_time.cpp",
+    "src/m4a/m4a_user_data.cpp",
+  ]
+  deps = [ "$utils_path/Util:util_static" ]
+  configs += [ ":music_config" ]
+}
+
+static_library("music_static") {
+  public_deps = [ ":music_sources" ]
+}
+
+shared_library("music_shared") {
+  public_deps = [ ":music_sources" ]
+}
+
+test_executable("MusicTest") {
+  configs = [ ":music_config" ]
+  sources = [ "test/Music_test.cpp" ]
+  so_deps = [ ":music_shared" ]
+}

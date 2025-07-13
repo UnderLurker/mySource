@@ -1,0 +1,32 @@
+import("//config.gni")
+import("//utils/test_config.gni")
+
+common_log_sources = [ "base/log_base.cpp" ]
+
+shared_library("log_client_shared") {
+  include_dirs = [ "." ]
+  sources = common_log_sources
+  sources += [ "client/src/log_client.cpp" ]
+}
+
+shared_library("log_server_shared") {
+  include_dirs = [ "." ]
+  sources = common_log_sources
+  sources += [ "server/src/log_server.cpp" ]
+}
+
+test_executable("LogClientTest") {
+  include_dirs = [ "." ]
+  sources = [ "test/log_client_test.cpp" ]
+  deps = [ "$third_part/libuv:uv_static" ]
+  so_deps = [ ":log_client_shared" ]
+  libs = [ "dl" ]
+}
+
+test_executable("LogServerTest") {
+  include_dirs = [ "." ]
+  sources = [ "test/log_server_test.cpp" ]
+  deps = [ "$third_part/libuv:uv_static" ]
+  so_deps = [ ":log_server_shared" ]
+  libs = [ "dl" ]
+}

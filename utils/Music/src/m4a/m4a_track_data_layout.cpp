@@ -9,7 +9,7 @@ namespace myUtil {
 
 M4AStatus DataEntryUrlBox::OnProcessData(const uint8_t* body, size_t length) {
     location = std::string(length, STRING_FILL);
-    memcpy_s(location.data(), length, body, length);
+    memcpy(location.data(), body, length);
     return SUCCESS;
 }
 
@@ -23,8 +23,8 @@ M4AStatus DataEntryUrnBox::OnProcessData(const uint8_t* body, size_t length) {
     }
     name     = std::string(pos, STRING_FILL);
     location = std::string(length - pos - 1, STRING_FILL);
-    memcpy_s(name.data(), pos, body, pos);
-    memcpy_s(location.data(), length - pos - 1, body + pos + 1, length - pos - 1);
+    memcpy(name.data(), body, pos);
+    memcpy(location.data(), body + pos + 1, length - pos - 1);
     return SUCCESS;
 }
 
@@ -51,7 +51,7 @@ M4AStatus CompactSampleSizeBox::OnProcessData(const uint8_t* body, size_t length
     sampleCount = GetValue<uint32_t>(body + 4);
     if (length == 8) return SUCCESS;
     entrySize = std::make_unique<uint8_t[]>(length - 8);
-    memcpy_s(entrySize.get(), length - 8, body + 8, length - 8);
+    memcpy(entrySize.get(), body + 8, length - 8);
     return SUCCESS;
 }
 
@@ -139,7 +139,7 @@ M4AStatus SampleAuxiliaryInformationSizesBox::OnProcessData(const uint8_t* body,
     count                 = GetValue<uint32_t>(body + pos + 1);
     if (count == 0) return SUCCESS;
     infoSize = std::make_unique<uint8_t[]>(count);
-    memcpy_s(infoSize.get(), count, body + pos + 5, count);
+    memcpy(infoSize.get(), body + pos + 5, count);
     return SUCCESS;
 }
 

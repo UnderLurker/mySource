@@ -5,7 +5,6 @@
 #include <functional>
 #include <map>
 #include <string>
-#include <vadefs.h>
 #include <vector>
 
 #include "Singleton.h"

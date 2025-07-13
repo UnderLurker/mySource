@@ -1,0 +1,11 @@
+import("//config.gni")
+import("//utils/test_config.gni")
+
+config("matrix_config") {
+  include_dirs = [ "include" ]
+}
+
+test_executable("MatrixTest") {
+  configs = [ ":matrix_config" ]
+  sources = [ "test/Matrix_test.cpp" ]
+}
