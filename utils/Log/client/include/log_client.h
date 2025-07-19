@@ -15,7 +15,7 @@ class LogClient : public LogBase {
 public:
     static LogClient* GetInstance();
     void Recv();
-    void Send(const std::string& message) { LogBase::Send(message); }
+    void Send(const std::string& message);
 
 protected:
     static void OnConnect(uv_connect_t* req, int status);

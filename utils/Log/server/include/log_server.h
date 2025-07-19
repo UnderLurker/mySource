@@ -17,6 +17,7 @@ protected:
     static void OnConnect(uv_stream_t* server, int status);
     static void OnAccept(uv_stream_t* server, uv_stream_t* client);
     static void OnRead(uv_stream_t* client, ssize_t nRead, const uv_buf_t* buf);
+    static uint32_t Decode(std::string_view& data, std::string_view& next);
 };
 
 } // namespace myUtil

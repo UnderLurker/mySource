@@ -25,6 +25,17 @@ LogClient* LogClient::GetInstance() {
 
 void LogClient::Recv() { LogBase::Recv(reinterpret_cast<uv_stream_t*>(&_tcp)); }
 
+void LogClient::Send(const std::string& message) {
+    auto size = message.size();
+    int32_t len = 0;
+    while(size) {
+        size /= 10;
+        len++;
+    }
+    std::string tmp = std::to_string(len) + std::to_string(message.size()) + message;
+    LogBase::Send(tmp);
+}
+
 void LogClient::OnConnect(uv_connect_t* req, int status) {
     if (status < 0) {
         std::cerr << "Connect error: " << uv_strerror(status) << std::endl;

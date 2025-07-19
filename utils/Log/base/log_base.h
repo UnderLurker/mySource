@@ -21,7 +21,9 @@ public:
 
 protected:
     void Recv(uv_stream_t*);
+    void CloseTcp();
     static void AllocBuffer(uv_handle_t* handle, size_t suggestedSize, uv_buf_t* buf);
+    static std::string GetSockaddr(const sockaddr* addr);
 
 protected:
     static uv_loop_t* _loop;

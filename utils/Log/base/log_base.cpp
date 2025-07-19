@@ -21,7 +21,7 @@ LogBase::LogBase(const std::string& ip, int32_t port) {
 
 LogBase::~LogBase() {
     uv_loop_close(_loop);
-    uv_tcp_close_reset(&_tcp, nullptr);
+    CloseTcp();
 }
 
 void LogBase::Send(const std::string& message) {
@@ -37,18 +37,51 @@ void LogBase::OnRead(uv_stream_t* client, ssize_t nRead, const uv_buf_t* buf) {
     if (nRead > 0) {
         printf("Received data: %.*s\n", (int)nRead, buf->base);
     } else if (nRead < 0) {
-        std::cerr << "Read error: " << uv_strerror(static_cast<int>(nRead)) << std::endl;
+        printf("Read error: %s\n", uv_strerror(static_cast<int>(nRead)));
+        uv_read_stop(client);
         uv_close((uv_handle_t*)client, OnClose);
     }
     delete[] buf->base;
 }
 
-void LogBase::OnClose(uv_handle_t* handle) {}
+void LogBase::OnClose(uv_handle_t* handle) {
+    printf("logBase::OnClose\n");
+}
 
 void LogBase::Recv(uv_stream_t* stream) { uv_read_start(stream, AllocBuffer, OnRead); }
+
+void LogBase::CloseTcp() {
+    printf("logBase::CloseTcp\n");
+    uv_read_stop((uv_stream_t*)&_tcp);
+    uv_close((uv_handle_t*)&_tcp, OnClose);
+}
 
 void LogBase::AllocBuffer(uv_handle_t* handle, size_t suggestedSize, uv_buf_t* buf) {
     buf->base = new char[suggestedSize];
     buf->len  = suggestedSize;
+}
+
+std::string LogBase::GetSockaddr(const sockaddr* addr) {
+    if (!addr) return "";
+    char ip[INET6_ADDRSTRLEN];
+    int port;
+
+    if (addr->sa_family == AF_INET) {
+        sockaddr_in* addr_in = (sockaddr_in*)addr;
+        inet_ntop(AF_INET, &(addr_in->sin_addr), ip, sizeof(ip));
+        port = ntohs(addr_in->sin_port);
+    } else if (addr->sa_family == AF_INET6) {
+        sockaddr_in6* addr_in6 = (sockaddr_in6*)addr;
+        inet_ntop(AF_INET6, &(addr_in6->sin6_addr), ip, sizeof(ip));
+        port = ntohs(addr_in6->sin6_port);
+    } else {
+        return "Unknown address family\n";
+    }
+    std::string result = "Address: ";
+    result.append(ip);
+    result.append(", Port: ");
+    result.append(std::to_string(port));
+    result.append("\n");
+    return result;
 }
 } // namespace myUtil

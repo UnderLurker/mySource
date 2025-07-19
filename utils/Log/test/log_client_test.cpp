@@ -1,13 +1,11 @@
 //
 // Created by Administrator on 2025/5/4.
 //
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <iostream>
-#include <uv.h>
 
 #include "client/include/log_client.h"
+
+#include <thread>
+#include <chrono>
 
 int main() {
     auto client = myUtil::LogClient::GetInstance();
