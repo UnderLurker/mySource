@@ -2,6 +2,8 @@
 
 #include <fstream>
 
+#include "include/logger_wrapper.h"
+
 using namespace std;
 NAME_SPACE_START(myUtil)
 

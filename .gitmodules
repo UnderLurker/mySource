@@ -15,7 +15,7 @@
 	url = https://github.com/UnderLurker/googletest.git
 [submodule "third_part/freetype-windows-binaries"]
 	path = third_part/freetype-windows-binaries
-	url = git@github.com:UnderLurker/freetype-windows-binaries.git
+	url = https://github.com/UnderLurker/freetype-windows-binaries.git
 [submodule "third_part/opencv-for-mingw-x64"]
 	path = third_part/opencv-for-mingw-x64
 	url = https://github.com/UnderLurker/opencv-for-mingw-x64.git

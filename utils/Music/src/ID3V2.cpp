@@ -7,6 +7,7 @@
 #include <iostream>
 
 #include "Util.h"
+#include "include/logger_wrapper.h"
 
 namespace myUtil {
 void convert16(uint16_t& value) {

@@ -5,6 +5,7 @@
 
 #include <cstring>
 
+#include "include/logger_wrapper.h"
 #include "m4a/m4a_map.h"
 
 namespace myUtil {

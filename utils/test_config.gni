@@ -13,6 +13,7 @@ template("test_executable") {
   exe_cflags = []
   exe_output = "$target_gen_dir"
   exe_target_name = target_name
+  has_test_file = false
 
   if (defined(invoker.sources)) {
     exe_sources += invoker.sources
@@ -73,6 +74,30 @@ template("test_executable") {
       }
     }
   }
+  if (defined(invoker.test_file) && invoker.test_file != []) {
+    copy_test_file = "${target_name}_copy_test_file"
+    has_test_file = true
+    test_file_dir = ""
+    if (defined(invoker.test_file_dir)) {
+      test_file_dir = invoker.test_file_dir + "/"
+    }
+    action(copy_test_file) {
+      script = "//build/copy.py"
+      inputs = []
+      outputs = []
+      args = [ "--dest", rebase_path(exe_output, root_build_dir) ]
+      foreach(file, invoker.test_file) {
+        file_path = rebase_path(file, root_build_dir)
+        file_name = get_label_info(file, "name")
+        inputs += [ "${file_path}" ]
+        outputs += [ "${exe_output}/${test_file_dir}${file_name}" ]
+        args += [
+          "--input", file_path,
+          "--output", "${test_file_dir}${file_name}",
+        ]
+      }
+    }
+  }
   executable(exe_target_name) {
     testonly = true
     sources = []
@@ -94,6 +119,9 @@ template("test_executable") {
 
     if (exe_so_deps != []) {
       deps += [ ":$copy_target" ]
+    }
+    if (has_test_file) {
+      deps += [ ":$copy_test_file" ]
     }
     cflags = []
     cflags += exe_cflags

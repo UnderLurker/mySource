@@ -7,26 +7,29 @@ shared_library("log_client_shared") {
   include_dirs = [ "." ]
   sources = common_log_sources
   sources += [ "client/src/log_client.cpp" ]
+  public_deps = [ "$third_part/libuv:uv" ]
 }
 
 shared_library("log_server_shared") {
   include_dirs = [ "." ]
   sources = common_log_sources
   sources += [ "server/src/log_server.cpp" ]
+  public_deps = [ "$third_part/libuv:uv" ]
 }
 
 test_executable("LogClientTest") {
   include_dirs = [ "." ]
   sources = [ "test/log_client_test.cpp" ]
-  deps = [ "$third_part/libuv:uv_static" ]
-  so_deps = [ ":log_client_shared" ]
+  so_deps = [
+    ":log_client_shared",
+    "$third_part/libuv:uv",
+  ]
   libs = [ "dl" ]
 }
 
 test_executable("LogServerTest") {
   include_dirs = [ "." ]
   sources = [ "test/log_server_test.cpp" ]
-  deps = [ "$third_part/libuv:uv_static" ]
   so_deps = [ ":log_server_shared" ]
   libs = [ "dl" ]
 }

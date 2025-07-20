@@ -6,6 +6,7 @@
 #include <iostream>
 
 #include "Util.h"
+#include "include/logger_wrapper.h"
 
 namespace myUtil {
 

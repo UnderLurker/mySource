@@ -3,6 +3,8 @@
 //
 #include "m4a.h"
 
+#include "include/logger_wrapper.h"
+
 namespace myUtil {
 
 MusicStatus M4a::analysis() {

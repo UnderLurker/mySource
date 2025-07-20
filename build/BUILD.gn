@@ -24,6 +24,9 @@ config("compiler_defaults") {
       "UTIL_DEBUG",
     ]
   }
+  if (is_use_log_client) {
+    defines += [ "LOGGER_CLIENT" ]
+  }
 }
 
 config("executable_ldconfig") {
