@@ -7,11 +7,7 @@
 
 namespace myUtil {
 
-uv_loop_t* LogBase::_loop = nullptr;
-uv_tcp_t LogBase::_tcp;
-sockaddr_in LogBase::_addr;
 uv_connect_t LogClient::_connect_req;
-uv_write_t LogBase::_write_req;
 thread_local LogClient* LogClient::_logClientInstance = nullptr;
 
 LogClient* LogClient::GetInstance() {

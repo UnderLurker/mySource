@@ -31,11 +31,6 @@ std::string GetTime() {
 }
 }
 
-uv_loop_t* LogBase::_loop = nullptr;
-uv_tcp_t LogBase::_tcp;
-sockaddr_in LogBase::_addr;
-uv_write_t LogBase::_write_req;
-
 LogServer::LogServer(const std::string& ip, int32_t port)
     : LogBase(ip, port) {
     uv_tcp_bind(&_tcp, reinterpret_cast<const sockaddr*>(&_addr), 0);

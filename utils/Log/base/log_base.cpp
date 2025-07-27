@@ -13,6 +13,11 @@ void OnWrite(uv_write_t* req, int status) {
 }
 } // namespace
 
+uv_loop_t* LogBase::_loop = nullptr;
+uv_tcp_t LogBase::_tcp;
+sockaddr_in LogBase::_addr;
+uv_write_t LogBase::_write_req;
+
 LogBase::LogBase(const std::string& ip, int32_t port) {
     _loop = uv_default_loop();
     uv_tcp_init(_loop, &_tcp);

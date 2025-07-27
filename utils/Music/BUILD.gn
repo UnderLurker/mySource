@@ -38,7 +38,6 @@ static_library("music_static") {
 shared_library("music_shared") {
   public_deps = [
     ":music_sources",
-    "$utils_path/Log:log_client_shared",
   ]
 }
 

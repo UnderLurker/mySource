@@ -91,13 +91,12 @@ static void UtilPrint(LogLevel level,
     va_end(args);
     std::string strLevel = ToStrLevel(level);
     std::stringstream ss;
+    ss << strLevel;
 #ifdef LOG_FILE_PATH
     ss << file.substr(file.rfind('/') + 1) << ":" << line << " ";
 #endif
     ss << function << " ";
-    ss << strLevel;
     ss << buffer;
-    ss << std::endl;
     auto client = LogClient::GetInstance();
     client->Send(ss.str());
 }
