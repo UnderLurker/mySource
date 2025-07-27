@@ -4,6 +4,8 @@
 
 #include "glyph.h"
 
+#include "include/logger_wrapper.h"
+
 namespace myUtil {
 thread_local std::unique_ptr<FontManager> FontManager::_instance = nullptr;
 FontManager* FontManager::GetInstance() {

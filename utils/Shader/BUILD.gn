@@ -1,3 +1,4 @@
+import("//build/cxx_config.gni")
 import("//config.gni")
 import("//utils/test_config.gni")
 
@@ -6,6 +7,7 @@ config("shader_config") {
     "include",
     "//include",
     "$third_part/std",
+    "$utils_path/Log",
   ]
   configs = [ "$third_part/glm:glm_config" ]
   freetype_cflags = exec_script("//build/run_pkg_config.py", [ "--cflags", "freetype2" ], "list lines")
@@ -66,4 +68,7 @@ test_executable("OpenGLTest") {
     ":shader_shared",
     "$third_part/glfw:glfw",
   ]
+  if (is_use_log_client) {
+    so_deps += [ "$utils_path/Log:log_client_shared" ]
+  }
 }

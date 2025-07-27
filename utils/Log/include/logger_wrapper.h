@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <cstdarg>
 
 #ifdef UTIL_DEBUG
 #include "client/include/log_client.h"

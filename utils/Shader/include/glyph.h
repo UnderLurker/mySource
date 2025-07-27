@@ -6,6 +6,7 @@
 #define _GLYPH_H_
 
 #include "color.h"
+#include "include/logger_wrapper.h"
 #include "texture.h"
 
 #include <ft2build.h>

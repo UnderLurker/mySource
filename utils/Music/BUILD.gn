@@ -1,3 +1,4 @@
+import("//build/cxx_config.gni")
 import("//config.gni")
 import("//utils/test_config.gni")
 
@@ -44,10 +45,10 @@ shared_library("music_shared") {
 test_executable("MusicTest") {
   configs = [ ":music_config" ]
   sources = [ "test/Music_test.cpp" ]
-  so_deps = [
-    ":music_shared",
-    "$utils_path/Log:log_client_shared",
-  ]
+  so_deps = [ ":music_shared" ]
+  if (is_use_log_client) {
+    so_deps += [ "$utils_path/Log:log_client_shared" ]
+  }
   test_file = [ "//Sounds/3.m4a" ]
   test_file_dir = "Sounds"
 }

@@ -6,6 +6,7 @@
 #include <glad/glad.h>
 #include <sstream>
 
+#include "include/logger_wrapper.h"
 #include "shader_macro.h"
 
 NAME_SPACE_START(myUtil)
