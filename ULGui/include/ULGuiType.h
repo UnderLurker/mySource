@@ -9,6 +9,8 @@
 #include <cstdint>
 #include <cstring>
 #include <initializer_list>
+#include <sstream>
+#include <string>
 
 #include "ULGuiMacro.h"
 
@@ -74,6 +76,23 @@ public:
 
     const T* rawPtr() const { return _ptr; }
 
+    std::string toString() const {
+        std::ostringstream tmp;
+        tmp << "{";
+        for(size_t i = 0; i < _size; i++) {
+            if constexpr (std::is_arithmetic_v<T>) {
+                tmp << std::to_string(_ptr[i]);
+            } else {
+                tmp << _ptr[i].toString();
+            }
+            if (i != _size - 1) {
+                tmp << ',';
+            }
+        }
+        tmp << "}";
+        return tmp.str();
+    }
+
 private:
     T* _ptr {nullptr};
     size_t _size {size};
@@ -92,33 +111,66 @@ __ULGUI_DECLARE typedef GVec<double, 2> GVec2d;
 __ULGUI_DECLARE typedef GVec<double, 3> GVec3d;
 __ULGUI_DECLARE typedef GVec<double, 4> GVec4d;
 
+// format
+//      uint32_t: argb
+//      string  : #argb
 __ULGUI_DECLARE class GraphicRGBA {
 public:
-    float red {255.0f};
-    float green {255.0f};
-    float blue {255.0f};
-    float alpha {255.0f};
-    explicit GraphicRGBA(float r, float g, float b, float a = 255.0f)
-        : red(r), green(g), blue(b), alpha(a) {}
-    explicit GraphicRGBA(uint32_t color) {
-        blue  = static_cast<float>(color & 0xFF);
-        green = static_cast<float>((color & 0xFF00) >> 8);
-        red   = static_cast<float>((color & 0xFF0000) >> 16);
-        alpha = static_cast<float>((color & 0xFF000000) >> 24);
+    GraphicRGBA() = default;
+    GraphicRGBA(const GraphicRGBA&) = default;
+    GraphicRGBA(GraphicRGBA&&) = default;
+    explicit GraphicRGBA(uint32_t color) : _data(color) {}
+    explicit GraphicRGBA(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255)
+    {
+        _data = a;
+        _data <<= 8;
+        _data |= r;
+        _data <<= 8;
+        _data |= g;
+        _data <<= 8;
+        _data |= b;
     }
+    uint8_t red() const { return (_data >> 16) & 0xFF; }
+    uint8_t green() const { return (_data >> 8) & 0xFF; }
+    uint8_t blue() const { return _data & 0xFF; }
+    uint8_t alpha() const { return (_data >> 24) & 0xFF; }
 
+    std::string toString() const {
+        constexpr char HEX[] = "0123456789ABCDEF";
+        constexpr uint32_t stringLen = 9;
+        std::string res(stringLen, '#');
+        for(uint32_t i = 0; i < stringLen - 1; i++) {
+            uint32_t index = (_data >> (4 * i)) & 0xF;
+            res[stringLen - 1 - i] = HEX[index];
+        }
+        return std::move(res);
+    }
+    explicit operator uint32_t() const {
+        return _data;
+    }
     GraphicRGBA& operator=(const uint32_t& color) {
-        blue  = static_cast<float>(color & 0xFF);
-        green = static_cast<float>((color & 0xFF00) >> 8);
-        red   = static_cast<float>((color & 0xFF0000) >> 16);
-        alpha = static_cast<float>((color & 0xFF000000) >> 24);
+        _data = color;
         return *this;
     }
+    GraphicRGBA& operator=(const GraphicRGBA& color) = default;
+    GraphicRGBA& operator=(GraphicRGBA&& color) = default;
 
-    explicit operator uint32_t() const {
-        return (static_cast<unsigned int>(alpha) << 24) + (static_cast<unsigned int>(red) << 16) +
-               (static_cast<unsigned int>(green) << 8) + (static_cast<unsigned int>(blue));
+    static GraphicRGBA makeGraphicRGBA(const std::string& str) {
+        constexpr uint32_t stringLen = 9;
+        if ((str.size() != stringLen && str.size() != stringLen - 2) || str[0] != '#') {
+            return {};
+        }
+        uint32_t data = 0;
+        constexpr uint32_t offset = 4;
+        for (uint32_t i = 1; i < str.size(); i++) {
+            data <<= offset;
+            data += str[i] < 'A' ? str[i] - '0' : str[i] - '7';
+        }
+        return GraphicRGBA(data);
     }
+
+private:
+    uint32_t _data = 0xFFFFFFFF;
 };
 } // namespace ULGui
 

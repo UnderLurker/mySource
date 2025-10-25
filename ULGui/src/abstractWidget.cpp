@@ -31,13 +31,16 @@ bool AbstractWidget::show() {
         updateFrameSize();
 
         auto bgColor = background();
-        glClearColor(bgColor.red, bgColor.green, bgColor.blue, bgColor.alpha);
+        glClearColor(bgColor.red(), bgColor.green(), bgColor.blue(), bgColor.alpha());
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         event::PaintEvent event;
         paintEvent(&event);
 
         for (const auto& item : _childWidget) {
+            item.second->setCoordSize(_size[0], _size[1]);
+            item.second->setWidth(_size[0]);
+            item.second->setHeight(_size[1]);
             item.second->paintEvent(&event);
         }
 

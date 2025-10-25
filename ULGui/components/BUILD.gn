@@ -1,0 +1,16 @@
+import("//config.gni")
+
+shared_library("Components") {
+  sources = [
+    "src/abstractButton.cpp",
+  ]
+  configs += [
+    "$ulgui_path:base_config",
+    "$ulgui_path:BaseGraphics_config",
+    "$ulgui_path:components_config",
+    "$ulgui_path:event_config",
+  ]
+  deps = [
+    "$third_part/glfw:glfw",
+  ]
+}

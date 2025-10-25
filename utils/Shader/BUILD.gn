@@ -20,7 +20,7 @@ copy("shader_font") {
     "fonts/consolab.ttf",
     "fonts/consolai.ttf",
     "fonts/consolaz.ttf",
-    "fonts/STXINGKA.TTF",
+    "fonts/STXINGKA.ttf",
   ]
   outputs = [ "$target_gen_dir/fonts/{{source_name_part}}.ttf" ]
 }

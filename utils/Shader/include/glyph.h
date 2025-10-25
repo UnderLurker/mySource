@@ -54,12 +54,16 @@ public:
     }
 
     static FontManager* GetInstance();
+    static std::vector<CharCode> UTF16ToCodePoints(const std::u16string& utf16_str);
     Character Get(CharCode code);
     void Insert(const std::pair<CharCode, Character>& value);
-    void SetFontFamily(const std::string& fontFamily) { _fontFamily = fontFamily; }
-    const std::string& GetFontFamily() const { return _fontFamily; }
+    void SetFontFamilies(const std::vector<std::string>& families) { _fontFamilies = families; }
+    const std::vector<std::string>& GetFontFamilies() const { return _fontFamilies; }
+    void AddFontFamily(const std::string& str) { _fontFamilies.push_back(str); }
+    void SetCurDir(const std::string dir) { _curDir = dir; }
 
 protected:
+    bool LoadChar(CharCode code, FT_Face* face);
     bool AddCharCode(CharCode code);
     bool InitFontLibrary() {
         if (FT_Init_FreeType(&_libFreeType)) {
@@ -71,7 +75,8 @@ protected:
 
 private:
     std::map<CharCode, myUtil::Character> _characters;
-    std::string _fontFamily   = DEFAULT_FONT_FAMILY;
+    std::vector<std::string> _fontFamilies {DEFAULT_FONT_FAMILY};
+    std::string _curDir;
     FT_Library _libFreeType;
     static thread_local std::unique_ptr<FontManager> _instance;
 };

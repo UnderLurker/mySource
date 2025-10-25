@@ -106,7 +106,8 @@ void Program::renderGlyph(const std::u16string& context,
     setColor("glyphColor", config.color);
     vao.use();
     float x = config.position.x, y = config.position.y;
-    for (auto item : context) {
+    auto codePoints = FontManager::UTF16ToCodePoints(context);
+    for (auto item : codePoints) {
         Character ch = FontManager::GetInstance()->Get(item);
         if (!ch.texture) continue;
 
@@ -116,12 +117,12 @@ void Program::renderGlyph(const std::u16string& context,
         GLfloat w = ch.size.width * config.scale;
         GLfloat h = ch.size.height * config.scale;
         ch.texture->drawTexture(GL_TEXTURE0);
-        vao.updateVertexData({xPos,     yPos + h, 0.0, 0.0,
-                              xPos,     yPos,     0.0, 1.0,
-                              xPos + w, yPos,     1.0, 1.0,
-                              xPos,     yPos + h, 0.0, 0.0,
-                              xPos + w, yPos,     1.0, 1.0,
-                              xPos + w, yPos + h, 1.0, 0.0});
+        vao.updateData({xPos,     yPos + h, 0.0, 0.0,
+                        xPos,     yPos,     0.0, 1.0,
+                        xPos + w, yPos,     1.0, 1.0,
+                        xPos,     yPos + h, 0.0, 0.0,
+                        xPos + w, yPos,     1.0, 1.0,
+                        xPos + w, yPos + h, 1.0, 0.0});
         // 绘制四边形
         glDrawArrays(GL_TRIANGLES, 0, 6);
         // 更新位置到下一个字形的原点，注意单位是1/64像素

@@ -28,11 +28,17 @@ struct Point {
         assert(val != 0);
         return {x / val, y / val, z / val};
     }
+
+    std::string toString() {
+        return "{x: " + std::to_string(x) + ", y: " + std::to_string(y) + ", z: " + std::to_string(z) + "}";
+    }
 };
 
 class Coord {
 public:
     Coord() = default;
+    explicit Coord(const GInt32& width, const GInt32& height, const Point& pos)
+        : _width(width), _height(height), _pos(pos) {}
     explicit Coord(const GInt32& width, const GInt32& height, double x = 0, double y = 0, double z = 0)
         : _width(width), _height(height), _pos({x, y, z}) {}
 

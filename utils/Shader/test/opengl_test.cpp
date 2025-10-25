@@ -15,8 +15,6 @@
 #include "const_vertices.h"
 #include "glyph.h"
 
-#include <ft2build.h>
-#include FT_FREETYPE_H
 using namespace std;
 
 // settings
@@ -33,7 +31,18 @@ void scrollCallBack(GLFWwindow* window, double xoffset, double yoffset);
 float deltaTime = 0;
 float lastTime  = 0;
 
-int main() {
+std::string GetExecutablePath(int argc, char* argv[]) {
+    if (argc < 1) return "";
+    char buf[PATH_MAX];
+    if (realpath(argv[0], buf)) {
+        std::string tmp(buf);
+        auto pos = tmp.find_last_of('/');
+        return tmp.substr(0, pos);
+    }
+    return "";
+}
+
+int main(int argc, char* argv[]) {
     // glfw: initialize and configure
     // ------------------------------
     glfwInit();
@@ -91,13 +100,15 @@ int main() {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    vector<glm::vec3> cubePositions {glm::vec3(1.0f, 0.0f, 0.0f),    glm::vec3(2.0f, 5.0f, -15.0f),
-                                     glm::vec3(-1.5f, -2.2f, -2.5f), glm::vec3(-3.8f, -2.0f, -12.3f),
-                                     glm::vec3(2.4f, -0.4f, -3.5f),  glm::vec3(-1.7f, 3.0f, -7.5f),
-                                     glm::vec3(1.3f, -2.0f, -2.5f),  glm::vec3(1.5f, 2.0f, -2.5f),
-                                     glm::vec3(1.5f, 0.2f, -1.5f),   glm::vec3(-1.3f, 1.0f, -1.5f)};
+    vector<glm::vec3> cubePositions {glm::vec3(-1.0f, 0.0f, 0.0f)};
+    // vector<glm::vec3> cubePositions {glm::vec3(1.0f, 0.0f, 0.0f),    glm::vec3(2.0f, 5.0f, -15.0f),
+    //                                  glm::vec3(-1.5f, -2.2f, -2.5f), glm::vec3(-3.8f, -2.0f, -12.3f),
+    //                                  glm::vec3(2.4f, -0.4f, -3.5f),  glm::vec3(-1.7f, 3.0f, -7.5f),
+    //                                  glm::vec3(1.3f, -2.0f, -2.5f),  glm::vec3(1.5f, 2.0f, -2.5f),
+    //                                  glm::vec3(1.5f, 0.2f, -1.5f),   glm::vec3(-1.3f, 1.0f, -1.5f)};
 
-    myUtil::FontManager::GetInstance()->SetFontFamily("STXINGKA");
+    myUtil::FontManager::GetInstance()->SetCurDir(GetExecutablePath(argc, argv));
+    myUtil::FontManager::GetInstance()->AddFontFamily("STXINGKA");
     glm::vec3 lightColor(1.0f);
     glm::vec3 cubeColor(.1f, 1.0f, .3f);
     glm::mat4 lightModel(1.0f);

@@ -1,0 +1,18 @@
+import("//config.gni")
+
+
+shared_library("BaseGraphics") {
+  sources = [
+    "src/abstractAbility.cpp",
+    "src/baseGraphics.cpp",
+    "src/brush.cpp",
+    "src/coord.cpp",
+    "src/font.cpp",
+    "src/pen.cpp",
+  ]
+  configs += [
+    "$ulgui_path:base_config",
+    "$ulgui_path:event_config",
+    "$ulgui_path:BaseGraphics_config",
+  ]
+}

@@ -1,0 +1,66 @@
+import("//config.gni")
+import("//utils/test_config.gni")
+
+config("base_config") {
+  include_dirs = [ "include" ]
+}
+
+config("event_config") {
+  include_dirs = [ "events/include" ]
+}
+
+config("BaseGraphics_config") {
+  include_dirs = [ "base/include" ]
+}
+
+config("components_config") {
+  include_dirs = [ "components/include" ]
+}
+
+test_executable("ULGuiTest") {
+  include_dirs = [ "//include" ]
+  sources = [
+    "test/ULGui_test.cpp",
+    "//src/glad.c",
+  ]
+  configs = [
+    ":base_config",
+    ":BaseGraphics_config",
+    ":components_config",
+    ":event_config",
+    "$third_part/glm:glm_config",
+  ]
+  libs = [ "dl", "GL" ]
+  so_deps = [
+    ":Window",
+    "base:BaseGraphics",
+    "components:Components",
+    "events:Events",
+    "$third_part/glfw:glfw",
+  ]
+
+  output_dir = "$target_gen_dir"
+}
+
+shared_library("Window") {
+  sources = [
+    "src/abstractWidget.cpp",
+    "src/widget.cpp",
+  ]
+  configs += [
+    ":base_config",
+    ":BaseGraphics_config",
+    ":components_config",
+    ":event_config",
+    "$third_part/glm:glm_config",
+  ]
+  deps = [
+    "components:Components",
+    "$third_part/glfw:glfw",
+  ]
+}
+
+group("ULGui_test") {
+  deps = [
+  ]
+}

@@ -1,4 +1,5 @@
 declare_args() {
   utils_path = "//utils/"
   third_part = "//third_part"
+  ulgui_path = "//ULGui"
 }

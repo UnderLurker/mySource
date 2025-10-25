@@ -12,6 +12,7 @@ group("all_build") {
 group("all_test") {
   testonly = true
   deps = [
+    "ULGui:ULGui_test",
     "utils:all_utils_test",
     "$third_part:third_party_all",
   ]

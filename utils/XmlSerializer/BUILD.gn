@@ -1,0 +1,28 @@
+import("//config.gni")
+import("//utils/test_config.gni")
+
+xml_sources = [
+  "src/xml_named_node_map.cpp",
+  "src/XmlDocument.cpp",
+  "src/XmlElement.cpp",
+]
+config("xml_config") {
+  include_dirs = [ "include" ]
+}
+
+static_library("xml_static") {
+  public_configs = [ ":xml_config" ]
+  sources = xml_sources
+}
+
+shared_library("xml_shared") {
+  public_configs = [ ":xml_config" ]
+  sources = xml_sources
+}
+
+test_executable("XmlTest") {
+  sources = [ "test/xml_test.cpp" ]
+  deps = [
+    ":xml_static"
+  ]
+}

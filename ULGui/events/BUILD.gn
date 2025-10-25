@@ -1,0 +1,11 @@
+import("//config.gni")
+
+
+shared_library("Events") {
+  sources = [
+    "src/event.cpp",
+  ]
+  configs += [
+    "$ulgui_path:event_config",
+  ]
+}

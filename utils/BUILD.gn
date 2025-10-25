@@ -17,5 +17,6 @@ group("all_utils_test") {
     "Music:MusicTest",
     "Shader:OpenGLTest",
     "Util:UtilTest",
+    "XmlSerializer:XmlTest",
   ]
 }

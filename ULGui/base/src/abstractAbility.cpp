@@ -66,7 +66,7 @@ void AbstractAbility::lineTo(const std::vector<Point>& pointList) {
 
 void AbstractAbility::point(const Point& position) {
     glPointSize(_style.width);
-    glColor4f(_style.color.red, _style.color.green, _style.color.blue, _style.color.alpha);
+    glColor4f(_style.color.red(), _style.color.green(), _style.color.blue(), _style.color.alpha());
     glBegin(GL_POINTS);
     auto temp = _coord.toViewPort(position);
     glVertex3f(temp.x, temp.y, temp.z);
@@ -75,7 +75,7 @@ void AbstractAbility::point(const Point& position) {
 
 void AbstractAbility::point(const Coord& position) {
     glPointSize(_style.width);
-    glColor4f(_style.color.red, _style.color.green, _style.color.blue, _style.color.alpha);
+    glColor4f(_style.color.red(), _style.color.green(), _style.color.blue(), _style.color.alpha());
     glBegin(GL_POINTS);
     auto temp = position.toViewPort();
     glVertex3f(temp.x, temp.y, temp.z);
@@ -121,6 +121,6 @@ void AbstractAbility::arc(const Point& center, double radius, float startAngle, 
 void AbstractAbility::updateStyle() {
     glLineWidth(_style.width);
     glPointSize(_style.width);
-    glColor4f(_style.color.red, _style.color.green, _style.color.blue, _style.color.alpha);
+    glColor4f(_style.color.red(), _style.color.green(), _style.color.blue(), _style.color.alpha());
 }
 } // namespace ULGui::base
