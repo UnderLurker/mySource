@@ -27,6 +27,7 @@ __ULGUI_2D_DECLARE typedef unsigned long long GUint64;
 
 template<typename T, size_t size>
 __ULGUI_DECLARE class GVec {
+    static_assert(size > 0, "size equal 0");
 public:
     GVec() = default;
     GVec(const GVec<T, size>& vec) {
@@ -35,21 +36,19 @@ public:
         _ptr  = new T[_size];
         memcpy(_ptr, vec._ptr, sizeof(T) * _size);
     }
-    GVec(GVec<T, size>&& vec) noexcept {
+    GVec(GVec<T, size>&& vec) noexcept
+        : _size(size), _ptr(vec._ptr) {
         delete[] _ptr;
-        _ptr      = vec._ptr;
-        _size     = size;
         vec._size = 0;
         vec._ptr  = nullptr;
     }
     explicit GVec(const T& val)
         : _size(size) {
-        if (size == 0) return;
         _ptr = new T[size] {val};
     }
     GVec(const std::initializer_list<T>& list)
         : _size(size) {
-        if (list.size() == 0 || list.size() != size) return;
+        assert(list.size() == size);
         _ptr = new T[_size];
         memcpy(_ptr, list.begin(), sizeof(T) * _size);
     }
@@ -60,11 +59,11 @@ public:
 
     const T& at(const size_t& idx) const {
         assert(idx >= 0 && idx < _size);
-        return _ptr[idx];
+        return *(_ptr + idx);
     }
     T& operator[](const size_t& idx) const {
         assert(idx >= 0 && idx < _size);
-        return _ptr[idx];
+        return *(_ptr + idx);
     }
 
     GVec<T, size>& operator=(const GVec<T, size>& vec) {
@@ -72,6 +71,13 @@ public:
         _ptr = new T[_size];
         memcpy(_ptr, vec._ptr, sizeof(T) * _size);
         return *this;
+    }
+    GVec<T, size>& operator=(GVec<T, size>&& vec) noexcept {
+        _size = size;
+        _ptr  = vec._ptr;
+        delete[] _ptr;
+        vec._size = 0;
+        vec._ptr  = nullptr;
     }
 
     const T* rawPtr() const { return _ptr; }
@@ -81,9 +87,9 @@ public:
         tmp << "{";
         for(size_t i = 0; i < _size; i++) {
             if constexpr (std::is_arithmetic_v<T>) {
-                tmp << std::to_string(_ptr[i]);
+                tmp << std::to_string(*(_ptr + i));
             } else {
-                tmp << _ptr[i].toString();
+                tmp << *(_ptr + i).toString();
             }
             if (i != _size - 1) {
                 tmp << ',';

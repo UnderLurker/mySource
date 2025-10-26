@@ -34,6 +34,7 @@ test_executable("ULGuiTest") {
   so_deps = [
     ":Window",
     "base:BaseGraphics",
+    "canvas:CanvasKit",
     "components:Components",
     "events:Events",
     "$third_part/glfw:glfw",

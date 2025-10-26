@@ -43,6 +43,9 @@ struct LineStyle {
 class AbstractAbility {
 public:
     AbstractAbility() = default;
+    AbstractAbility(const AbstractAbility&) = default;
+    AbstractAbility(AbstractAbility&&) = default;
+    ~AbstractAbility() = default;
     LineType lineType() const { return _style.type; }
     float penWidth() const { return _style.width; }
     uint32_t penColor() const { return (uint32_t)_style.color; }
@@ -65,6 +68,8 @@ public:
     void point(const Coord& position);
     void circle(const Point& center, double radius, bool fill = false);
     void arc(const Point& center, double radius, float startAngle, float endAngle);
+    AbstractAbility& operator=(const AbstractAbility&) = default;
+    AbstractAbility& operator=(AbstractAbility&&) = default;
 
 protected:
     void updateStyle();
