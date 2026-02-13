@@ -1,0 +1,21 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "ULGuiTest",
+            "type": "shell",
+            "command": "./build.sh",
+            "args": [
+                "ULGuiTest"
+            ],
+        },
+        {
+            "label": "MusicTest",
+            "type": "shell",
+            "command": "./build.sh",
+            "args": [
+                "MusicTest"
+            ],
+        }
+    ]
+}

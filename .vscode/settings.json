@@ -1,0 +1,8 @@
+{
+    "clangd.path": "/usr/bin/clangd",
+    "clangd.arguments": [
+        "--compile-commands-dir=/home/cxn/mySource/out/default",
+        "--query-driver=/usr/bin/clang",
+        "--header-insertion=never"
+    ]
+}

@@ -104,6 +104,10 @@ const std::map<BoxType, BoxCreator> BoxMap = {
     {myUtil::BoxType::IPRO, []() { return std::make_shared<ItemProtectionBox>(); }                      },
     {myUtil::BoxType::IINF, []() { return std::make_shared<ItemInfoBox>(); }                            },
     {myUtil::BoxType::INFE, []() { return std::make_shared<ItemInfoEntry>(); }                          },
+    {myUtil::BoxType::MECO, []() { return std::make_shared<AdditionalMetadataContainerBox>(); }         },
+    {myUtil::BoxType::MERE, []() { return std::make_shared<MetaboxRelationBox>(); }                     },
+    {myUtil::BoxType::IDAT, []() { return std::make_shared<ItemDataBox>(); }                            },
+    {myUtil::BoxType::IREF, []() { return std::make_shared<ItemReferenceBox>(); }                       },
 };
 } // namespace myUtil
 

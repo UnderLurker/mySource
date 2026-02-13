@@ -100,6 +100,10 @@ M4AStatus Box::ProcessData(std::fstream& file) {
 #endif
         auto bodySize = box._header.BodySize();
         auto iter     = BoxMap.find(box._header.type);
+        if (remainLen - box._header.size < 0) {
+            file.seekg(remainLen, std::ios::cur);
+            return ERROR_FILE_FORMAT;
+        }
         if (iter == BoxMap.end()) {
             file.seekg(bodySize, std::ios::cur);
         } else {

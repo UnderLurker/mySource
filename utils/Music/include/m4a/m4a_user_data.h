@@ -74,6 +74,7 @@ struct ItemProtectionBox : public FullBox {
 // IINF
 struct ItemInfoBox : public FullBox {
     uint32_t entryCount {0};
+    std::list<std::shared_ptr<Box>> ItemInfos() { return _boxes[BoxType::INFE]; }
     bool ProcessFullBox(std::fstream& file) override;
 };
 // INFE
@@ -85,11 +86,12 @@ struct ItemInfoEntry : public LeafFullBox {
         uint64_t transferLength;
         uint8_t entryCount;
         std::unique_ptr<uint32_t[]> groupId;
+        void ProcessData(const uint8_t* body, size_t length, uint32_t& pos);
     };
-    std::optional<uint32_t> itemId;
-    std::optional<uint16_t> itemProtectionIndex;
-    std::optional<std::string> itemName;
-    std::optional<std::string> contentType;
+    uint32_t itemId;
+    uint16_t itemProtectionIndex;
+    std::string itemName;
+    std::string contentType;
     std::optional<std::string> contentEncoding;
     std::optional<uint32_t> extensionType;
     std::optional<FDItemInfoExtension> extensionInfo;
@@ -97,7 +99,37 @@ struct ItemInfoEntry : public LeafFullBox {
     std::optional<std::string> itemUriType;
     M4AStatus OnProcessData(const uint8_t* body, size_t length) override;
 };
-
+// MECO
+struct AdditionalMetadataContainerBox : public Box {};
+// MERE
+struct MetaboxRelationBox : public LeafFullBox {
+    uint32_t firstMetaboxHandlerType;
+    uint32_t secondMetaboxHandlerType;
+    uint8_t metaboxRelation;
+    M4AStatus OnProcessData(const uint8_t* body, size_t length) override;
+};
+// IDAT
+struct ItemDataBox : public LeafBox{
+    std::unique_ptr<uint8_t[]> data;
+    M4AStatus OnProcessData(const uint8_t* body, size_t length) override;
+};
+struct SingleItemTypeReferenceBox : public FullBox {
+    uint16_t fromItemID;
+    uint16_t referenceCount;
+    std::unique_ptr<uint16_t[]> toItemIDs;
+    bool ProcessFullBox(std::fstream& file) override;
+};
+struct SingleItemTypeReferenceBoxLarge : public FullBox {
+    uint32_t fromItemID;
+    uint16_t referenceCount;
+    std::unique_ptr<uint32_t[]> toItemIDs;
+    bool ProcessFullBox(std::fstream& file) override;
+};
+// IREF
+struct ItemReferenceBox : public FullBox {
+    std::vector<std::shared_ptr<Box>> references;
+    bool ProcessFullBox(std::fstream& file) override;
+};
 } // namespace myUtil
 
 #endif // _M4A_USER_DATA_H

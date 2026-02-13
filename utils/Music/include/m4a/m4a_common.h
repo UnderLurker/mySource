@@ -55,6 +55,7 @@ public:
     uint32_t Count(BoxType type) const;
     uint32_t ParentCount(BoxType type) const;
     BoxList GetBoxList(BoxType type);
+    const BoxHeader& GetHeader() const { return _header; }
 
     ostringstream PrintTree(uint32_t tab, const std::string& fill = "  ");
 
