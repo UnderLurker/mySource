@@ -69,13 +69,13 @@ struct PrimaryItemBox : public LeafFullBox {
 // IPRO
 struct ItemProtectionBox : public FullBox {
     uint16_t protectionCount;
-    bool ProcessFullBox(std::fstream& file) override;
+    M4AStatus ProcessData(std::fstream& file) override;
 };
 // IINF
 struct ItemInfoBox : public FullBox {
     uint32_t entryCount {0};
     std::list<std::shared_ptr<Box>> ItemInfos() { return _boxes[BoxType::INFE]; }
-    bool ProcessFullBox(std::fstream& file) override;
+    M4AStatus ProcessData(std::fstream& file) override;
 };
 // INFE
 struct ItemInfoEntry : public LeafFullBox {
@@ -117,18 +117,18 @@ struct SingleItemTypeReferenceBox : public FullBox {
     uint16_t fromItemID;
     uint16_t referenceCount;
     std::unique_ptr<uint16_t[]> toItemIDs;
-    bool ProcessFullBox(std::fstream& file) override;
+    M4AStatus ProcessData(std::fstream& file) override;
 };
 struct SingleItemTypeReferenceBoxLarge : public FullBox {
     uint32_t fromItemID;
     uint16_t referenceCount;
     std::unique_ptr<uint32_t[]> toItemIDs;
-    bool ProcessFullBox(std::fstream& file) override;
+    M4AStatus ProcessData(std::fstream& file) override;
 };
 // IREF
 struct ItemReferenceBox : public FullBox {
     std::vector<std::shared_ptr<Box>> references;
-    bool ProcessFullBox(std::fstream& file) override;
+    M4AStatus ProcessData(std::fstream& file) override;
 };
 } // namespace myUtil
 

@@ -40,9 +40,10 @@ struct BoxHeader {
 // Container
 class Box {
 public:
-    using BoxList   = std::list<std::shared_ptr<Box>>;
-    using SubBoxMap = std::map<BoxType, BoxList>;
-    Box()           = default;
+    using BoxList      = std::list<std::shared_ptr<Box>>;
+    using SubBoxMap    = std::map<BoxType, BoxList>;
+    using PrintBoxList = std::list<std::weak_ptr<Box>>;
+    Box()              = default;
     virtual ~Box() { delete[] _userType; }
 
     virtual M4AStatus ProcessHeader(std::fstream& file);
@@ -51,6 +52,7 @@ public:
     virtual M4AStatus ProcessData(std::fstream& file);
     virtual bool ProcessFullBox(std::fstream& file) { return false; }
     virtual bool ProcessFullBox(const uint8_t* body, size_t length) { return false; }
+    M4AStatus ProcessChildBox(std::fstream& file, int64_t remainLen);
 
     uint32_t Count(BoxType type) const;
     uint32_t ParentCount(BoxType type) const;
@@ -64,6 +66,9 @@ public:
     SubBoxMap _boxes;
     uint8_t* _userType {};
     std::weak_ptr<Box> _parent;
+
+protected:
+    PrintBoxList _printList;
 };
 
 // Container

@@ -37,6 +37,7 @@ MusicStatus M4a::analysis() {
                 } else {
                     _boxes[subBox->_header.type].emplace_back(subBox);
                 }
+                _printList.emplace_back(subBox);
             } else {
                 file.seekg(box._header.BodySize(), std::ios::cur);
             }
@@ -47,14 +48,12 @@ MusicStatus M4a::analysis() {
 
 ostringstream M4a::PrintTree(uint32_t tab, const std::string& fill) {
     ostringstream ss;
-    for(const auto& item : _boxes) {
-        auto name = TypeToString(item.first);
-        for(const auto& box : item.second) {
-            ss << name << endl;
-            if (box) {
-                ss << box->PrintTree(tab + 1, fill).str();
-            }
-        }
+    for(const auto& item : _printList) {
+        std::shared_ptr<Box> boxPtr(item);
+        if (!boxPtr) break;
+        auto name = boxPtr->GetHeader().TypeToString();
+        ss << name << endl;
+        ss << boxPtr->PrintTree(tab + 1, fill).str();
     }
     return ss;
 }

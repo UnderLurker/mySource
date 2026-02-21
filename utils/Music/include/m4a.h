@@ -23,6 +23,7 @@ public:
     ostringstream PrintTree(uint32_t tab, const std::string& fill = "  ");
 private:
     Box::SubBoxMap _boxes;
+    Box::PrintBoxList _printList;
 };
 
 } // namespace myUtil

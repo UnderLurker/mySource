@@ -23,6 +23,7 @@ struct DataEntryUrnBox : public LeafFullBox { // type = 'urn '
 };
 // DREF
 struct DataReferenceBox : public FullBox {
+    uint32_t entryCount;
     M4AStatus ProcessData(std::fstream& file) override;
 };
 // STSZ

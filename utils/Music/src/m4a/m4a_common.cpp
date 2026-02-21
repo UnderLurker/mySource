@@ -117,8 +117,46 @@ M4AStatus Box::ProcessData(std::fstream& file) {
             } else {
                 _boxes[subBox->_header.type].emplace_back(subBox);
             }
+            _printList.emplace_back(subBox);
         }
         remainLen -= box._header.size;
+    }
+    return SUCCESS;
+}
+
+M4AStatus Box::ProcessChildBox(std::fstream& file, int64_t remainLen) {
+    if (remainLen < 8) return ERROR_FILE_FORMAT;
+#ifdef UTIL_DEBUG
+    std::stringstream ss;
+    ss << file.tellg();
+    uint32_t pos = 0;
+    ss >> pos;
+#endif
+    Box box;
+    box.ProcessHeader(file);
+#ifdef UTIL_DEBUG
+    LOGI(" Box SIZE:0x%x, \ttype:%s, pos:0x%x", box._header.size, box._header.TypeToString().c_str(), pos);
+#endif
+    auto bodySize = box._header.BodySize();
+    auto iter     = BoxMap.find(box._header.type);
+    if (remainLen - box._header.size < 0) {
+        file.seekg(remainLen, std::ios::cur);
+        return ERROR_FILE_FORMAT;
+    }
+    if (iter == BoxMap.end()) {
+        file.seekg(bodySize, std::ios::cur);
+    } else {
+        auto subBox     = iter->second();
+        subBox->_header = box._header;
+        //            subBox->_parent = std::weak_ptr(this);
+        subBox->ProcessData(file);
+        auto mapIter = _boxes.find(subBox->_header.type);
+        if (mapIter == _boxes.end()) {
+            _boxes[subBox->_header.type] = {subBox};
+        } else {
+            _boxes[subBox->_header.type].emplace_back(subBox);
+        }
+        _printList.emplace_back(subBox);
     }
     return SUCCESS;
 }
@@ -138,17 +176,15 @@ Box::BoxList Box::GetBoxList(BoxType type) {
 
 ostringstream Box::PrintTree(uint32_t tab, const std::string& fill) {
     ostringstream ss;
-    for(const auto& item : _boxes) {
+    for(const auto& item : _printList) {
+        std::shared_ptr<Box> boxPtr(item);
+        if (!boxPtr) break;
         auto tmp = tab;
         while(tmp--) {
             ss << fill;
         }
-        ss << TypeToString(item.first) << endl;
-        for(const auto& box : item.second) {
-            if (box) {
-                ss << box->PrintTree(tab + 1, fill).str();
-            }
-        }
+        ss << boxPtr->GetHeader().TypeToString() << endl;
+        ss << boxPtr->PrintTree(tab + 1, fill).str();
     }
     return ss;
 }
@@ -168,7 +204,7 @@ bool FullBox::ProcessFullBox(const uint8_t* body, size_t length) {
 
 M4AStatus LeafBox::ProcessData(std::fstream& file) {
     auto remainLen = _header.BodySize();
-    if (remainLen < 8) return ERROR_FILE_FORMAT;
+    if (remainLen < 4) return ERROR_FILE_FORMAT;
     auto body = new uint8_t[remainLen];
     file.read((char*)body, remainLen);
     M4AStatus ret;

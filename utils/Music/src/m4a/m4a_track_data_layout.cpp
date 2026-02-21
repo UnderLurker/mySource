@@ -29,8 +29,13 @@ M4AStatus DataEntryUrnBox::OnProcessData(const uint8_t* body, size_t length) {
 }
 
 M4AStatus DataReferenceBox::ProcessData(std::fstream& file) {
-    file.seekg(sizeof(uint32_t), std::ios::cur);
-    return FullBox::ProcessData(file);
+    FullBox::ProcessFullBox(file);
+    auto body = new uint8_t[sizeof(uint32_t)];
+    file.read((char*)body, sizeof(uint32_t));
+    entryCount = GetValue<uint32_t>(body);
+    delete[] body;
+    ProcessChildBox(file, _header.BodySize() - 4 - sizeof(uint32_t));
+    return SUCCESS;
 }
 
 M4AStatus SampleSizeBox::OnProcessData(const uint8_t* body, size_t length) {

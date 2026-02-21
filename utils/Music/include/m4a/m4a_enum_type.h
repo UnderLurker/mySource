@@ -83,11 +83,11 @@ enum BoxType : uint32_t {
     TRUN = CONVERT(trun),
     TSEL = CONVERT(tsel),
     UDTA = CONVERT(udta),
-    URL  = CONVERT(url),
-    URN  = CONVERT(urn),
+    URL  = CONVERT(url ) + ' ',
+    URN  = CONVERT(urn ) + ' ',
     UUID = CONVERT(uuid),
     VMHD = CONVERT(vmhd),
-    XML  = CONVERT(xml),
+    XML  = CONVERT(xml ) + ' ',
 };
 
 } // namespace myUtil

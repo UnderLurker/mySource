@@ -108,17 +108,17 @@ M4AStatus PrimaryItemBox::OnProcessData(const uint8_t* body, size_t length) {
     return SUCCESS;
 }
 
-bool ItemProtectionBox::ProcessFullBox(std::fstream& file) {
+M4AStatus ItemProtectionBox::ProcessData(std::fstream& file) {
     FullBox::ProcessFullBox(file);
     protectionCount = (file.get() << 8) | file.get();
-    return true;
+    return SUCCESS;
 }
 
-bool ItemInfoBox::ProcessFullBox(std::fstream& file) {
+M4AStatus ItemInfoBox::ProcessData(std::fstream& file) {
     FullBox::ProcessFullBox(file);
     if (_header.version == 0) entryCount = (file.get() << 8) | file.get();
     else entryCount = (file.get() << 24) | (file.get() << 16) | (file.get() << 8) | file.get();
-    return true;
+    return SUCCESS;
 }
 
 void ItemInfoEntry::FDItemInfoExtension::ProcessData(const uint8_t* body, size_t length, uint32_t& pos)
@@ -205,19 +205,19 @@ M4AStatus ItemDataBox::OnProcessData(const uint8_t* body, size_t length)
     return SUCCESS;
 }
 
-bool SingleItemTypeReferenceBox::ProcessFullBox(std::fstream& file) {
+M4AStatus SingleItemTypeReferenceBox::ProcessData(std::fstream& file) {
     FullBox::ProcessFullBox(file);
     
-    return true;
+    return SUCCESS;
 }
 
-bool SingleItemTypeReferenceBoxLarge::ProcessFullBox(std::fstream& file) {
+M4AStatus SingleItemTypeReferenceBoxLarge::ProcessData(std::fstream& file) {
     FullBox::ProcessFullBox(file);
     
-    return true;
+    return SUCCESS;
 }
 
-bool ItemReferenceBox::ProcessFullBox(std::fstream& file) {
+M4AStatus ItemReferenceBox::ProcessData(std::fstream& file) {
     FullBox::ProcessFullBox(file);
     std::shared_ptr<Box> referenceBox;
     if (_header.version == 0) {
@@ -226,8 +226,8 @@ bool ItemReferenceBox::ProcessFullBox(std::fstream& file) {
     } else if (_header.version == 1) {
         references.push_back(referenceBox);
     } else {
-        return false;
+        return ERROR_FILE_FORMAT;
     }
-    return true;
+    return SUCCESS;
 }
 } // namespace myUtil
