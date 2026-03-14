@@ -126,37 +126,40 @@ M4AStatus Box::ProcessData(std::fstream& file) {
 
 M4AStatus Box::ProcessChildBox(std::fstream& file, int64_t remainLen) {
     if (remainLen < 8) return ERROR_FILE_FORMAT;
+    while (remainLen > 0) {
 #ifdef UTIL_DEBUG
-    std::stringstream ss;
-    ss << file.tellg();
-    uint32_t pos = 0;
-    ss >> pos;
+        std::stringstream ss;
+        ss << file.tellg();
+        uint32_t pos = 0;
+        ss >> pos;
 #endif
-    Box box;
-    box.ProcessHeader(file);
+        Box box;
+        box.ProcessHeader(file);
 #ifdef UTIL_DEBUG
-    LOGI(" Box SIZE:0x%x, \ttype:%s, pos:0x%x", box._header.size, box._header.TypeToString().c_str(), pos);
+        LOGI(" Box SIZE:0x%x, \ttype:%s, pos:0x%x", box._header.size, box._header.TypeToString().c_str(), pos);
 #endif
-    auto bodySize = box._header.BodySize();
-    auto iter     = BoxMap.find(box._header.type);
-    if (remainLen - box._header.size < 0) {
-        file.seekg(remainLen, std::ios::cur);
-        return ERROR_FILE_FORMAT;
-    }
-    if (iter == BoxMap.end()) {
-        file.seekg(bodySize, std::ios::cur);
-    } else {
-        auto subBox     = iter->second();
-        subBox->_header = box._header;
-        //            subBox->_parent = std::weak_ptr(this);
-        subBox->ProcessData(file);
-        auto mapIter = _boxes.find(subBox->_header.type);
-        if (mapIter == _boxes.end()) {
-            _boxes[subBox->_header.type] = {subBox};
-        } else {
-            _boxes[subBox->_header.type].emplace_back(subBox);
+        auto bodySize = box._header.BodySize();
+        auto iter     = BoxMap.find(box._header.type);
+        if (remainLen - box._header.size < 0) {
+            file.seekg(remainLen, std::ios::cur);
+            return ERROR_FILE_FORMAT;
         }
-        _printList.emplace_back(subBox);
+        if (iter == BoxMap.end()) {
+            file.seekg(bodySize, std::ios::cur);
+        } else {
+            auto subBox     = iter->second();
+            subBox->_header = box._header;
+            //            subBox->_parent = std::weak_ptr(this);
+            subBox->ProcessData(file);
+            auto mapIter = _boxes.find(subBox->_header.type);
+            if (mapIter == _boxes.end()) {
+                _boxes[subBox->_header.type] = {subBox};
+            } else {
+                _boxes[subBox->_header.type].emplace_back(subBox);
+            }
+            _printList.emplace_back(subBox);
+        }
+        remainLen -= box._header.size;
     }
     return SUCCESS;
 }

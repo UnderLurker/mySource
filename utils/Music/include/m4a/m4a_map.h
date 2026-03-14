@@ -7,11 +7,14 @@
 
 #include <map>
 
+#include "m4a/m4a_file_delivery_format_support.h"
 #include "m4a/m4a_general.h"
+#include "m4a/m4a_metadata_support.h"
 #include "m4a/m4a_movie.h"
 #include "m4a/m4a_movie_fragments.h"
 #include "m4a/m4a_sample_group.h"
 #include "m4a/m4a_sample_tables.h"
+#include "m4a/m4a_support_for_protected_streams.h"
 #include "m4a/m4a_track.h"
 #include "m4a/m4a_track_data_layout.h"
 #include "m4a/m4a_track_media.h"
@@ -96,6 +99,7 @@ const std::map<BoxType, BoxCreator> BoxMap = {
     {myUtil::BoxType::CPRT, []() { return std::make_shared<CopyrightBox>(); }                           },
     {myUtil::BoxType::TSEL, []() { return std::make_shared<TrackSelectionBox>(); }                      },
     {myUtil::BoxType::KIND, []() { return std::make_shared<KindBox>(); }                                },
+    // metadata support
     {myUtil::BoxType::META, []() { return std::make_shared<MetaBox>(); }                                },
     {myUtil::BoxType::XML,  []() { return std::make_shared<XMLBox>(); }                                 },
     {myUtil::BoxType::BXML, []() { return std::make_shared<BinaryXMLBox>(); }                           },
@@ -108,6 +112,13 @@ const std::map<BoxType, BoxCreator> BoxMap = {
     {myUtil::BoxType::MERE, []() { return std::make_shared<MetaboxRelationBox>(); }                     },
     {myUtil::BoxType::IDAT, []() { return std::make_shared<ItemDataBox>(); }                            },
     {myUtil::BoxType::IREF, []() { return std::make_shared<ItemReferenceBox>(); }                       },
+    // support for protected streams
+    {myUtil::BoxType::SINF, []() { return std::make_shared<ProtectionSchemeInformationBox>(); }         },
+    {myUtil::BoxType::FRMA, []() { return std::make_shared<OriginalFormatBox>(); }                      },
+    {myUtil::BoxType::SCHM, []() { return std::make_shared<SchemeTypeBox>(); }                          },
+    {myUtil::BoxType::SCHI, []() { return std::make_shared<SchemeInformationBox>(); }                   },
+    // file delivery format support
+    {myUtil::BoxType::PAEN, []() { return std::make_shared<PartitionEntry>(); }                         },
 };
 } // namespace myUtil
 
