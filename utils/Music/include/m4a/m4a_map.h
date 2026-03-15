@@ -119,6 +119,10 @@ const std::map<BoxType, BoxCreator> BoxMap = {
     {myUtil::BoxType::SCHI, []() { return std::make_shared<SchemeInformationBox>(); }                   },
     // file delivery format support
     {myUtil::BoxType::PAEN, []() { return std::make_shared<PartitionEntry>(); }                         },
+    {myUtil::BoxType::FPAR, []() { return std::make_shared<FilePartitionBox>(); }                       },
+    {myUtil::BoxType::FECR, []() { return std::make_shared<FECReservoirBox>(); }                        },
+    {myUtil::BoxType::SEGR, []() { return std::make_shared<FDSessionGroupBox>(); }                      },
+    {myUtil::BoxType::FIRE, []() { return std::make_shared<FileReservoirBox>(); }                       },
 };
 } // namespace myUtil
 
