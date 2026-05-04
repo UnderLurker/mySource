@@ -16,6 +16,7 @@ group("all_utils_test") {
     "Matrix:MatrixTest",
     "Music:MusicTest",
     "Shader:OpenGLTest",
+    "Thread:ThreadTest",
     "Util:UtilTest",
     "XmlSerializer:XmlTest",
   ]

@@ -57,6 +57,9 @@ struct GroupIdToNameBox : public LeafFullBox {
 };
 // FIRE
 struct FileReservoirBox : public LeafFullBox {
+    uint32_t entryCount;
+    std::unique_ptr<uint32_t[]> itemIds;
+    std::unique_ptr<uint32_t[]> symbolCounts;
     M4AStatus OnProcessData(const uint8_t* body, size_t length) override;
 };
 } // namespace myUtil

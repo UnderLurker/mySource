@@ -52,6 +52,7 @@ public:
     virtual M4AStatus ProcessData(std::fstream& file);
     virtual bool ProcessFullBox(std::fstream& file) { return false; }
     virtual bool ProcessFullBox(const uint8_t* body, size_t length) { return false; }
+    // Example: extend FullBox and has other Box
     M4AStatus ProcessChildBox(std::fstream& file, int64_t remainLen);
 
     uint32_t Count(BoxType type) const;
@@ -74,7 +75,10 @@ protected:
 // Container
 class FullBox : public virtual Box {
 public:
+    // Call FullBox::ProcessFullBox before calling
     bool ProcessFullBox(std::fstream& file) override;
+
+private:
     bool ProcessFullBox(const uint8_t* body, size_t length) override;
 };
 

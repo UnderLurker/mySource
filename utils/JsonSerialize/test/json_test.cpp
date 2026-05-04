@@ -126,7 +126,7 @@ public:
 };
 
 TEST_F(JsonTest, JsonBaseTest001) {
-    JsonDocument doc("../../../sample/test.json");
+    JsonDocument doc("./sample/test.json");
     ASSERT_EQ(doc.getNode().getStatus(), 0);
 
     auto node = doc.CreateNode(Number, "abc", "123");

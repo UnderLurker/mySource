@@ -12,8 +12,10 @@
 #include "m4a/m4a_metadata_support.h"
 #include "m4a/m4a_movie.h"
 #include "m4a/m4a_movie_fragments.h"
+#include "m4a/m4a_post_decoder_requirements_on_media.h"
 #include "m4a/m4a_sample_group.h"
 #include "m4a/m4a_sample_tables.h"
+#include "m4a/m4a_sub_tracks.h"
 #include "m4a/m4a_support_for_protected_streams.h"
 #include "m4a/m4a_track.h"
 #include "m4a/m4a_track_data_layout.h"
@@ -123,6 +125,14 @@ const std::map<BoxType, BoxCreator> BoxMap = {
     {myUtil::BoxType::FECR, []() { return std::make_shared<FECReservoirBox>(); }                        },
     {myUtil::BoxType::SEGR, []() { return std::make_shared<FDSessionGroupBox>(); }                      },
     {myUtil::BoxType::FIRE, []() { return std::make_shared<FileReservoirBox>(); }                       },
+    // sub tracks
+    {myUtil::BoxType::STRK, []() { return std::make_shared<SubTrack>(); }                               },
+    {myUtil::BoxType::STRI, []() { return std::make_shared<SubTrackInformation>(); }                    },
+    {myUtil::BoxType::STRD, []() { return std::make_shared<SubTrackDefinition>(); }                     },
+    {myUtil::BoxType::STSG, []() { return std::make_shared<SubTrackSampleGroupBox>(); }                 },
+    // post-decoder requirements on media
+    {myUtil::BoxType::RINF, []() { return std::make_shared<RestrictedSchemeInfoBox>(); }                },
+
 };
 } // namespace myUtil
 

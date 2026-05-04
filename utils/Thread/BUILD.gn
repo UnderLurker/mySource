@@ -1,0 +1,16 @@
+import("//config.gni")
+import("//utils/test_config.gni")
+
+config("thread_config") {
+  include_dirs = [
+    "include",
+  ]
+}
+
+test_executable("ThreadTest") {
+  configs = [ ":thread_config" ]
+  sources = [
+    "src/Thread.cpp",
+    "test/Thread_test.cpp"
+  ]
+}

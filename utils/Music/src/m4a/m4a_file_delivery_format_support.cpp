@@ -137,6 +137,25 @@ M4AStatus GroupIdToNameBox::OnProcessData(const uint8_t* body, size_t length) {
 }
 
 M4AStatus FileReservoirBox::OnProcessData(const uint8_t* body, size_t length) {
+    if (_header.version == 0) {
+        entryCount = GetValue<uint16_t>(body);
+    } else {
+        entryCount = GetValue<uint32_t>(body);
+    }
+    itemIds      = std::make_unique<uint32_t[]>(entryCount);
+    symbolCounts = std::make_unique<uint32_t[]>(entryCount);
+    uint32_t pos = _header.version == 0 ? 2 : 4;
+    for (uint32_t i = 0; i < entryCount; i++) {
+        constexpr uint32_t SIX   = 6;
+        constexpr uint32_t EIGHT = 8;
+        if (_header.version == 0) {
+            itemIds[i] = GetValue<uint16_t>(body + pos + SIX * i);
+        } else {
+            itemIds[i] = GetValue<uint32_t>(body + pos + EIGHT * i);
+        }
+        uint32_t p      = _header.version == 0 ? (SIX * i + 2) : (EIGHT * i + 4);
+        symbolCounts[i] = GetValue<uint32_t>(body + pos + p);
+    }
     return SUCCESS;
 }
 } // namespace myUtil
