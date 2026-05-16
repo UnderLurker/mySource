@@ -4,6 +4,7 @@
 #include <iostream>
 #include <map>
 #include <utility>
+#include <thread>
 
 #include "base64.h"
 #include "BTree.h"
@@ -11,6 +12,8 @@
 #include "RBTree.h"
 #include "SingleLinkList.h"
 #include "Trie.h"
+#include "SPSCDeque.h"
+#include "LockFreeQueue.h"
 using namespace std;
 using namespace myUtil;
 
@@ -133,6 +136,124 @@ TEST_F(UtilTest, UtilTest001) {
     dict.insert(test2);
     EXPECT_TRUE(dict.search(test1));
     EXPECT_TRUE(dict.startsWith(test3));
+}
+
+TEST_F(UtilTest, SPSCDequeTest) {
+    std::atomic<int32_t> writeCount {0};
+    std::atomic<int32_t> readCount {0};
+    SPSCQueue<int32_t> queue(1000);
+    constexpr int32_t number = 10000;
+    std::thread write([&]() {
+        for (int i = 0; i < number; i++) {
+            while (!queue.push(i)) {
+                std::this_thread::yield();
+            }
+            writeCount++;
+        }
+    });
+    std::thread read([&]() {
+        int32_t i = 0;
+        while (readCount < number) {
+            if (auto val = queue.pop()) {
+                readCount++;
+                EXPECT_FALSE(val && val != i);
+                // if (val && val != i) {
+                //     cout << "not equal!!!" << " " << i << endl;
+                // }
+                i++;
+            } else {
+                std::this_thread::yield();
+            }
+        }
+    });
+    write.join();
+    read.join();
+    EXPECT_EQ(writeCount.load(), number);
+    EXPECT_EQ(readCount.load(), number);
+}
+
+void testMultiProducerMultiConsumer() {
+    std::cout << "=== 测试5: 多生产者多消费者测试 ===\n";
+    const int NUM_PRODUCERS = 10;
+    const int NUM_CONSUMERS = 10;
+    const int ITEMS_PER_PRODUCER = 2000000;
+    const int TOTAL_ITEMS = NUM_PRODUCERS * ITEMS_PER_PRODUCER;
+    LockFreeQueue<int> queue(ITEMS_PER_PRODUCER);
+    
+    std::vector<std::thread> producers;
+    std::vector<std::thread> consumers;
+    std::atomic<int> producedCount{0};
+    std::atomic<int> consumedCount{0};
+    
+    // 用于验证的计数器
+    std::vector<int> received(TOTAL_ITEMS, 0);
+    std::mutex resultMutex;
+    
+    auto start = std::chrono::high_resolution_clock::now();
+    
+    // 生产者
+    for(int i = 0; i < NUM_PRODUCERS; i++) {
+        producers.emplace_back([&, i]() {
+            for(int j = 0; j < ITEMS_PER_PRODUCER; j++) {
+                int value = i * ITEMS_PER_PRODUCER + j;
+                while(!queue.push(value)) {
+                    std::this_thread::yield();
+                }
+                producedCount++;
+            }
+        });
+    }
+    
+    // 消费者
+    for(int i = 0; i < NUM_CONSUMERS; i++) {
+        consumers.emplace_back([&]() {
+            int localCount = 0;
+            while(consumedCount < TOTAL_ITEMS) {
+                if(auto val = queue.pop()) {
+                    std::lock_guard<std::mutex> lock(resultMutex);
+                    received[*val]++;
+                    localCount++;
+                    consumedCount++;
+                } else {
+                    if(producedCount >= TOTAL_ITEMS) {
+                        break;
+                    }
+                    std::this_thread::yield();
+                }
+            }
+        });
+    }
+    
+    for(auto& t : producers) t.join();
+    
+    // 等待所有消费者完成
+    for(auto& t : consumers) t.join();
+    
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    
+    // 验证每个值都被消费了一次
+    bool allGood = true;
+    for(int i = 0; i < TOTAL_ITEMS; i++) {
+        if(received[i] != 1) {
+            std::cerr << "错误: 值 " << i << " 被消费了 " 
+                      << received[i] << " 次\n";
+            allGood = false;
+        }
+    }
+    
+    assert(allGood);
+    assert(consumedCount == TOTAL_ITEMS);
+    
+    std::cout << "生产者: " << NUM_PRODUCERS << " 个\n";
+    std::cout << "消费者: " << NUM_CONSUMERS << " 个\n";
+    std::cout << "总元素: " << TOTAL_ITEMS << "\n";
+    std::cout << "耗时: " << duration.count() << " ms\n";
+    std::cout << "✓ 多生产者多消费者测试通过\n\n";
+}
+
+TEST_F(UtilTest, LockFreeQueueTest) {
+    testMultiProducerMultiConsumer();
 }
 
 int main(int argc, char** argv) {
