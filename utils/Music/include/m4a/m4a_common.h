@@ -131,6 +131,12 @@ void ReadData(const uint8_t* body, T& data, uint32_t& pos) {
     data  = GetValue<typename T::value_type>(body + pos);
     pos  += sizeof(typename T::value_type);
 }
+
+template<typename T, std::enable_if_t<std::is_integral_v<T>, bool> = true>
+void ReadData(const uint8_t *body, T &data, uint32_t &pos) {
+    data = GetValue<T>(body + pos);
+    pos += sizeof(T);
+}
 } // namespace myUtil
 
 #endif // _M4A_COMMON_H

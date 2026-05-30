@@ -15,6 +15,7 @@
 #include "m4a/m4a_post_decoder_requirements_on_media.h"
 #include "m4a/m4a_sample_group.h"
 #include "m4a/m4a_sample_tables.h"
+#include "m4a/m4a_segments.h"
 #include "m4a/m4a_sub_tracks.h"
 #include "m4a/m4a_support_for_protected_streams.h"
 #include "m4a/m4a_track.h"
@@ -132,6 +133,11 @@ const std::map<BoxType, BoxCreator> BoxMap = {
     {myUtil::BoxType::STSG, []() { return std::make_shared<SubTrackSampleGroupBox>(); }                 },
     // post-decoder requirements on media
     {myUtil::BoxType::RINF, []() { return std::make_shared<RestrictedSchemeInfoBox>(); }                },
+    {myUtil::BoxType::STVI, []() { return std::make_shared<StereoVideoBox>(); }                         },
+    {myUtil::BoxType::STYP, []() { return std::make_shared<SegmentTypeBox>(); }                         },
+    {myUtil::BoxType::SIDX, []() { return std::make_shared<SegmentIndexBox>(); }                        },
+    {myUtil::BoxType::SSIX, []() { return std::make_shared<SubsegmentIndexBox>(); }                     },
+    {myUtil::BoxType::PRFT, []() { return std::make_shared<ProducerReferenceTimeBox>(); }               },
 
 };
 } // namespace myUtil
