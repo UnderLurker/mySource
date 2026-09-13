@@ -14,6 +14,7 @@
 #include "Trie.h"
 #include "SPSCDeque.h"
 #include "LockFreeQueue.h"
+#include "Timer.h"
 using namespace std;
 using namespace myUtil;
 
@@ -254,6 +255,30 @@ void testMultiProducerMultiConsumer() {
 
 TEST_F(UtilTest, LockFreeQueueTest) {
     testMultiProducerMultiConsumer();
+}
+void print(int a) {
+    printf("%d\n", a);
+}
+
+TEST_F(UtilTest, TimerTest) {
+    struct A {
+        void print(int a) {
+            printf("%d\n", a);
+        }
+    };
+    A a;
+    Timer<void, int> timer("timer");
+    timer.setInterval(print, 2000);
+    int val = 30;
+    timer.start(val);
+    int32_t t = 0;
+    int32_t num = 10;
+    for (; t < num; t++) {
+        std::this_thread::sleep_for(1s);
+    }
+    timer.stop();
+    std::this_thread::sleep_for(3s);
+
 }
 
 int main(int argc, char** argv) {

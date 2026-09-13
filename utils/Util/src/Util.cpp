@@ -28,46 +28,6 @@ std::string getFile(const std::string& filePath)
     return content;
 }
 
-Timer::Timer(){
-    startTime=clock();
-}
-
-Timer::Timer(void* lpFunc){
-    startTime=clock();
-    this->lpFunc=lpFunc;
-}
-
-std::string Timer::getRunTime(const std::string &format){
-    curTime=clock();
-    clock_t temp=curTime-startTime;
-    if(format=="millisecond") return std::to_string(temp);
-    else if(format=="second") return std::to_string(temp/CLOCKS_PER_SEC);
-    return std::to_string(temp);
-}
-
-void Timer::setInterval(void *lpFunc,long interval){
-    runFlag=true;
-    this->lpFunc=lpFunc;
-    this->inter=interval;
-}
-
-template<typename classType, typename ...Args>
-void Timer::start(Args... args){
-    typedef std::function<void(classType,Args...)> classFunc;
-    classFunc* func=(classFunc*)lpFunc;
-    while(runFlag){
-        // Sleep(inter);
-        // std::thread th([](Args... args){
-        //     (*func)(args...);
-        // },args...);
-        // th.join();
-    }
-}
-
-void Timer::end(){
-    runFlag=false;
-}
-
 vector<string> Split(const string& source, char ch){
     vector<string> res;
     size_t pre=0,pos=0;
