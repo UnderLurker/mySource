@@ -5,6 +5,7 @@
 #include <map>
 #include <utility>
 #include <thread>
+#include <sys/syscall.h>
 
 #include "base64.h"
 #include "BTree.h"
@@ -257,26 +258,33 @@ TEST_F(UtilTest, LockFreeQueueTest) {
     testMultiProducerMultiConsumer();
 }
 void print(int a) {
-    printf("%d\n", a);
+    cout << "pid: " << syscall(SYS_gettid);
+    printf(" %d\n", a);
 }
 
 TEST_F(UtilTest, TimerTest) {
     struct A {
         void print(int a) {
-            printf("%d\n", a);
+            cout << "A:: pid: " << syscall(SYS_gettid);
+            printf(" %d\n", a);
         }
     };
     A a;
-    Timer<void, int> timer("timer");
-    timer.setInterval(print, 2000);
-    int val = 30;
-    timer.start(val);
+    Timer<void, int> timer1("timerA");
+    Timer<void, int> timer2("timerB");
+    timer1.setInterval(&A::print, &a, 1000);
+    timer2.setInterval(print, 1000);
+    int val1 = 30;
+    int val2 = 20;
+    timer1.start(val1);
+    timer2.start(val2);
     int32_t t = 0;
     int32_t num = 10;
     for (; t < num; t++) {
         std::this_thread::sleep_for(1s);
     }
-    timer.stop();
+    timer1.stop();
+    timer2.stop();
     std::this_thread::sleep_for(3s);
 
 }
