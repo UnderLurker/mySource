@@ -257,27 +257,42 @@ void testMultiProducerMultiConsumer() {
 TEST_F(UtilTest, LockFreeQueueTest) {
     testMultiProducerMultiConsumer();
 }
-void print(int a) {
-    cout << "pid: " << syscall(SYS_gettid);
-    printf(" %d\n", a);
+void printGlobal(int a) {
+    auto now = std::chrono::steady_clock::now();
+    auto ms  = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+    printf("now : %ld, pid: %ld, a = %d\n", ms, syscall(SYS_gettid), a);
 }
 
 TEST_F(UtilTest, TimerTest) {
     struct A {
         void print(int a) {
-            cout << "A:: pid: " << syscall(SYS_gettid);
-            printf(" %d\n", a);
+            printGlobal(a);
+        }
+        void printB(int a) const {
+            printGlobal(a);
+        }
+        static void printC(int a) {
+            printGlobal(a);
         }
     };
     A a;
     Timer<void, int> timer1("timerA");
     Timer<void, int> timer2("timerB");
+    Timer<void, int> timer3("timerC");
+    Timer<void, int> timer4("timerD");
     timer1.setInterval(&A::print, &a, 1000);
-    timer2.setInterval(print, 1000);
+    timer2.setInterval(printGlobal, 1000);
+    timer3.setInterval(&A::printC, 1000);
+    timer4.setInterval([](int a) {
+        printGlobal(a);
+    }, 2000);
     int val1 = 30;
     int val2 = 20;
+    int val3 = 10;
     timer1.start(val1);
     timer2.start(val2);
+    timer3.start(val3);
+    timer4.start(val3);
     int32_t t = 0;
     int32_t num = 10;
     for (; t < num; t++) {
@@ -285,6 +300,8 @@ TEST_F(UtilTest, TimerTest) {
     }
     timer1.stop();
     timer2.stop();
+    timer3.stop();
+    timer4.stop();
     std::this_thread::sleep_for(3s);
 
 }
