@@ -15,6 +15,7 @@ config("compiler_defaults") {
     cflags = [
       "-fPIC",
       "-pthread",
+      "-Wextra",
     ]
   }
   if (is_debug) {
