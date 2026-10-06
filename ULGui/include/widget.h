@@ -11,7 +11,7 @@
 
 #include "abstractComponent.h"
 #include "abstractWidget.h"
-#include "ULGuiType.h"
+#include "ULGuiGVec.h"
 
 using namespace ULGui::components;
 

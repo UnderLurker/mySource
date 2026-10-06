@@ -25,7 +25,7 @@ Widget::Widget(Widget* parent) {
     if (parent) setParent(parent);
 }
 
-Widget::Widget(const GInt32& width, const GInt32& height, Widget* parent){
+Widget::Widget(const GInt32& width, const GInt32& height, Widget*){
     setWidth(width);
     setHeight(height);
 }
@@ -54,13 +54,13 @@ void Widget::paintEvent(event::PaintEvent* event) {
         {80, 0 },
         base::Point(width() / 4, height() / 2),
         {20,  20}});
-    tri.setCoordSize(width(), height());
+    tri.setViewPortSize(width(), height());
     tri.paintEvent(event);
 
     base::Circle circle({width() / 2.0, height() / 2.0}, height() / 3.0, 0, 120);
     circle.fill = false;
     circle.setPenWidth(1);
-    circle.setCoordSize(width(), height());
+    circle.setViewPortSize(width(), height());
     circle.paintEvent(event);
 }
 

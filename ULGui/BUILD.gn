@@ -3,6 +3,9 @@ import("//utils/test_config.gni")
 
 config("base_config") {
   include_dirs = [ "include" ]
+  defines = [
+    "GLFW_INCLUDE_NONE", # OpenGL 头由 glad 提供，禁止 glfw 再引入 <GL/gl.h>
+  ]
 }
 
 config("event_config") {
@@ -10,7 +13,10 @@ config("event_config") {
 }
 
 config("BaseGraphics_config") {
-  include_dirs = [ "base/include" ]
+  include_dirs = [
+    "base/include",
+    "//include",  # glad/glad.h
+  ]
 }
 
 config("components_config") {
@@ -21,7 +27,6 @@ test_executable("ULGuiTest") {
   include_dirs = [ "//include" ]
   sources = [
     "test/ULGui_test.cpp",
-    "//src/glad.c",
   ]
   configs = [
     ":base_config",
@@ -38,6 +43,7 @@ test_executable("ULGuiTest") {
     "components:Components",
     "events:Events",
     "$third_part/glfw:glfw",
+    "$utils_path/Shader:shader_shared",
   ]
 
   output_dir = "$target_gen_dir"
@@ -46,6 +52,7 @@ test_executable("ULGuiTest") {
 shared_library("Window") {
   sources = [
     "src/abstractWidget.cpp",
+    "src/ULGuiColor.cpp",
     "src/widget.cpp",
   ]
   configs += [
@@ -54,10 +61,12 @@ shared_library("Window") {
     ":components_config",
     ":event_config",
     "$third_part/glm:glm_config",
+    "$utils_path/Shader:shader_config",
   ]
-  deps = [
+  public_deps = [
     "components:Components",
     "$third_part/glfw:glfw",
+    "$utils_path/Shader:shader_shared",
   ]
 }
 

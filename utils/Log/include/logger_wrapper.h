@@ -103,10 +103,10 @@ static void UtilPrint(LogLevel level,
 }
 #endif
 
-#define LOGE(fmt, ...) UtilPrint(LogLevel::ERROR, __FILE__, __LINE__, __FUNCTION__, fmt, ##__VA_ARGS__)
-#define LOGD(fmt, ...) UtilPrint(LogLevel::DEBUG, __FILE__, __LINE__, __FUNCTION__, fmt, ##__VA_ARGS__)
-#define LOGW(fmt, ...) UtilPrint(LogLevel::WARNING, __FILE__, __LINE__, __FUNCTION__, fmt, ##__VA_ARGS__)
-#define LOGI(fmt, ...) UtilPrint(LogLevel::INFO, __FILE__, __LINE__, __FUNCTION__, fmt, ##__VA_ARGS__)
+#define LOGE(fmt, ...) UtilPrint(myUtil::LogLevel::ERROR, __FILE__, __LINE__, __FUNCTION__, fmt, ##__VA_ARGS__)
+#define LOGD(fmt, ...) UtilPrint(myUtil::LogLevel::DEBUG, __FILE__, __LINE__, __FUNCTION__, fmt, ##__VA_ARGS__)
+#define LOGW(fmt, ...) UtilPrint(myUtil::LogLevel::WARNING, __FILE__, __LINE__, __FUNCTION__, fmt, ##__VA_ARGS__)
+#define LOGI(fmt, ...) UtilPrint(myUtil::LogLevel::INFO, __FILE__, __LINE__, __FUNCTION__, fmt, ##__VA_ARGS__)
 #else
 #define LOGE(fmt, ...)
 #define LOGD(fmt, ...)

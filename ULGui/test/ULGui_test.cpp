@@ -26,7 +26,7 @@ int main() {
     ULGui::window::Widget widget(600, 300);
     std::string str = "this is a title";
     widget.setTitle(str);
-    widget.setBackground(ULGui::GraphicRGBA(122, 61, 61));
+    widget.setBackground(ULGui::RGBA(122, 61, 61));
     widget.setLocation(100, 100);
 
     TriComponent tri;

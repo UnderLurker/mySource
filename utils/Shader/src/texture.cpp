@@ -3,12 +3,11 @@
 //
 #include "texture.h"
 
-#include <glad/glad.h>
 NAME_SPACE_START(myUtil)
 
-Texture::Texture(myUtil::TextureType type) {
+Texture::Texture(myUtil::TextureType type)
+    : _type(type) {
     glGenTextures(1, &_textureId);
-    _type = type;
 }
 
 void Texture::drawTexture(uint32_t texture) const {

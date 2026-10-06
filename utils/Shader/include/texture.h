@@ -29,21 +29,19 @@ public:
     }
     template<typename... Args>
     void setParam(uint32_t name, int32_t value, Args... args) const {
+        MYASSERT(sizeof...(args) % 2 == 0);
         setParam(name, value);
         setParam(args...);
     }
     void setImage2D(uint32_t width, uint32_t height, unsigned char* data) const {
         if (_type != TEXTURE_2D) return;
-        glTexImage2D(_type, 0, GL_RED, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(_type, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
     }
     void drawTexture(uint32_t texture) const;
 
 public:
     uint32_t _textureId {0};
     TextureType _type {TEXTURE_2D};
-    bool _status {false};
-
-private:
 };
 
 NAME_SPACE_END()

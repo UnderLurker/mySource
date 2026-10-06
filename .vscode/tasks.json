@@ -16,6 +16,14 @@
             "args": [
                 "MusicTest"
             ],
+        },
+        {
+            "label": "OpenGLTest",
+            "type": "shell",
+            "command": "./build.sh",
+            "args": [
+                "OpenGLTest"
+            ],
         }
     ]
 }

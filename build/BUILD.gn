@@ -28,6 +28,7 @@ config("compiler_defaults") {
   if (is_use_log_client) {
     defines += [ "LOGGER_CLIENT" ]
   }
+  ldflags = [ "-Wl,-rpath,\$ORIGIN" ]
 }
 
 config("executable_ldconfig") {

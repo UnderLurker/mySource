@@ -9,91 +9,135 @@
 #include "shader_macro.h"
 
 NAME_SPACE_START(myUtil)
-void shaderAttach(uint32_t programId, const vector<Shader*>& shaderList) {
+void shaderAttach(uint32_t programId, const std::vector<std::unique_ptr<Shader>>& shaderList) {
     for (const auto& item : shaderList)
-        glAttachShader(programId, item->_shaderId);
+        if (item && item->_shaderId) glAttachShader(programId, item->_shaderId);
 }
 
-void deleteShader(vector<Shader*>& shaderList) {
-    for (auto& item : shaderList) {
-        item->deleteShader();
-        delete item;
-        item = nullptr;
+Program::~Program() {
+    if (_programId == 0 || !_status) return;
+    int32_t success = 0;
+    glDeleteProgram(_programId);
+    glGetProgramiv(_programId, GL_DELETE_STATUS, &success);
+    if (!success) {
+        int32_t len = 0;
+        glGetProgramiv(_programId, GL_INFO_LOG_LENGTH, &len);
+        std::string msg(len ? len + 1 : 1, '\0');
+        glGetProgramInfoLog(_programId, len, nullptr, msg.data());
+        // shader compiler delete failed
+        LOGE("%s", msg.data());
     }
+    _programId = 0;
 }
-
-Program::Program() { _programId = glCreateProgram(); }
 
 void Program::use() const { glUseProgram(_programId); }
 
-void Program::push_back(Shader* shader) {
+void Program::push_back(std::unique_ptr<Shader>&& shader) {
     if (!shader->_status) return;
-    if (shader->_type == Shader::VERTEX_SHADER) _vertexShaderList.push_back(shader);
-    else if (shader->_type == Shader::FRAGMENT_SHADER) _fragmentShaderList.push_back(shader);
+    if (shader->_type == Shader::VERTEX_SHADER) _vertexShaderList.push_back(std::move(shader));
+    else if (shader->_type == Shader::FRAGMENT_SHADER) _fragmentShaderList.push_back(std::move(shader));
 }
 
 bool Program::linkProgram() {
+    if (_programId == 0) {
+        _programId = glCreateProgram();
+        if (_programId == 0) return false;
+    }
     if (_vertexShaderList.empty() || _fragmentShaderList.empty()) return false;
     shaderAttach(_programId, _vertexShaderList);
     shaderAttach(_programId, _fragmentShaderList);
     glLinkProgram(_programId);
-    int32_t success;
+    int32_t success = 0;
     glGetProgramiv(_programId, GL_LINK_STATUS, &success);
     if (!success) {
-        char* msg = new char[MSG_SIZE];
-        glGetProgramInfoLog(_programId, 512, nullptr, msg);
+        int32_t len = 0;
+        glGetProgramiv(_programId, GL_INFO_LOG_LENGTH, &len);
+        std::string msg(len ? len + 1 : 1, '\0');
+        glGetProgramInfoLog(_programId, len, nullptr, msg.data());
         // program link error
-        LOGE("%s", msg);
-        delete[] msg;
+        LOGE("%s", msg.data());
         return _status = false;
     }
-    deleteShader(_vertexShaderList);
-    deleteShader(_fragmentShaderList);
+    _vertexShaderList.clear();
+    _fragmentShaderList.clear();
     return _status = true;
 }
 
-void Program::deleteProgram() const {
-    int32_t success;
-    glDeleteProgram(_programId);
-    glGetProgramiv(_programId, GL_DELETE_STATUS, &success);
-    if (!success) {
-        char* msg = new char[MSG_SIZE];
-        glGetProgramInfoLog(_programId, MSG_SIZE, nullptr, msg);
-        // shader compiler delete failed
-        LOGE("%s", msg);
-        delete[] msg;
+Program::UniformId Program::uniform(const std::string& name) {
+    if (_uniformMap.find(name) != _uniformMap.end()) return _uniformMap[name];
+    UniformId t = glGetUniformLocation(_programId, name.c_str());
+    if (t < 0) {
+        LOGE("Program get uniform location fail, name: %s", name.c_str());
+        return -1;
     }
+    _uniformMap[name] = t;
+    return t;
 }
 
-void Program::setBool(const std::string& name, bool value) const {
-    glUniform1i(glGetUniformLocation(_programId, name.c_str()), (int)value);
+void Program::setBool(const std::string& name, bool value) {
+    auto id = uniform(name);
+    if (id < 0) {
+        LOGW("[Program] setBool fail, name: %s", name.c_str());
+        return;
+    }
+    glUniform1i(id, (int)value);
 }
 
-void Program::setInt(const std::string& name, int value) const {
-    glUniform1i(glGetUniformLocation(_programId, name.c_str()), value);
+void Program::setInt(const std::string& name, int value) {
+    auto id = uniform(name);
+    if (id < 0) {
+        LOGW("[Program] setInt fail, name: %s", name.c_str());
+        return;
+    }
+    glUniform1i(id, value);
 }
 
-void Program::setUInt(const std::string& name, uint32_t value) const {
-    glUniform1ui(glGetUniformLocation(_programId, name.c_str()), value);
+void Program::setUInt(const std::string& name, uint32_t value) {
+    auto id = uniform(name);
+    if (id < 0) {
+        LOGW("[Program] setUInt fail, name: %s", name.c_str());
+        return;
+    }
+    glUniform1ui(id, value);
 }
 
-void Program::setFloat(const std::string& name, float value) const {
-    glUniform1f(glGetUniformLocation(_programId, name.c_str()), value);
+void Program::setFloat(const std::string& name, float value) {
+    auto id = uniform(name);
+    if (id < 0) {
+        LOGW("[Program] setFloat fail, name: %s", name.c_str());
+        return;
+    }
+    glUniform1f(id, value);
 }
 
-void Program::set4Float(const std::string& name, float x, float y, float z, float w) const {
-    glUniform4f(glGetUniformLocation(_programId, name.c_str()), x, y, z, w);
+void Program::set4Float(const std::string& name, float x, float y, float z, float w) {
+    auto id = uniform(name);
+    if (id < 0) {
+        LOGW("[Program] set4Float fail, name: %s", name.c_str());
+        return;
+    }
+    glUniform4f(id, x, y, z, w);
 }
 
-void Program::setMatrix4fv(const std::string& name, const float* array) const {
-    glUniformMatrix4fv(glGetUniformLocation(_programId, name.c_str()), 1, GL_FALSE, array);
+void Program::setMatrix4fv(const std::string& name, const float* array) {
+    auto id = uniform(name);
+    if (id < 0) {
+        LOGW("[Program] setMatrix4fv fail, name: %s", name.c_str());
+        return;
+    }
+    glUniformMatrix4fv(id, 1, GL_FALSE, array);
 }
 
-void Program::setVec3fv(const std::string& name, const float* array) const {
-    glUniform3fv(glGetUniformLocation(_programId, name.c_str()), 1, array);
+void Program::setVec3fv(const std::string& name, const float* array) {
+    auto id = uniform(name);
+    if (id < 0) {
+        LOGW("[Program] setVec3fv fail, name: %s", name.c_str());
+        return;
+    }
+    glUniform3fv(id, 1, array);
 }
 
-void Program::setColor(const std::string& name, const Color& color) const {
+void Program::setColor(const std::string& name, const Color& color) {
     auto tmp = color.convertFloat();
     if (tmp.size() != 4) return;
     set4Float(name, tmp[0], tmp[1], tmp[2], tmp[3]);
@@ -101,7 +145,7 @@ void Program::setColor(const std::string& name, const Color& color) const {
 
 void Program::renderGlyph(const std::u16string& context,
                           const GlyphConfiguration& config,
-                          const VertexArrayObj& vao) const {
+                          const VertexArrayObj& vao) {
     this->use();
     setColor("glyphColor", config.color);
     vao.use();
@@ -130,16 +174,13 @@ void Program::renderGlyph(const std::u16string& context,
     }
 }
 
-void Program::create(const char* filePath, Shader::ShaderType type) {
-    if (_programId == 0) _programId = glCreateProgram();
+void Program::addShader(const std::string& filePath, Shader::ShaderType type) {
     if (type == Shader::VERTEX_SHADER) {
-        auto tmp = new VertexShader(filePath);
-        if (tmp->_status) _vertexShaderList.push_back(tmp);
-        else delete tmp;
+        auto shader = std::make_unique<VertexShader>(filePath);
+        if (shader->_status) _vertexShaderList.push_back(std::move(shader));
     } else if (type == Shader::FRAGMENT_SHADER) {
-        auto tmp = new FragmentShader(filePath);
-        if (tmp->_status) _fragmentShaderList.push_back(tmp);
-        else delete tmp;
+        auto shader = std::make_unique<FragmentShader>(filePath);
+        if (shader->_status) _fragmentShaderList.push_back(std::move(shader));
     }
 }
 NAME_SPACE_END()

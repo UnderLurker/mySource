@@ -12,7 +12,8 @@
 
 #include "abstractAbility.h"
 #include "paintEvent.h"
-#include "ULGuiType.h"
+#include "ULGuiColor.h"
+#include "ULGuiGVec.h"
 
 namespace ULGui {
 
@@ -23,7 +24,7 @@ public:
     GInt32 x() const { return _location[0]; }
     GInt32 y() const { return _location[1]; }
     GVec2i location() const { return _location; }
-    GraphicRGBA background() const { return _background; }
+    RGBA background() const { return _background; }
     /**
      * @return { width, height }
      */
@@ -32,12 +33,12 @@ public:
     AbstractWidget* parent() const { return _parent; }
     const char* title() const { return _title.c_str(); }
 
-    void setWidth(const GInt32& width) { _size[0] = width, setCoordSize(_size[0], _size[1]); }
-    void setHeight(const GInt32& height) { _size[1] = height, setCoordSize(_size[0], _size[1]); }
+    void setWidth(const GInt32& width) { _size[0] = width, setViewPortSize(_size[0], _size[1]); }
+    void setHeight(const GInt32& height) { _size[1] = height, setViewPortSize(_size[0], _size[1]); }
     void setX(const GInt32& xPos) { _location[0] = xPos; }
     void setY(const GInt32& yPos) { _location[1] = yPos; }
     void setLocation(const GInt32& xPos, const GInt32& yPos) { _location[0] = xPos, _location[1] = yPos; }
-    void setBackground(const GraphicRGBA& background) { _background = background; }
+    void setBackground(const RGBA& background) { _background = background; }
     /**
      * @param size { width, height }
      */
@@ -51,15 +52,10 @@ public:
 
     bool init();
     virtual bool show();
-    virtual void paintEvent(event::PaintEvent* event) {}
+    virtual void paintEvent(event::PaintEvent*) {}
 
 protected:
-    static void setSmooth();
     void updateFrameSize();
-
-private:
-    void stableFrameRate();
-    static void _sleep(double time);
 
 private:
     AbstractWidget* _parent {nullptr};
@@ -67,10 +63,9 @@ private:
     GLFWwindow* _window {nullptr};
     GVec2i _size {DEFAULT_WIDGET_WIDTH, DEFAULT_WIDGET_HEIGHT}; // {width, height}
     GVec2i _location {0, 0};                                    // {left, top} or {x, y}
-    GraphicRGBA _background {255, 255, 255};
+    RGBA _background = RGBA::WHITE;
     bool _smooth {true};
     std::map<size_t, AbstractWidget*> _childWidget;
-    double _lastime {0};
 };
 
 } // namespace ULGui

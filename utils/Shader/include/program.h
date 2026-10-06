@@ -12,55 +12,51 @@
 #include "shader.h"
 #include "Util.h"
 #include "vertex_array_obj.h"
-using namespace std;
 
 NAME_SPACE_START(myUtil)
 
 class Program {
 public:
-    Program();
+    using UniformId = GLint;
+
+    Program() = default;
     template<typename... Args>
-    Program(const char* filePath, Shader::ShaderType type, Args... args) {
+    Program(const std::string& filePath, Shader::ShaderType type, Args... args) {
         create(filePath, type, args...);
     }
-    ~Program() = default;
+    ~Program();
 
     void use() const;
-    void push_back(Shader* shader);
+    void push_back(std::unique_ptr<Shader>&& shader);
     bool linkProgram();
-    void deleteProgram() const;
+    UniformId uniform(const std::string& name);
     // uniform工具函数
-    void setBool(const std::string& name, bool value) const;
-    void setInt(const std::string& name, int value) const;
-    void setUInt(const std::string& name, uint32_t value) const;
-    void setFloat(const std::string& name, float value) const;
-    void set4Float(const std::string& name, float x, float y, float z, float w) const;
-    void setMatrix4fv(const std::string& name, const float* array) const;
-    void setVec3fv(const std::string& name, const float* array) const;
-    void setColor(const std::string& name, const Color& color) const;
+    void setBool(const std::string& name, bool value);
+    void setInt(const std::string& name, int value);
+    void setUInt(const std::string& name, uint32_t value);
+    void setFloat(const std::string& name, float value);
+    void set4Float(const std::string& name, float x, float y, float z, float w);
+    void setMatrix4fv(const std::string& name, const float* array);
+    void setVec3fv(const std::string& name, const float* array);
+    void setColor(const std::string& name, const Color& color);
 
-    void renderGlyph(const std::u16string& context, const GlyphConfiguration& config, const VertexArrayObj& vao) const;
+    void renderGlyph(const std::u16string& context, const GlyphConfiguration& config, const VertexArrayObj& vao);
 
 private:
-    void create(const char* filePath, Shader::ShaderType type);
+    void create(const std::string& filePath, Shader::ShaderType type) { addShader(filePath, type); }
     template<typename... Args>
-    void create(const char* filePath, Shader::ShaderType type, Args... args) {
-        if (_programId == 0) _programId = glCreateProgram();
-        if (type == Shader::VERTEX_SHADER) {
-            _vertexShaderList.push_back(new VertexShader(filePath));
-        } else if (type == Shader::FRAGMENT_SHADER) {
-            _fragmentShaderList.push_back(new FragmentShader(filePath));
-        }
+    void create(const std::string& filePath, Shader::ShaderType type, Args... args) {
+        addShader(filePath, type);
         create(args...);
     }
-
-public:
-    bool _status {true};
-    uint32_t _programId {0};
+    void addShader(const std::string& filePath, Shader::ShaderType type);
 
 private:
-    vector<Shader*> _vertexShaderList;
-    vector<Shader*> _fragmentShaderList;
+    bool _status {true};
+    uint32_t _programId {0};
+    std::vector<std::unique_ptr<Shader>> _vertexShaderList;
+    std::vector<std::unique_ptr<Shader>> _fragmentShaderList;
+    std::unordered_map<std::string, UniformId> _uniformMap;
 };
 
 NAME_SPACE_END()

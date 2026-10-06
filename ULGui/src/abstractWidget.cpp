@@ -3,17 +3,17 @@
 //
 #include "abstractWidget.h"
 
-#include <chrono>
-#include <GL/gl.h>
-#include <thread>
+#include "renderer.h"
 
 namespace ULGui {
 namespace {
-void framebuffer_size_callback(GLFWwindow* window, int width, int height) { glViewport(0, 0, width, height); }
+void framebuffer_size_callback(GLFWwindow*, int width, int height) {
+    base::Renderer::instance().setViewport(width, height);
+}
 } // namespace
 
 void AbstractWidget::addChild(AbstractWidget* widget) {
-    widget->setCoordSize(width(), height());
+    widget->setViewPortSize(width(), height());
     _childWidget[_childWidget.size()] = widget;
 }
 
@@ -21,34 +21,51 @@ bool AbstractWidget::init() { return glfwInit(); }
 
 bool AbstractWidget::show() {
     if (!init()) return false;
+
+    // 现代管线：3.3 core profile（shader 必需）
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
+    // 抗锯齿：请求多重采样 framebuffer（须在 glfwCreateWindow 之前设置）
+    glfwWindowHint(GLFW_SAMPLES, _smooth ? DEFAULT_MSAA_SAMPLES : 0);
+
     _window = glfwCreateWindow(width(), height(), _title.c_str(), nullptr, nullptr);
     if (!_window) return false;
     glfwMakeContextCurrent(_window);
+    glfwSwapInterval(1); // 用 vsync 同步帧率：拖动窗口时最平滑、CPU 占用最低（不再手动忙等节流）
     glfwSetWindowPos(_window, _location[0], _location[1]);
     glfwSetFramebufferSizeCallback(_window, &framebuffer_size_callback);
-    setSmooth();
+
+    // 初始化渲染后端：内部加载 glad、编译 shader、建 VAO/VBO
+    auto& renderer = base::Renderer::instance();
+    if (!renderer.init(width(), height(), reinterpret_cast<void* (*)(const char*)>(glfwGetProcAddress))) {
+        return false;
+    }
+
     while (!glfwWindowShouldClose(_window)) {
         updateFrameSize();
 
-        auto bgColor = background();
-        glClearColor(bgColor.red(), bgColor.green(), bgColor.blue(), bgColor.alpha());
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        renderer.clear(background());
 
         event::PaintEvent event;
         paintEvent(&event);
 
         for (const auto& item : _childWidget) {
-            item.second->setCoordSize(_size[0], _size[1]);
+            item.second->setViewPortSize(_size[0], _size[1]);
             item.second->setWidth(_size[0]);
             item.second->setHeight(_size[1]);
             item.second->paintEvent(&event);
         }
 
-        glFlush();
-        stableFrameRate();
+        renderer.flush();
         glfwSwapBuffers(_window);
         glfwPollEvents();
     }
+
+    renderer.shutdown();
     return true;
 }
 
@@ -56,33 +73,10 @@ void AbstractWidget::setTitle(char* title) { _title = std::string(title); }
 
 void AbstractWidget::setTitle(const std::string& title) { _title = title; }
 
-void AbstractWidget::setSmooth() {
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_POINT_SMOOTH);
-    glEnable(GL_LINE_SMOOTH);
-    glHint(GL_POINT_SMOOTH_HINT, GL_NICEST); // Make round points, not square points
-    glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);  // Antialias the lines
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-}
-
 void AbstractWidget::updateFrameSize() {
     glfwGetWindowSize(_window, &_size[0], &_size[1]);
-    setCoordSize(_size[0], _size[1]);
+    setViewPortSize(_size[0], _size[1]);
     setWidth(_size[0]);
     setHeight(_size[1]);
-}
-
-void AbstractWidget::stableFrameRate() {
-    _sleep(FRAME_TIME - glfwGetTime() + _lastime);
-    _lastime = glfwGetTime();
-}
-
-void AbstractWidget::_sleep(double time) {
-    static constexpr std::chrono::duration<double> MinSleepDuration(0);
-    std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
-    while (std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start).count() < time) {
-        std::this_thread::sleep_for(MinSleepDuration);
-    }
 }
 } // namespace ULGui

@@ -8,7 +8,8 @@
 #include <vector>
 
 #include "coord.h"
-#include "ULGuiType.h"
+#include "ULGuiColor.h"
+#include "ULGuiGVec.h"
 
 namespace ULGui::base {
 
@@ -36,16 +37,16 @@ struct LineStyle {
     LineMode mode {LINE};
     LineType type {NORMORAL};
     float width {DEFAULT_PEN_WIDTH};
-    GraphicRGBA color {DEFAULT_PEN_COLOR};
+    RGBA color {DEFAULT_PEN_COLOR};
     StippleStyle stippleStyle;
 };
 
 class AbstractAbility {
 public:
-    AbstractAbility() = default;
+    AbstractAbility()                       = default;
     AbstractAbility(const AbstractAbility&) = default;
-    AbstractAbility(AbstractAbility&&) = default;
-    ~AbstractAbility() = default;
+    AbstractAbility(AbstractAbility&&)      = default;
+    ~AbstractAbility()                      = default;
     LineType lineType() const { return _style.type; }
     float penWidth() const { return _style.width; }
     uint32_t penColor() const { return (uint32_t)_style.color; }
@@ -55,30 +56,26 @@ public:
 
     void setLineType(LineType type) { _style.type = type; }
     void setPenWidth(float width) { assert(width >= 0), _style.width = width; }
-    void setPenColor(const GraphicRGBA& color) { _style.color = color; }
+    void setPenColor(const RGBA& color) { _style.color = color; }
     void setPenColor(const uint32_t& color) { _style.color = color; }
     void setStippleStyle(const StippleStyle& style) { _style.stippleStyle = style; }
     void setLineMode(const LineMode& mode) { _style.mode = mode; }
     void setLineStyle(const LineStyle& style) { _style = style; }
-    void setCoordSize(const GInt32& width, const GInt32& height);
+    void setViewPortSize(const GInt32& width, const GInt32& height);
 
-    void lineTo(const Coord& start, const Coord& end);
+    void lineTo(const Point& start, const Point& end);
     void lineTo(const std::vector<Point>& pointList);
     void point(const Point& position);
     void point(const Coord& position);
     void circle(const Point& center, double radius, bool fill = false);
     void arc(const Point& center, double radius, float startAngle, float endAngle);
     AbstractAbility& operator=(const AbstractAbility&) = default;
-    AbstractAbility& operator=(AbstractAbility&&) = default;
-
-protected:
-    void updateStyle();
+    AbstractAbility& operator=(AbstractAbility&&)      = default;
 
 public:
     static GUint32 _count;
 
 private:
-    Coord _coord;
     GUint32 _id {0};
     LineStyle _style;
 };

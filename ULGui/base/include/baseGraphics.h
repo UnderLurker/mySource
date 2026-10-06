@@ -10,7 +10,7 @@
 
 #include "abstractAbility.h"
 #include "paintEvent.h"
-#include "ULGuiType.h"
+#include "ULGuiGVec.h"
 
 namespace ULGui::base {
 using TriPosition  = GVec<Point, 3>;
@@ -20,7 +20,7 @@ class BaseGraphic : public virtual AbstractAbility {
 public:
     BaseGraphic()          = default;
     virtual ~BaseGraphic() = default;
-    virtual void paintEvent(event::PaintEvent* event) {}
+    virtual void paintEvent(event::PaintEvent*) {}
     bool fill {false};
 };
 

@@ -8,7 +8,8 @@
 #include <cstdint>
 
 #include "dimension.h"
-#include "ULGuiType.h"
+#include "ULGuiColor.h"
+#include "ULGuiGVec.h"
 
 namespace ULGui::base {
 
@@ -25,18 +26,18 @@ public:
     FontWeight weight() const { return _weight; }
     Dimension size() const { return _size; }
     std::string fontFamily() const { return _fontFamily; };
-    GraphicRGBA color() const { return _color; }
+    RGBA color() const { return _color; }
     void setWeight(FontWeight weight) { _weight = weight; }
     void setSize(const Dimension& size) { _size = size; }
     void setSize(Dimension&& size) { _size = size; }
     void setFontFamily(const std::string& fontFamily) { _fontFamily = fontFamily; }
-    void setColor(GraphicRGBA color) { _color = color; }
+    void setColor(RGBA color) { _color = color; }
 
 private:
     FontWeight _weight { Normal };
     Dimension _size {0};
     std::string _fontFamily { FONT_DEFAULT_FAMILY };
-    GraphicRGBA _color { DEFAULT_PEN_COLOR };
+    RGBA _color { DEFAULT_PEN_COLOR };
 };
 
 } // namespace ULGui::base

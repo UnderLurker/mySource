@@ -7,69 +7,64 @@
 #include <sstream>
 
 #include "include/logger_wrapper.h"
-#include "shader_macro.h"
 
 NAME_SPACE_START(myUtil)
 
-Shader::Shader(const char* filePath, ShaderType shaderType) {
-    _shaderId = glCreateShader(shaderType);
-    _status   = loadSource(filePath, shaderType);
-    _type     = shaderType;
-    //    if (_status) deleteShader();
+Shader::Shader(const std::string& filePath, ShaderType shaderType)
+    : _shaderId(glCreateShader(shaderType)), _type(shaderType), _status(loadSource(filePath)) {}
+
+Shader::Shader(const char* glsl, ShaderType shaderType)
+    : _shaderId(glCreateShader(shaderType)), _type(shaderType), _status(compile(glsl)) {}
+
+Shader::~Shader() {
+    if (_shaderId == 0) return;
+    int32_t success = 0;
+    glDeleteShader(_shaderId);
+    glGetShaderiv(_shaderId, GL_DELETE_STATUS, &success);
+    if (!success) {
+        int32_t len = 0;
+        glGetShaderiv(_shaderId, GL_INFO_LOG_LENGTH, &len);
+        std::string msg(len ? len + 1 : 1, '\0');
+        glGetShaderInfoLog(_shaderId, len, nullptr, msg.data());
+        // shader compiler delete failed
+        LOGE("%s", msg.data());
+    }
 }
 
-Shader::Shader(Shader&& obj) noexcept {
-    _status       = obj._status;
-    _shaderId     = obj._shaderId;
-    _type         = obj._type;
-    obj._shaderId = 0;
-}
-
-bool Shader::loadSource(const std::string& filePath, ShaderType shaderType) {
-    string _source;
+bool Shader::loadSource(const std::string& filePath) {
+    stringstream ss;
     try {
         std::fstream file(filePath, std::ios::in | std::ios::binary);
         if (file.fail()) return false;
-        stringstream ss;
         ss << file.rdbuf();
-        _source = ss.str();
     } catch (ifstream::failure& e) {
-        cout << "loadSource failed: " << e.what() << endl;
+        LOGE("loadSource failed: %s", e.what());
         return false;
     }
-    return compile(_source, filePath);
+    return compile(ss.str(), filePath);
 }
 
 bool Shader::compile(const string& source, const std::string& filePath) {
-    int32_t success;
+    int32_t success     = 0;
     const char* _source = source.c_str();
     glShaderSource(_shaderId, 1, &_source, nullptr);
     glCompileShader(_shaderId);
     glGetShaderiv(_shaderId, GL_COMPILE_STATUS, &success);
     if (!success) {
-        char* msg = new char[MSG_SIZE];
-        glGetShaderInfoLog(_shaderId, MSG_SIZE, nullptr, msg);
+        int32_t len = 0;
+        glGetShaderiv(_shaderId, GL_INFO_LOG_LENGTH, &len);
+        std::string msg(len ? len + 1 : 1, '\0');
+        glGetShaderInfoLog(_shaderId, len, nullptr, msg.data());
         // shader compile error
-        LOGE("filePath: %s msg: %s", filePath.c_str(), msg);
-        delete[] msg;
-        _status = false;
+        LOGE("filePath: %s msg: %s", filePath.c_str(), msg.data());
         return false;
     }
     return true;
 }
 
-void Shader::deleteShader() const {
-    if (_shaderId == 0 || !_status) return;
-    int32_t success;
-    glDeleteShader(_shaderId);
-    glGetShaderiv(_shaderId, GL_DELETE_STATUS, &success);
-    if (!success) {
-        char* msg = new char[MSG_SIZE];
-        glGetShaderInfoLog(_shaderId, MSG_SIZE, nullptr, msg);
-        // shader compiler delete failed
-        LOGE("%s", msg);
-        delete[] msg;
-    }
+bool Shader::compile(const char* source) {
+    std::string str;
+    str.assign(source);
+    return compile(str, "string");
 }
-
 NAME_SPACE_END()

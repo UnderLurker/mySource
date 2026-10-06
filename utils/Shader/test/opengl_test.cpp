@@ -174,8 +174,6 @@ int main(int argc, char* argv[]) {
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-    lightProgram.deleteProgram();
-    cubeProgram.deleteProgram();
 
     glfwTerminate();
     return 0;

@@ -9,10 +9,17 @@ shared_library("BaseGraphics") {
     "src/coord.cpp",
     "src/font.cpp",
     "src/pen.cpp",
+    "src/renderer.cpp",
+    "//src/glad.c",
   ]
   configs += [
+    "$third_part/glm:glm_config",
     "$ulgui_path:base_config",
     "$ulgui_path:event_config",
     "$ulgui_path:BaseGraphics_config",
+    "$utils_path/Shader:shader_config",
+  ]
+  public_deps = [
+    "$utils_path/Shader:shader_shared",
   ]
 }
