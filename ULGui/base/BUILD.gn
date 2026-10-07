@@ -1,5 +1,14 @@
 import("//config.gni")
 
+action("ulgui_shader_glsl") {
+  script = "//build/copy.py"
+  inputs = [ "shader" ]
+  outputs = [ "$target_gen_dir/shader" ]
+  args = [
+    "--input", rebase_path("shader", root_build_dir),
+    "--dest", rebase_path("$target_gen_dir", root_build_dir),
+  ]
+}
 
 shared_library("BaseGraphics") {
   sources = [
@@ -20,6 +29,7 @@ shared_library("BaseGraphics") {
     "$utils_path/Shader:shader_config",
   ]
   public_deps = [
+    ":ulgui_shader_glsl",
     "$utils_path/Shader:shader_shared",
   ]
 }

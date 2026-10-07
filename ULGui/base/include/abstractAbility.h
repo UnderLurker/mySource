@@ -7,8 +7,8 @@
 
 #include <vector>
 
+#include "brush.h"
 #include "coord.h"
-#include "ULGuiColor.h"
 #include "ULGuiGVec.h"
 
 namespace ULGui::base {
@@ -46,7 +46,7 @@ public:
     AbstractAbility()                       = default;
     AbstractAbility(const AbstractAbility&) = default;
     AbstractAbility(AbstractAbility&&)      = default;
-    ~AbstractAbility()                      = default;
+    virtual ~AbstractAbility()              = default;
     LineType lineType() const { return _style.type; }
     float penWidth() const { return _style.width; }
     uint32_t penColor() const { return (uint32_t)_style.color; }
@@ -62,6 +62,8 @@ public:
     void setLineMode(const LineMode& mode) { _style.mode = mode; }
     void setLineStyle(const LineStyle& style) { _style = style; }
     void setViewPortSize(const GInt32& width, const GInt32& height);
+    void setBrush(const ULBrush& brush) { _brush = brush; }
+    void setBorder();
 
     void lineTo(const Point& start, const Point& end);
     void lineTo(const std::vector<Point>& pointList);
@@ -69,6 +71,7 @@ public:
     void point(const Coord& position);
     void circle(const Point& center, double radius, bool fill = false);
     void arc(const Point& center, double radius, float startAngle, float endAngle);
+    void drawRect(const Point& leftTop, double width, double height);
     AbstractAbility& operator=(const AbstractAbility&) = default;
     AbstractAbility& operator=(AbstractAbility&&)      = default;
 
@@ -78,6 +81,7 @@ public:
 private:
     GUint32 _id {0};
     LineStyle _style;
+    ULBrush _brush;
 };
 
 } // namespace ULGui::base

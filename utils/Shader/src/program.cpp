@@ -137,6 +137,33 @@ void Program::setVec3fv(const std::string& name, const float* array) {
     glUniform3fv(id, 1, array);
 }
 
+void Program::setVec2fv(const std::string& name, const float* array) {
+    auto id = uniform(name);
+    if (id < 0) {
+        LOGW("[Program] setVec2fv fail, name: %s", name.c_str());
+        return;
+    }
+    glUniform2fv(id, 1, array);
+}
+
+void Program::setFloatArray(const std::string& name, int count, const float* array) {
+    auto id = uniform(name);
+    if (id < 0) {
+        LOGW("[Program] setFloatArray fail, name: %s", name.c_str());
+        return;
+    }
+    glUniform1fv(id, count, array);
+}
+
+void Program::setVec4Array(const std::string& name, int count, const float* array) {
+    auto id = uniform(name);
+    if (id < 0) {
+        LOGW("[Program] setVec4Array fail, name: %s", name.c_str());
+        return;
+    }
+    glUniform4fv(id, count, array);
+}
+
 void Program::setColor(const std::string& name, const Color& color) {
     auto tmp = color.convertFloat();
     if (tmp.size() != 4) return;
@@ -177,10 +204,10 @@ void Program::renderGlyph(const std::u16string& context,
 void Program::addShader(const std::string& filePath, Shader::ShaderType type) {
     if (type == Shader::VERTEX_SHADER) {
         auto shader = std::make_unique<VertexShader>(filePath);
-        if (shader->_status) _vertexShaderList.push_back(std::move(shader));
+        if (shader && shader->_status) _vertexShaderList.push_back(std::move(shader));
     } else if (type == Shader::FRAGMENT_SHADER) {
         auto shader = std::make_unique<FragmentShader>(filePath);
-        if (shader->_status) _fragmentShaderList.push_back(std::move(shader));
+        if (shader && shader->_status) _fragmentShaderList.push_back(std::move(shader));
     }
 }
 NAME_SPACE_END()

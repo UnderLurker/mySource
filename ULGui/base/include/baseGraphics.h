@@ -41,18 +41,18 @@ class Rectangle : public BaseGraphic {
 public:
     Rectangle() = default;
     explicit Rectangle(const RectPosition& pos)
-        : top(pos[0]), right(pos[1]), bottom(pos[2]), left(pos[3]) {}
-    RectPosition position() const { return RectPosition {top, right, bottom, left}; }
+        : left(pos[0]), top(pos[1]), right(pos[2]), bottom(pos[3]) {}
+    RectPosition position() const { return RectPosition {left, top, right, bottom}; }
     void setPosition(const RectPosition& pos);
     void paintEvent(event::PaintEvent* event) override;
 
-    explicit operator GVec4f() const noexcept { return GVec4f {top, right, bottom, left}; }
+    explicit operator GVec4f() const noexcept { return GVec4f {left, top, right, bottom}; }
 
 public:
-    float top {0};
     float left {0};
-    float bottom {0};
+    float top {0};
     float right {0};
+    float bottom {0};
 };
 
 class Circle : public BaseGraphic {

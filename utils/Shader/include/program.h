@@ -38,6 +38,9 @@ public:
     void set4Float(const std::string& name, float x, float y, float z, float w);
     void setMatrix4fv(const std::string& name, const float* array);
     void setVec3fv(const std::string& name, const float* array);
+    void setVec2fv(const std::string& name, const float* array);
+    void setFloatArray(const std::string& name, int count, const float* array);
+    void setVec4Array(const std::string& name, int count, const float* array);
     void setColor(const std::string& name, const Color& color);
 
     void renderGlyph(const std::u16string& context, const GlyphConfiguration& config, const VertexArrayObj& vao);

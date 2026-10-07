@@ -6,6 +6,8 @@
 #include <cmath>
 #include <vector>
 
+#include "include/logger_wrapper.h"
+
 namespace ULGui::base {
 
 void Triangle::paintEvent(event::PaintEvent*) {
@@ -14,20 +16,14 @@ void Triangle::paintEvent(event::PaintEvent*) {
 }
 
 void Rectangle::setPosition(const RectPosition& pos) {
-    top    = pos[0];
-    left   = pos[1];
-    bottom = pos[2];
-    right  = pos[3];
+    left   = pos[0];
+    top    = pos[1];
+    right  = pos[2];
+    bottom = pos[3];
 }
 
 void Rectangle::paintEvent(event::PaintEvent*) {
-    setLineMode(base::LINE_LOOP);
-    lineTo({
-        {left,  top   },
-        {right, top   },
-        {right, bottom},
-        {left,  bottom}
-    });
+    drawRect(Point {left, top}, right - left, bottom - top);
 }
 
 void Circle::paintEvent(event::PaintEvent*) {

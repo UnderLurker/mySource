@@ -19,6 +19,7 @@ namespace ULGui {
 
 class AbstractWidget : public virtual base::AbstractAbility {
 public:
+    ~AbstractWidget() override = default;
     GInt32 width() const { return _size[0]; }
     GInt32 height() const { return _size[1]; }
     GInt32 x() const { return _location[0]; }
