@@ -5,9 +5,9 @@
 #ifndef _G_COORD_H
 #define _G_COORD_H
 
-#include <cassert>
+#include <string>
 
-#include "ULGuiGVec.h"
+#include "ULGuiMacro.h"
 
 namespace ULGui::base {
 
@@ -33,50 +33,6 @@ struct Point {
     std::string toString() const {
         return "{x: " + std::to_string(x) + ", y: " + std::to_string(y) + ", z: " + std::to_string(z) + "}";
     }
-};
-
-class Coord {
-public:
-    Coord() = default;
-    explicit Coord(const GInt32& width, const GInt32& height, const Point& pos)
-        : _width(width), _height(height), _pos(pos) {}
-    explicit Coord(const GInt32& width, const GInt32& height, double x = 0, double y = 0, double z = 0)
-        : _width(width), _height(height), _pos({x, y, z}) {}
-
-    const Point& position() const { return _pos; }
-    double X() const { return _pos.x; }
-    double Y() const { return _pos.y; }
-    double Z() const { return _pos.z; }
-    GInt32 width() const { return _width; }
-    GInt32 height() const { return _height; }
-
-    void setPosition(const Point& pos) { _pos = pos; }
-    void setViewPortWidth(const GInt32& width) { _width = width; }
-    void setViewPortHeight(const GInt32& height) { _height = height; }
-
-    /**
-     * 获取在视口中的坐标
-     * @return 返回视口坐标范围{[-1, 1], [-1, 1], 0}
-     */
-    Point toViewPort() const;
-    /**
-     * 获取在视口中的坐标
-     * @param input 输入坐标
-     * @return 返回视口坐标范围{[-1, 1], [-1, 1]}
-
-     */
-    Point toViewPort(const Point& input) const;
-    static double toViewPort(const double& val, const double& base);
-
-    Coord operator+(const Coord& coord) const;
-    Coord operator-(const Coord& coord) const;
-    Coord operator*(const double& val) const;
-    Coord operator/(const double& val) const;
-
-private:
-    Point _pos {0, 0, 0};
-    GInt32 _width {0};
-    GInt32 _height {0};
 };
 
 } // namespace ULGui::base

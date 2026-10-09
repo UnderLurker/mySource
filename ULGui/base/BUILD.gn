@@ -15,7 +15,6 @@ shared_library("BaseGraphics") {
     "src/abstractAbility.cpp",
     "src/baseGraphics.cpp",
     "src/brush.cpp",
-    "src/coord.cpp",
     "src/font.cpp",
     "src/pen.cpp",
     "src/renderer.cpp",

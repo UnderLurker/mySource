@@ -46,7 +46,15 @@ int main() {
     radiusGradient->setColorAt(.0f, RGBA(255, 0, 0, 255));
     radiusGradient->setColorAt(1.0f, RGBA(0, 255, 0, 255));
     rect.setBrush(base::ULBrush(radiusGradient));
+    // rect.setBrush(RGBA::BLUE);
     rect.setPosition({100, 100, 800, 800});
+
+    // 圆角实线边框；换成 base::Border::Style::Dashed / Dotted 可看虚线/点线效果
+    base::Border border(.0);
+    border.radius = 50.0;
+    border.color  = RGBA(255, 0, 0, 255);
+    border.style  = base::Border::Style::Solid;
+    rect.setBorder(border);
 
     widget.addChild(&tri);
     widget.addChild(&rect);

@@ -7,6 +7,7 @@
 
 #include <vector>
 
+#include "border.h"
 #include "brush.h"
 #include "coord.h"
 #include "ULGuiGVec.h"
@@ -63,12 +64,12 @@ public:
     void setLineStyle(const LineStyle& style) { _style = style; }
     void setViewPortSize(const GInt32& width, const GInt32& height);
     void setBrush(const ULBrush& brush) { _brush = brush; }
-    void setBorder();
+    void setBorder(const Border& border) { _border = border; }
+    const Border& border() const { return _border; }
 
     void lineTo(const Point& start, const Point& end);
     void lineTo(const std::vector<Point>& pointList);
     void point(const Point& position);
-    void point(const Coord& position);
     void circle(const Point& center, double radius, bool fill = false);
     void arc(const Point& center, double radius, float startAngle, float endAngle);
     void drawRect(const Point& leftTop, double width, double height);
@@ -82,6 +83,7 @@ private:
     GUint32 _id {0};
     LineStyle _style;
     ULBrush _brush;
+    Border _border;
 };
 
 } // namespace ULGui::base

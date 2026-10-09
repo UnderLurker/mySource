@@ -53,8 +53,6 @@ void AbstractAbility::point(const Point& position) {
     base::Renderer::instance().drawPoint((float)position.x, (float)position.y, _style.width, _style.color);
 }
 
-void AbstractAbility::point(const Coord& position) { point(position.position()); }
-
 void AbstractAbility::circle(const Point& center, double radius, bool fill) {
     if (radius <= 0) return;
     auto& render = base::Renderer::instance();
@@ -70,6 +68,8 @@ void AbstractAbility::arc(const Point& center, double radius, float startAngle, 
 void AbstractAbility::drawRect(const Point& leftTop, double width, double height) {
     if (width < 0 || height < 0) return;
     auto& render = base::Renderer::instance();
-    render.drawRect((float)leftTop.x, (float)leftTop.y, (float)width, (float)height, _brush);
+    render.drawRoundedRectFill((float)leftTop.x, (float)leftTop.y, (float)width, (float)height,
+                               (float)_border.radius, _brush);
+    render.drawBorder((float)leftTop.x, (float)leftTop.y, (float)width, (float)height, _border);
 }
 } // namespace ULGui::base
