@@ -68,8 +68,7 @@ void AbstractAbility::arc(const Point& center, double radius, float startAngle, 
 void AbstractAbility::drawRect(const Point& leftTop, double width, double height) {
     if (width < 0 || height < 0) return;
     auto& render = base::Renderer::instance();
-    render.drawRoundedRectFill((float)leftTop.x, (float)leftTop.y, (float)width, (float)height,
-                               (float)_border.radius, _brush);
+    render.drawRoundedRectFill((float)leftTop.x, (float)leftTop.y, (float)width, (float)height, _border.radius, _brush);
     render.drawBorder((float)leftTop.x, (float)leftTop.y, (float)width, (float)height, _border);
 }
 } // namespace ULGui::base

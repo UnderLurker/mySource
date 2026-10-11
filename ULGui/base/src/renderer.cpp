@@ -152,26 +152,48 @@ void Renderer::drawRect(float x, float y, float w, float h, const ULBrush& brush
     pushTriangle(x, y, x1, y1, x, y1, brush);
 }
 
-void Renderer::drawRoundedRectFill(float x, float y, float w, float h, float radius, const ULBrush& brush) {
+void Renderer::drawRoundedRectFill(float x,
+                                   float y,
+                                   float w,
+                                   float h,
+                                   const BorderRadius& radius,
+                                   const ULBrush& brush) {
     if (w <= 0 || h <= 0) return;
     // 圆角半径 clamp 到矩形可容纳的范围
-    const float r = std::clamp(std::max(0.0f, radius), 0.0f, 0.5f * std::min(w, h));
-    if (r <= 0.0f) {
+    const float radiuslt = std::clamp(static_cast<float>(radius.leftTop), 0.0f, 0.5f * std::min(w, h));
+    const float radiusrt = std::clamp(static_cast<float>(radius.rightTop), 0.0f, 0.5f * std::min(w, h));
+    const float radiusrb = std::clamp(static_cast<float>(radius.rightBottom), 0.0f, 0.5f * std::min(w, h));
+    const float radiuslb = std::clamp(static_cast<float>(radius.leftBottom), 0.0f, 0.5f * std::min(w, h));
+    if (radiuslt <= .0f && radiusrt <= .0f && radiusrb <= .0f && radiuslb <= .0f) {
         drawRect(x, y, w, h, brush);
         return;
     }
+    float leftW   = std::max(radiuslt, radiuslb);
+    float leftH   = h - radiuslt - radiuslb;
+    float topW    = w - radiuslt - radiusrt;
+    float topH    = std::max(radiuslt, radiusrt);
+    float rightW  = std::max(radiusrt, radiusrb);
+    float rightH  = h - radiusrt - radiusrb;
+    float bottomW = w - radiuslb - radiusrb;
+    float bottomH = std::max(radiuslb, radiusrb);
 
-    drawRect(x + r, y, w - 2.0f * r, r, brush);                 // 上
-    drawRect(x, y + r, r, h - 2.0f * r, brush);                 // 左
-    drawRect(x + w - r, y + r, r, h - 2.0f * r, brush);         // 右
-    drawRect(x + r, y + h - r, w - 2.0f * r, r, brush);         // 下
-    drawRect(x + r, y + r, w - 2.0f * r, h - 2.0f * r, brush);  // 中
+    drawRect(x + radiuslt, y, topW, topH, brush);                                        // 上
+    drawRect(x, y + radiuslt, leftW, leftH, brush);                                      // 左
+    drawRect(x + w - std::max(radiusrt, radiusrb), y + radiusrt, rightW, rightH, brush); // 右
+    drawRect(x + radiuslb, y + h - bottomH, bottomW, bottomH, brush);                    // 下
+    drawRect(x + leftW, y + topH, w - leftW - rightW, h - topH - bottomH, brush);        // 中
 
     // 角度约定同 drawBorder：0° 朝右、90° 朝下（y 向下）
-    pushArc(x + r, y + r, 0.0f, r, kPi, 1.5f * kPi, brush);                 // 左上 180°~270°
-    pushArc(x + w - r, y + r, 0.0f, r, 1.5f * kPi, 2.0f * kPi, brush);      // 右上 270°~360°
-    pushArc(x + w - r, y + h - r, 0.0f, r, 0.0f, 0.5f * kPi, brush);        // 右下 0°~90°
-    pushArc(x + r, y + h - r, 0.0f, r, 0.5f * kPi, kPi, brush);             // 左下 90°~180°
+    if (radiuslt > 0) pushArc(x + radiuslt, y + radiuslt, 0.0f, radiuslt, kPi, 1.5f * kPi, brush); // 左上 180°~270°
+    else drawRect(x, y, radiuslt, radiuslt, brush);
+    if (radiusrt > 0)
+        pushArc(x + w - radiusrt, y + radiusrt, 0.0f, radiusrt, 1.5f * kPi, 2.0f * kPi, brush); // 右上 270°~360°
+    else drawRect(x + w - radiusrt, y, radiusrt, radiusrt, brush);
+    if (radiusrb > 0)
+        pushArc(x + w - radiusrb, y + h - radiusrb, 0.0f, radiusrb, 0.0f, 0.5f * kPi, brush); // 右下 0°~90°
+    else drawRect(x + w - radiusrb, y + h - radiusrb, radiusrb, radiusrb, brush);
+    if (radiuslb > 0) pushArc(x + radiuslb, y + h - radiuslb, 0.0f, radiuslb, 0.5f * kPi, kPi, brush); // 左下 90°~180°
+    else drawRect(x, y + h - radiuslb, radiuslb, radiuslb, brush);
 }
 
 void Renderer::drawTriangle(float x0, float y0, float x1, float y1, float x2, float y2, const ULBrush& brush) {
@@ -266,8 +288,53 @@ void Renderer::drawPoint(float x, float y, float size, const ULBrush& brush) {
     drawRect(x - h, y - h, s, s, brush);
 }
 
+void Renderer::drawSolidBorder(float x, float y, float w, float h, const Border& border) {
+    const float l = static_cast<float>(std::max(0.0, border.left));
+    const float t = static_cast<float>(std::max(0.0, border.top));
+    const float r = static_cast<float>(std::max(0.0, border.right));
+    const float b = static_cast<float>(std::max(0.0, border.bottom));
+    if (l <= 0 && t <= 0 && r <= 0 && b <= 0) return;
+    // 圆角半径 clamp 到矩形可容纳的范围
+    const float radiuslt = std::clamp(static_cast<float>(border.radius.leftTop), 0.0f, 0.5f * std::min(w, h));
+    const float radiusrt = std::clamp(static_cast<float>(border.radius.rightTop), 0.0f, 0.5f * std::min(w, h));
+    const float radiusrb = std::clamp(static_cast<float>(border.radius.rightBottom), 0.0f, 0.5f * std::min(w, h));
+    const float radiuslb = std::clamp(static_cast<float>(border.radius.leftBottom), 0.0f, 0.5f * std::min(w, h));
+    const ULBrush brush(border.color);
+    // 实线：4 条直边矩形 + 每个角两条 45° 圆环扇区（按对角线切分，
+    // 相邻两边线宽不同时也能正确拼合）
+    if (t > 0) drawRect(x + radiuslt, y, w - radiuslt - radiusrt, t, brush);         // 上
+    if (r > 0) drawRect(x + w - r, y + radiusrt, r, h - radiusrt - radiusrb, brush); // 右
+    if (b > 0) drawRect(x + radiuslb, y + h - b, w - radiuslb - radiusrb, b, brush); // 下
+    if (l > 0) drawRect(x, y + radiuslt, l, h - radiuslt - radiuslb, brush);         // 左
+
+    if (radiuslt > 0) {
+        const float cxLT = x + radiuslt, cyLT = y + radiuslt; // 左上角圆心
+        if (l > 0) drawArc(cxLT, cyLT, radiuslt - 0.5f * l, 180, 225, l, brush);
+        if (t > 0) drawArc(cxLT, cyLT, radiuslt - 0.5f * t, 225, 270, t, brush);
+    }
+    if (radiusrt > 0) {
+        const float cxRT = x + w - radiusrt, cyRT = y + radiusrt; // 右上角圆心
+        if (t > 0) drawArc(cxRT, cyRT, radiusrt - 0.5f * t, 270, 315, t, brush);
+        if (r > 0) drawArc(cxRT, cyRT, radiusrt - 0.5f * r, 315, 360, r, brush);
+    }
+    if (radiusrb > 0) {
+        const float cxRB = x + w - radiusrb, cyRB = y + h - radiusrb; // 右下角圆心
+        if (r > 0) drawArc(cxRB, cyRB, radiusrb - 0.5f * r, 0, 45, r, brush);
+        if (b > 0) drawArc(cxRB, cyRB, radiusrb - 0.5f * b, 45, 90, b, brush);
+    }
+    if (radiuslb > 0) {
+        const float cxLB = x + radiuslb, cyLB = y + h - radiuslb; // 左下角圆心
+        if (b > 0) drawArc(cxLB, cyLB, radiuslb - 0.5f * b, 90, 135, b, brush);
+        if (l > 0) drawArc(cxLB, cyLB, radiuslb - 0.5f * l, 135, 180, l, brush);
+    }
+}
+
 void Renderer::drawBorder(float x, float y, float w, float h, const Border& border) {
     if (border.isEmpty() || w <= 0 || h <= 0) return;
+    if (border.style == Border::Style::Solid) {
+        drawSolidBorder(x, y, w, h, border);
+        return;
+    }
     const float l = static_cast<float>(std::max(0.0, border.left));
     const float t = static_cast<float>(std::max(0.0, border.top));
     const float r = static_cast<float>(std::max(0.0, border.right));
@@ -275,38 +342,10 @@ void Renderer::drawBorder(float x, float y, float w, float h, const Border& bord
     if (l <= 0 && t <= 0 && r <= 0 && b <= 0) return;
 
     // 圆角半径 clamp 到矩形可容纳的范围
-    const float radius = std::clamp(static_cast<float>(border.radius), 0.0f, 0.5f * std::min(w, h));
-
-    const ULBrush brush(border.color);
-    if (border.style == Border::Style::Solid) {
-        // 实线：4 条直边矩形 + 每个角两条 45° 圆环扇区（按对角线切分，
-        // 相邻两边线宽不同时也能正确拼合）
-        if (t > 0) drawRect(x + radius, y, w - 2.0f * radius, t, brush);         // 上
-        if (r > 0) drawRect(x + w - r, y + radius, r, h - 2.0f * radius, brush); // 右
-        if (b > 0) drawRect(x + radius, y + h - b, w - 2.0f * radius, b, brush); // 下
-        if (l > 0) drawRect(x, y + radius, l, h - 2.0f * radius, brush);         // 左
-
-        if (radius > 0) {
-            const float cxTL = x + radius, cyTL = y + radius;         // 左上角圆心
-            const float cxTR = x + w - radius, cyTR = y + radius;     // 右上角圆心
-            const float cxBR = x + w - radius, cyBR = y + h - radius; // 右下角圆心
-            const float cxBL = x + radius, cyBL = y + h - radius;     // 左下角圆心
-            // 角度约定：0° 朝右、90° 朝下（y 向下）
-            // 左上角（上边 + 左边）
-            if (t > 0) drawArc(cxTL, cyTL, radius - 0.5f * t, 225, 270, t, brush);
-            if (l > 0) drawArc(cxTL, cyTL, radius - 0.5f * l, 180, 225, l, brush);
-            // 右上角（上边 + 右边）
-            if (t > 0) drawArc(cxTR, cyTR, radius - 0.5f * t, 270, 315, t, brush);
-            if (r > 0) drawArc(cxTR, cyTR, radius - 0.5f * r, 315, 360, r, brush);
-            // 右下角（右边 + 下边）
-            if (r > 0) drawArc(cxBR, cyBR, radius - 0.5f * r, 0, 45, r, brush);
-            if (b > 0) drawArc(cxBR, cyBR, radius - 0.5f * b, 45, 90, b, brush);
-            // 左下角（下边 + 左边）
-            if (b > 0) drawArc(cxBL, cyBL, radius - 0.5f * b, 90, 135, b, brush);
-            if (l > 0) drawArc(cxBL, cyBL, radius - 0.5f * l, 135, 180, l, brush);
-        }
-        return;
-    }
+    const float radiuslt = std::clamp(static_cast<float>(border.radius.leftTop), 0.0f, 0.5f * std::min(w, h));
+    const float radiusrt = std::clamp(static_cast<float>(border.radius.rightTop), 0.0f, 0.5f * std::min(w, h));
+    const float radiusrb = std::clamp(static_cast<float>(border.radius.rightBottom), 0.0f, 0.5f * std::min(w, h));
+    const float radiuslb = std::clamp(static_cast<float>(border.radius.leftBottom), 0.0f, 0.5f * std::min(w, h));
 
     // 虚线/点线：沿边框中线折线连续走相位，避免各边图案错位。
     // 中线 = 各边向内偏移半线宽；圆角处按两条 45° 弧拼合，非均匀线宽时两弧半径不同，
@@ -344,23 +383,32 @@ void Renderer::drawBorder(float x, float y, float w, float h, const Border& bord
 
     const float tcy = y + 0.5f * t, rcx = x + w - 0.5f * r; // 上边中线的 y、右边中线的 x
     const float bcy = y + h - 0.5f * b, lcx = x + 0.5f * l; // 下边中线的 y、左边中线的 x
-    const float radT = radius - 0.5f * t, radR = radius - 0.5f * r;
-    const float radB = radius - 0.5f * b, radL = radius - 0.5f * l;
+    // 每条边两端角的圆角半径可能不同：弧半径必须按「本角半径 − 半线宽」逐角计算，
+    // 否则弧在 0°/90°/180°/270° 处的端点与直边中线端点错位
+    const float radLT_t = radiuslt - 0.5f * t, radLT_l = radiuslt - 0.5f * l; // 左上角：上边/左边弧
+    const float radRT_t = radiusrt - 0.5f * t, radRT_r = radiusrt - 0.5f * r; // 右上角：上边/右边弧
+    const float radRB_r = radiusrb - 0.5f * r, radRB_b = radiusrb - 0.5f * b; // 右下角：右边/下边弧
+    const float radLB_b = radiuslb - 0.5f * b, radLB_l = radiuslb - 0.5f * l; // 左下角：下边/左边弧
 
     // 中线折线（顺时针）：上 → 右上角 → 右 → 右下角 → 下 → 左下角 → 左 → 左上角
-    pushLine(x + radius, tcy, x + w - radius, tcy, t);                                                           // 上
-    pushCorner(x + w - radius, y + radius, radT, 270, 315, t, radR, 315, 360, r, x + w - radius, tcy, rcx, y + radius);    // 右上角
-    pushLine(rcx, y + radius, rcx, y + h - radius, r);                                                           // 右
-    pushCorner(x + w - radius, y + h - radius, radR, 0, 45, r, radB, 45, 90, b, rcx, y + h - radius, x + w - radius, bcy); // 右下角
-    pushLine(x + w - radius, bcy, x + radius, bcy, b);                                                           // 下
-    pushCorner(x + radius, y + h - radius, radB, 90, 135, b, radL, 135, 180, l, x + radius, bcy, lcx, y + h - radius);     // 左下角
-    pushLine(lcx, y + h - radius, lcx, y + radius, l);                                                           // 左
-    pushCorner(x + radius, y + radius, radL, 180, 225, l, radT, 225, 270, t, lcx, y + radius, x + radius, tcy);            // 左上角
+    pushLine(x + radiuslt, tcy, x + w - radiusrt, tcy, t); // 上
+    pushCorner(x + w - radiusrt, y + radiusrt, radRT_t, 270, 315, t, radRT_r, 315, 360, r, x + w - radiusrt, tcy, rcx,
+               y + radiusrt);                              // 右上角
+    pushLine(rcx, y + radiusrt, rcx, y + h - radiusrb, r); // 右
+    pushCorner(x + w - radiusrb, y + h - radiusrb, radRB_r, 0, 45, r, radRB_b, 45, 90, b, rcx, y + h - radiusrb,
+               x + w - radiusrb, bcy);                     // 右下角
+    pushLine(x + w - radiusrb, bcy, x + radiuslb, bcy, b); // 下
+    pushCorner(x + radiuslb, y + h - radiuslb, radLB_b, 90, 135, b, radLB_l, 135, 180, l, x + radiuslb, bcy, lcx,
+               y + h - radiuslb);                          // 左下角
+    pushLine(lcx, y + h - radiuslb, lcx, y + radiuslt, l); // 左
+    pushCorner(x + radiuslt, y + radiuslt, radLT_l, 180, 225, l, radLT_t, 225, 270, t, lcx, y + radiuslt, x + radiuslt,
+               tcy); // 左上角
 
     // 连续相位走线：dashRem 为当前实/空段的剩余长度，跨段（跨边、跨角）连续
     const bool dotted = border.style == Border::Style::Dotted;
     bool inDash       = false; // 首轮翻转后从实段开始
     float dashRem     = 0.0f;
+    const ULBrush brush(border.color);
     for (const auto& s : segs) {
         const float dashLen = s.width * (dotted ? kDotLengthScale : kDashLengthScale);
         const float gapLen  = s.width * kGapLengthScale;

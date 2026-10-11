@@ -14,7 +14,7 @@
 #include "program.h"
 
 namespace ULGui::base {
-
+struct BorderRadius;
 struct Border;
 class Renderer {
 public:
@@ -37,12 +37,13 @@ public:
 
     // —— 图元接口：只往批处理缓冲区塞顶点，不真正绘制 ——
     void drawRect(float x, float y, float w, float h, const ULBrush& brush);
-    void drawRoundedRectFill(float x, float y, float w, float h, float radius, const ULBrush& brush);
+    void drawRoundedRectFill(float x, float y, float w, float h, const BorderRadius& radius, const ULBrush& brush);
     void drawTriangle(float x0, float y0, float x1, float y1, float x2, float y2, const ULBrush& brush);
     void drawLine(float x0, float y0, float x1, float y1, float width, const ULBrush& brush);
     void drawCircle(float cx, float cy, float r, const ULBrush& brush, bool fill, float width);
     void drawArc(float cx, float cy, float r, float startDeg, float endDeg, float width, const ULBrush& brush);
     void drawPoint(float x, float y, float size, const ULBrush& brush);
+    void drawSolidBorder(float x, float y, float w, float h, const Border& border);
     // 绘制边框：矩形为边框所在区域，线宽/颜色/线型/圆角由 Border 描述
     void drawBorder(float x, float y, float w, float h, const Border& border);
 

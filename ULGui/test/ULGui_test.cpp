@@ -50,9 +50,9 @@ int main() {
     rect.setPosition({100, 100, 800, 800});
 
     // 圆角实线边框；换成 base::Border::Style::Dashed / Dotted 可看虚线/点线效果
-    base::Border border(.0);
-    border.radius = 50.0;
-    border.color  = RGBA(255, 0, 0, 255);
+    base::Border border(10.0);
+    border.radius = {50.0, 25, 100, 100};
+    border.color  = RGBA(120, 12, 12, 255);
     border.style  = base::Border::Style::Solid;
     rect.setBorder(border);
 
