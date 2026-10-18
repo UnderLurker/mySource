@@ -73,25 +73,33 @@ int main(int argc, char* argv[]) {
     myUtil::Program cubeProgram("shader/cube.vert", myUtil::Shader::VERTEX_SHADER,
                             "shader/cube.frag", myUtil::Shader::FRAGMENT_SHADER);
     cubeProgram.linkProgram();
+    cubeProgram.setName("cubeProgram");
     myUtil::Program lightProgram("shader/light.frag", myUtil::Shader::FRAGMENT_SHADER,
                                  "shader/light.vert", myUtil::Shader::VERTEX_SHADER);
     lightProgram.linkProgram();
+    lightProgram.setName("lightProgram");
     myUtil::Program textProgram("shader/glyph.frag", myUtil::Shader::FRAGMENT_SHADER,
                                  "shader/glyph.vert", myUtil::Shader::VERTEX_SHADER);
     textProgram.linkProgram();
-    textProgram.use();
+    textProgram.setName("textProgram");
+    textProgram.bind();
     glm::mat4 projection = glm::ortho(0.0f, static_cast<GLfloat>(SCR_WIDTH), 0.0f, static_cast<GLfloat>(SCR_HEIGHT));
     textProgram.setMatrix4fv("projection", glm::value_ptr(projection));
 
     myUtil::VertexArrayObj cubeVAO;
-    cubeVAO.setArrayBuffer(lightCubeVertices, myUtil::VertexArrayObj::STATIC_DRAW);
-    cubeVAO.setVertexAttribPointer<float>(3, myUtil::FLOAT, 6, 0);
-    cubeVAO.setVertexAttribPointer<float>(3, myUtil::FLOAT, 6, 3);
+    auto cubeVBO = std::make_shared<myUtil::BufferF>(myUtil::BufferType::VBO);
+    cubeVBO->setData(lightCubeVertices, myUtil::BufferUsage::STATIC_DRAW);
+    cubeVAO.setVertexAttribPointer(cubeVBO, {.attrIndex = 0, .size = 3, .stride = 6, .offset = 0});
+    cubeVAO.setVertexAttribPointer(cubeVBO, {.attrIndex = 1, .size = 3, .stride = 6, .offset = 3});
 
     myUtil::VertexArrayObj lightVAO;
-    lightVAO.setArrayBuffer(lightVertices, myUtil::VertexArrayObj::STATIC_DRAW);
-    lightVAO.setEleArrayBuffer(lightIndices, myUtil::VertexArrayObj::STATIC_DRAW);
-    lightVAO.setVertexAttribPointer<float>(3, myUtil::FLOAT, 3, 0);
+    auto lightVBO = std::make_shared<myUtil::BufferF>(myUtil::BufferType::VBO);
+    lightVBO->setData(lightVertices, myUtil::BufferUsage::STATIC_DRAW);
+    lightVAO.setVertexAttribPointer(lightVBO, {.attrIndex = 0, .size = 3, .stride = 3, .offset = 0});
+    auto lightEBO = std::make_shared<myUtil::BufferU32>(myUtil::BufferType::VEO);
+    lightVAO.bind();
+    lightEBO->setData(lightIndices, myUtil::BufferUsage::STATIC_DRAW);
+    lightVAO.pushBuffer(lightEBO);
 
     myUtil::VertexArrayObj glyphVAO;
     glyphVAO.setGlyphArrayBuffer();
@@ -137,7 +145,7 @@ int main(int argc, char* argv[]) {
         deltaTime        = currentTime - lastTime;
         lastTime         = currentTime;
 
-        cubeProgram.use();
+        cubeProgram.bind();
         glm::mat4 view(1.0f);
         view    = camera.getViewMat4();
         cubeProgram.setMatrix4fv("view", glm::value_ptr(view));
@@ -147,7 +155,7 @@ int main(int argc, char* argv[]) {
         cubeProgram.setVec3fv("lightPos", glm::value_ptr(lightPos));
         cubeProgram.setVec3fv("viewPos", glm::value_ptr(camera.getCameraPos()));
 
-        cubeVAO.use();
+        cubeVAO.bind();
         for (int i = 0; i < cubePositions.size(); i++) {
             glm::mat4 model(1.0f);
             float angle = 20.0f * i;
@@ -157,17 +165,16 @@ int main(int argc, char* argv[]) {
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
         //        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        lightProgram.use();
+        lightProgram.bind();
         glm::mat4 lightView(1.0f);
         lightView = camera.getViewMat4();
         lightProgram.setMatrix4fv("view", glm::value_ptr(lightView));
         lightProgram.setMatrix4fv("project", glm::value_ptr(project));
         lightProgram.setMatrix4fv("model", glm::value_ptr(lightModel));
         lightProgram.setVec3fv("lightColor", glm::value_ptr(lightColor));
-        lightVAO.use();
+        lightVAO.bind();
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
 
-        textProgram.setMatrix4fv("project", glm::value_ptr(project));
         textProgram.renderGlyph(u"This is sample text你好", configuration1, glyphVAO);
         textProgram.renderGlyph(u"(C) LearnOpenGL.com", configuration2, glyphVAO);
 

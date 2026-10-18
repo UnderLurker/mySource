@@ -18,6 +18,8 @@ shared_library("BaseGraphics") {
     "src/font.cpp",
     "src/pen.cpp",
     "src/renderer.cpp",
+    "src/roundedRectDrawer.cpp",
+    "src/triangleBatchDrawer.cpp",
     "//src/glad.c",
   ]
   configs += [

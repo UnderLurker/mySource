@@ -8,15 +8,14 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <include/logger_wrapper.h>
 
-#include "border.h"
+#include "ULGuiColor.h"
+#include "brush.h"
+#include "program.h"
 
 namespace ULGui::base {
 
 namespace {
-constexpr size_t kMaxVertices   = 1u << 16; // 65536 顶点，足够一整屏控件
-constexpr int kFloatsPerVertex  = 8;        // pos(2) + color(4) + uv(2)
 constexpr float kPi             = 3.14159265358979323846f;
-constexpr int kMaxGradientStops = 16; // shader 中颜色 stop 数组的上限
 
 // 虚线/点线图案比例（相对线宽）
 constexpr float kDashLengthScale  = 3.0f; // 实段 = 线宽 * 3
@@ -45,46 +44,28 @@ bool Renderer::init(int viewportWidth, int viewportHeight, void* (*getProcAddres
         LOGE("[Renderer] glad load failed");
         return false;
     }
-    _program = std::make_unique<myUtil::Program>();
-    if (!_program) {
-        LOGE("[Renderer] create Program fail.");
+
+    // 主批次绘制器（program + 1x1 白纹理 + 动态 VBO/VAO）
+    _triangleBatch = std::make_unique<TriangleBatchDrawer>();
+    if (!_triangleBatch) {
+        LOGE("[Renderer] create TriangleBatchDrawer fail.");
+        return false;
+    }
+    if (!_triangleBatch->init()) {
+        LOGE("[Renderer] TriangleBatchDrawer init fail!!!");
         return false;
     }
 
-    std::unique_ptr<myUtil::Shader> vShader =
-        std::make_unique<myUtil::VertexShader>(std::string("base/shader/renderer.vert"));
-    std::unique_ptr<myUtil::Shader> fShader =
-        std::make_unique<myUtil::FragmentShader>(std::string("base/shader/renderer.frag"));
-    if (!vShader || !fShader) return false;
-    _program->push_back(std::move(vShader));
-    _program->push_back(std::move(fShader));
-    if (!_program->linkProgram()) {
-        LOGE("[Render] linkProgram fail!!!");
+    // 圆角矩形 SDF 绘制器（独立 program + 实例化 VAO）
+    _roundedRectDrawer = std::make_unique<RoundedRectDrawer>();
+    if (!_roundedRectDrawer) {
+        LOGE("[Renderer] create RoundedRectDrawer fail.");
         return false;
     }
-
-    // 1x1 白纹理：让纯色和纹理共用同一个 shader
-    unsigned char white[4] = {255, 255, 255, 255};
-    _texture               = std::make_unique<myUtil::Texture>();
-    if (!_texture) {
-        LOGE("[Render] create Texture fail!!!");
+    if (!_roundedRectDrawer->init()) {
+        LOGE("[Renderer] RoundedRectDrawer init fail!!!");
         return false;
     }
-    _texture->use();
-    _texture->setImage2D(1, 1, white);
-    _texture->setParam(GL_TEXTURE_MIN_FILTER, GL_LINEAR, GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_TEXTURE_WRAP_S,
-                       GL_CLAMP_TO_EDGE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-    // VAO + 动态 VBO（交错布局，预留整帧容量，flush 时 glBufferSubData）
-    _vao = std::make_unique<myUtil::VertexArrayObj>();
-    if (!_vao) {
-        LOGE("[Render] create VertexArrayObj fail!!!");
-        return false;
-    }
-    _vao->setArrayBuffer<float>(kMaxVertices * kFloatsPerVertex, myUtil::VertexArrayObj::DYNAMIC_DRAW);
-    _vao->setVertexAttribPointer<float>(2, myUtil::FLOAT, 8, 0);
-    _vao->setVertexAttribPointer<float>(4, myUtil::FLOAT, 8, 2);
-    _vao->setVertexAttribPointer<float>(2, myUtil::FLOAT, 8, 6);
 
     glBindVertexArray(0);
 
@@ -95,7 +76,6 @@ bool Renderer::init(int viewportWidth, int viewportHeight, void* (*getProcAddres
     // 抗锯齿：多重采样（配合窗口的 GLFW_SAMPLES hint）
     glEnable(GL_MULTISAMPLE);
 
-    _buffer.reserve(kMaxVertices * kFloatsPerVertex);
     setViewport(viewportWidth, viewportHeight);
 
     _inited = true;
@@ -104,10 +84,14 @@ bool Renderer::init(int viewportWidth, int viewportHeight, void* (*getProcAddres
 
 void Renderer::shutdown() {
     if (!_inited) return;
-    _program.reset();
-    _texture.reset();
-    _vao.reset();
-    _inited = false;
+    if (_triangleBatch) _triangleBatch->shutdown();
+    _triangleBatch.reset();
+    if (_roundedRectDrawer) _roundedRectDrawer->shutdown();
+    _roundedRectDrawer.reset();
+    _cmds.clear();
+    _mainSegStart = 0;
+    _rectSegStart = 0;
+    _inited       = false;
 }
 
 void Renderer::setViewport(int width, int height) {
@@ -126,18 +110,18 @@ void Renderer::clear(const RGBA& color) {
 }
 
 void Renderer::pushVertex(float x, float y, const RGBA& c, float u, float v) {
-    _buffer.push_back(x);
-    _buffer.push_back(y);
-    _buffer.push_back((float)c.red() / 255.0f);
-    _buffer.push_back((float)c.green() / 255.0f);
-    _buffer.push_back((float)c.blue() / 255.0f);
-    _buffer.push_back((float)c.alpha() / 255.0f);
-    _buffer.push_back(u);
-    _buffer.push_back(v);
-    ++_vertexCount;
+    // 主图元接在圆角矩形之后：先关闭矩形段，保证命令列表按提交顺序回放
+    if (_roundedRectDrawer->instanceCount() != _rectSegStart) {
+        _cmds.push_back({DrawCmd::Kind::RoundedRect, _rectSegStart,
+                         _roundedRectDrawer->instanceCount() - _rectSegStart, _rectBrush});
+        _rectSegStart = _roundedRectDrawer->instanceCount();
+    }
+    _triangleBatch->pushVertex(x, y, c, u, v);
 }
 
 void Renderer::pushTriangle(float x0, float y0, float x1, float y1, float x2, float y2, const ULBrush& brush) {
+    // 防溢出：顶点放不下时先 flush 掉已记录的批次（不在 pushVertex 里做，避免把三角形拆到两次 draw）
+    if (_triangleBatch->vertexCount() + 3 > TriangleBatchDrawer::kMaxVertices) flush();
     applyBrush(brush);
     const RGBA color = vertexColor(brush);
     pushVertex(x0, y0, color, 0, 0);
@@ -159,41 +143,16 @@ void Renderer::drawRoundedRectFill(float x,
                                    const BorderRadius& radius,
                                    const ULBrush& brush) {
     if (w <= 0 || h <= 0) return;
-    // 圆角半径 clamp 到矩形可容纳的范围
-    const float radiuslt = std::clamp(static_cast<float>(radius.leftTop), 0.0f, 0.5f * std::min(w, h));
-    const float radiusrt = std::clamp(static_cast<float>(radius.rightTop), 0.0f, 0.5f * std::min(w, h));
-    const float radiusrb = std::clamp(static_cast<float>(radius.rightBottom), 0.0f, 0.5f * std::min(w, h));
-    const float radiuslb = std::clamp(static_cast<float>(radius.leftBottom), 0.0f, 0.5f * std::min(w, h));
-    if (radiuslt <= .0f && radiusrt <= .0f && radiusrb <= .0f && radiuslb <= .0f) {
-        drawRect(x, y, w, h, brush);
-        return;
+    if (_roundedRectDrawer->isFull()) flush();
+    closeMainSegment();
+    // 描边实例不关心画刷，只有填充触发画刷分段
+    if (_roundedRectDrawer->instanceCount() != _rectSegStart && !(_rectBrush == brush)) {
+        _cmds.push_back({DrawCmd::Kind::RoundedRect, _rectSegStart,
+                         _roundedRectDrawer->instanceCount() - _rectSegStart, _rectBrush});
+        _rectSegStart = _roundedRectDrawer->instanceCount();
     }
-    float leftW   = std::max(radiuslt, radiuslb);
-    float leftH   = h - radiuslt - radiuslb;
-    float topW    = w - radiuslt - radiusrt;
-    float topH    = std::max(radiuslt, radiusrt);
-    float rightW  = std::max(radiusrt, radiusrb);
-    float rightH  = h - radiusrt - radiusrb;
-    float bottomW = w - radiuslb - radiusrb;
-    float bottomH = std::max(radiuslb, radiusrb);
-
-    drawRect(x + radiuslt, y, topW, topH, brush);                                        // 上
-    drawRect(x, y + radiuslt, leftW, leftH, brush);                                      // 左
-    drawRect(x + w - std::max(radiusrt, radiusrb), y + radiusrt, rightW, rightH, brush); // 右
-    drawRect(x + radiuslb, y + h - bottomH, bottomW, bottomH, brush);                    // 下
-    drawRect(x + leftW, y + topH, w - leftW - rightW, h - topH - bottomH, brush);        // 中
-
-    // 角度约定同 drawBorder：0° 朝右、90° 朝下（y 向下）
-    if (radiuslt > 0) pushArc(x + radiuslt, y + radiuslt, 0.0f, radiuslt, kPi, 1.5f * kPi, brush); // 左上 180°~270°
-    else drawRect(x, y, radiuslt, radiuslt, brush);
-    if (radiusrt > 0)
-        pushArc(x + w - radiusrt, y + radiusrt, 0.0f, radiusrt, 1.5f * kPi, 2.0f * kPi, brush); // 右上 270°~360°
-    else drawRect(x + w - radiusrt, y, radiusrt, radiusrt, brush);
-    if (radiusrb > 0)
-        pushArc(x + w - radiusrb, y + h - radiusrb, 0.0f, radiusrb, 0.0f, 0.5f * kPi, brush); // 右下 0°~90°
-    else drawRect(x + w - radiusrb, y + h - radiusrb, radiusrb, radiusrb, brush);
-    if (radiuslb > 0) pushArc(x + radiuslb, y + h - radiuslb, 0.0f, radiuslb, 0.5f * kPi, kPi, brush); // 左下 90°~180°
-    else drawRect(x, y + h - radiuslb, radiuslb, radiuslb, brush);
+    _rectBrush = brush;
+    _roundedRectDrawer->pushFill(x, y, w, h, radius, brush);
 }
 
 void Renderer::drawTriangle(float x0, float y0, float x1, float y1, float x2, float y2, const ULBrush& brush) {
@@ -289,44 +248,14 @@ void Renderer::drawPoint(float x, float y, float size, const ULBrush& brush) {
 }
 
 void Renderer::drawSolidBorder(float x, float y, float w, float h, const Border& border) {
-    const float l = static_cast<float>(std::max(0.0, border.left));
-    const float t = static_cast<float>(std::max(0.0, border.top));
-    const float r = static_cast<float>(std::max(0.0, border.right));
-    const float b = static_cast<float>(std::max(0.0, border.bottom));
-    if (l <= 0 && t <= 0 && r <= 0 && b <= 0) return;
-    // 圆角半径 clamp 到矩形可容纳的范围
-    const float radiuslt = std::clamp(static_cast<float>(border.radius.leftTop), 0.0f, 0.5f * std::min(w, h));
-    const float radiusrt = std::clamp(static_cast<float>(border.radius.rightTop), 0.0f, 0.5f * std::min(w, h));
-    const float radiusrb = std::clamp(static_cast<float>(border.radius.rightBottom), 0.0f, 0.5f * std::min(w, h));
-    const float radiuslb = std::clamp(static_cast<float>(border.radius.leftBottom), 0.0f, 0.5f * std::min(w, h));
-    const ULBrush brush(border.color);
-    // 实线：4 条直边矩形 + 每个角两条 45° 圆环扇区（按对角线切分，
-    // 相邻两边线宽不同时也能正确拼合）
-    if (t > 0) drawRect(x + radiuslt, y, w - radiuslt - radiusrt, t, brush);         // 上
-    if (r > 0) drawRect(x + w - r, y + radiusrt, r, h - radiusrt - radiusrb, brush); // 右
-    if (b > 0) drawRect(x + radiuslb, y + h - b, w - radiuslb - radiusrb, b, brush); // 下
-    if (l > 0) drawRect(x, y + radiuslt, l, h - radiuslt - radiuslb, brush);         // 左
-
-    if (radiuslt > 0) {
-        const float cxLT = x + radiuslt, cyLT = y + radiuslt; // 左上角圆心
-        if (l > 0) drawArc(cxLT, cyLT, radiuslt - 0.5f * l, 180, 225, l, brush);
-        if (t > 0) drawArc(cxLT, cyLT, radiuslt - 0.5f * t, 225, 270, t, brush);
-    }
-    if (radiusrt > 0) {
-        const float cxRT = x + w - radiusrt, cyRT = y + radiusrt; // 右上角圆心
-        if (t > 0) drawArc(cxRT, cyRT, radiusrt - 0.5f * t, 270, 315, t, brush);
-        if (r > 0) drawArc(cxRT, cyRT, radiusrt - 0.5f * r, 315, 360, r, brush);
-    }
-    if (radiusrb > 0) {
-        const float cxRB = x + w - radiusrb, cyRB = y + h - radiusrb; // 右下角圆心
-        if (r > 0) drawArc(cxRB, cyRB, radiusrb - 0.5f * r, 0, 45, r, brush);
-        if (b > 0) drawArc(cxRB, cyRB, radiusrb - 0.5f * b, 45, 90, b, brush);
-    }
-    if (radiuslb > 0) {
-        const float cxLB = x + radiuslb, cyLB = y + h - radiuslb; // 左下角圆心
-        if (b > 0) drawArc(cxLB, cyLB, radiuslb - 0.5f * b, 90, 135, b, brush);
-        if (l > 0) drawArc(cxLB, cyLB, radiuslb - 0.5f * l, 135, 180, l, brush);
-    }
+    if (w <= 0 || h <= 0) return;
+    if (_roundedRectDrawer->isFull()) flush();
+    closeMainSegment();
+    // 描边实例自带颜色、忽略渐变 uniform → 加入当前矩形段即可，不触发画刷切换。
+    // pushStroke 内部会对线宽 clamp 并在全 0 时跳过。
+    _roundedRectDrawer->pushStroke(x, y, w, h, border.radius, static_cast<float>(border.left),
+                                   static_cast<float>(border.top), static_cast<float>(border.right),
+                                   static_cast<float>(border.bottom), border.color);
 }
 
 void Renderer::drawBorder(float x, float y, float w, float h, const Border& border) {
@@ -436,73 +365,53 @@ void Renderer::drawBorder(float x, float y, float w, float h, const Border& bord
 }
 
 void Renderer::applyBrush(const ULBrush& brush) {
-    // 一批顶点只能共用一套渐变 uniform；画刷变化时先 flush 掉旧批次
-    if (_vertexCount != 0 && !(_brush == brush)) { flush(); }
+    // 一批顶点只能共用一套渐变 uniform；画刷变化时把旧批次收成一条命令，不再中途 flush
+    if (_triangleBatch->vertexCount() != _mainSegStart && !(_brush == brush)) {
+        _cmds.push_back({DrawCmd::Kind::Main, _mainSegStart,
+                         _triangleBatch->vertexCount() - _mainSegStart, _brush});
+        _mainSegStart = _triangleBatch->vertexCount();
+    }
     _brush = brush;
 }
 
-void Renderer::uploadBrushUniforms(const ULBrush& brush) {
-    const auto& gradient = brush.gradient();
-    if (!gradient) {
-        _program->setInt("uBrushType", 0);
-        return;
-    }
-
-    const bool linear = brush.style() == BrushStyle::LinearGradient;
-    _program->setInt("uBrushType", linear ? 1 : 2);
-    _program->setInt("uSpread", static_cast<int>(gradient->spread()));
-
-    const auto& stops = gradient->stops();
-    const int count   = std::min(static_cast<int>(stops.size()), kMaxGradientStops);
-    _program->setInt("uStopCount", count);
-
-    std::vector<float> pos(kMaxGradientStops, 0.0f);
-    std::vector<float> col(kMaxGradientStops * 4, 0.0f);
-    for (int i = 0; i < count; ++i) {
-        pos[i]         = stops[i].first;
-        const RGBA& c  = stops[i].second;
-        col[i * 4 + 0] = static_cast<float>(c.red()) / 255.0f;
-        col[i * 4 + 1] = static_cast<float>(c.green()) / 255.0f;
-        col[i * 4 + 2] = static_cast<float>(c.blue()) / 255.0f;
-        col[i * 4 + 3] = static_cast<float>(c.alpha()) / 255.0f;
-    }
-    _program->setFloatArray("uStopPos", kMaxGradientStops, pos.data());
-    _program->setVec4Array("uStopColor", kMaxGradientStops, col.data());
-
-    if (linear) {
-        const auto* lin = dynamic_cast<const LinearGradient*>(gradient.get());
-        if (lin) {
-            const float start[2] = {lin->x0(), lin->y0()};
-            const float stop[2]  = {lin->x1(), lin->y1()};
-            _program->setVec2fv("uGradStart", start);
-            _program->setVec2fv("uGradStop", stop);
-        }
-    } else {
-        const auto* rad = dynamic_cast<const RadiusGradient*>(gradient.get());
-        if (rad) {
-            const float center[2] = {rad->cx(), rad->cy()};
-            _program->setVec2fv("uGradCenter", center);
-            _program->setFloat("uGradRadius", rad->radius());
-        }
-    }
+void Renderer::closeMainSegment() {
+    if (_triangleBatch->vertexCount() == _mainSegStart) return;
+    _cmds.push_back({DrawCmd::Kind::Main, _mainSegStart,
+                     _triangleBatch->vertexCount() - _mainSegStart, _brush});
+    _mainSegStart = _triangleBatch->vertexCount();
 }
 
 void Renderer::flush() {
-    if (!_inited || _vertexCount == 0) return;
+    if (!_inited) return;
 
-    _program->use();
-    _program->setMatrix4fv("projection", &_projection[0][0]);
-    _program->setInt("tex", 0);
-    uploadBrushUniforms(_brush);
-    _texture->drawTexture(GL_TEXTURE0);
+    // 1. 关闭未关闭的段（跨类关段后最多只有一类有未关数据，双关无害）
+    closeMainSegment();
+    if (_roundedRectDrawer->instanceCount() > _rectSegStart) {
+        _cmds.push_back({DrawCmd::Kind::RoundedRect, _rectSegStart,
+                         _roundedRectDrawer->instanceCount() - _rectSegStart, _rectBrush});
+        _rectSegStart = _roundedRectDrawer->instanceCount();
+    }
+    if (_cmds.empty()) return;
 
-    _vao->use();
-    _vao->updateData(_buffer);
-    glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(_vertexCount));
+    // 2. 两块 VBO 各上传一次
+    _triangleBatch->updateBuffer();
+    _roundedRectDrawer->updateInstanceBuffer();
+
+    // 3. 按提交顺序回放命令列表
+    for (const auto& cmd : _cmds) {
+        if (cmd.kind == DrawCmd::Kind::Main) {
+            _triangleBatch->drawRange(cmd.first, cmd.count, _projection, cmd.brush);
+        } else {
+            _roundedRectDrawer->drawRange(cmd.first, cmd.count, _projection, cmd.brush);
+        }
+    }
     glBindVertexArray(0);
 
-    _buffer.clear();
-    _vertexCount = 0;
+    // 4. 清空暂存与命令列表
+    _mainSegStart = 0;
+    _cmds.clear();
+    _triangleBatch->clear();
+    _roundedRectDrawer->clear();
+    _rectSegStart = 0;
 }
-
 } // namespace ULGui::base

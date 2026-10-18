@@ -6,16 +6,19 @@
 #ifndef _RENDERER_H
 #define _RENDERER_H
 
+#include <cstdint>
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <vector>
 
+#include "border.h"
 #include "brush.h"
 #include "program.h"
+#include "roundedRectDrawer.h"
+#include "triangleBatchDrawer.h"
 
 namespace ULGui::base {
 struct BorderRadius;
-struct Border;
 class Renderer {
 public:
     static Renderer& instance();
@@ -63,20 +66,30 @@ private:
     void pushTriangle(float x0, float y0, float x1, float y1, float x2, float y2, const ULBrush& brush);
     // 圆环扇区：内半径 inner、外半径 outer、角度范围 [startRad, endRad]，拆成三角形
     void pushArc(float cx, float cy, float inner, float outer, float startRad, float endRad, const ULBrush& brush);
-    // 切换当前批处理的画刷；若与已缓存的画刷不同，先 flush 再开始新一批
+    // 切换当前批处理的画刷；画刷变化时关闭旧主批段、另起新段（不再中途 flush）
     void applyBrush(const ULBrush& brush);
-    // 把画刷（纯色/渐变）作为 uniform 写入当前 program
-    void uploadBrushUniforms(const ULBrush& brush);
+    // 主批段未关闭时收成一条命令（切换到圆角矩形批前调用）
+    void closeMainSegment();
 
 private:
-    std::unique_ptr<myUtil::Program> _program;
-    std::unique_ptr<myUtil::Texture> _texture;
-    std::unique_ptr<myUtil::VertexArrayObj> _vao;
+    // 保序命令：主批次与圆角矩形批次各自成段，按提交顺序回放
+    struct DrawCmd {
+        enum class Kind : uint8_t { Main, RoundedRect };
+        Kind kind;
+        uint32_t first;   // Main: 顶点偏移；RoundedRect: 实例偏移
+        uint32_t count;
+        ULBrush brush;
+    };
 
-    std::vector<float> _buffer;
-    size_t _vertexCount {0};
+    std::unique_ptr<TriangleBatchDrawer> _triangleBatch;   // 主批次（矩形/线/圆/弧等图元）
+    std::unique_ptr<RoundedRectDrawer> _roundedRectDrawer; // 圆角矩形 SDF 实例化批次
+
+    std::vector<DrawCmd> _cmds;
+    uint32_t _mainSegStart {0}; // 当前主批段起点（顶点数）
+    uint32_t _rectSegStart {0}; // 当前圆角矩形段起点（实例数）
 
     ULBrush _brush;
+    ULBrush _rectBrush;
 
     int _viewportW {0};
     int _viewportH {0};

@@ -26,10 +26,12 @@ public:
     }
     ~Program();
 
-    void use() const;
+    void setName(const std::string& name);
+    void bind() const;
+    void unBind() const;
     void push_back(std::unique_ptr<Shader>&& shader);
     bool linkProgram();
-    UniformId uniform(const std::string& name);
+    UniformId uniform(const std::string& funcName, const std::string& name);
     // uniform工具函数
     void setBool(const std::string& name, bool value);
     void setInt(const std::string& name, int value);
@@ -43,7 +45,7 @@ public:
     void setVec4Array(const std::string& name, int count, const float* array);
     void setColor(const std::string& name, const Color& color);
 
-    void renderGlyph(const std::u16string& context, const GlyphConfiguration& config, const VertexArrayObj& vao);
+    void renderGlyph(const std::u16string& context, const GlyphConfiguration& config, VertexArrayObj& vao);
 
 private:
     void create(const std::string& filePath, Shader::ShaderType type) { addShader(filePath, type); }
@@ -57,6 +59,7 @@ private:
 private:
     bool _status {true};
     uint32_t _programId {0};
+    std::string _name;
     std::vector<std::unique_ptr<Shader>> _vertexShaderList;
     std::vector<std::unique_ptr<Shader>> _fragmentShaderList;
     std::unordered_map<std::string, UniformId> _uniformMap;

@@ -6,7 +6,6 @@
 #include <glad/glad.h>
 
 #include "include/logger_wrapper.h"
-#include "shader_macro.h"
 
 NAME_SPACE_START(myUtil)
 void shaderAttach(uint32_t programId, const std::vector<std::unique_ptr<Shader>>& shaderList) {
@@ -16,21 +15,15 @@ void shaderAttach(uint32_t programId, const std::vector<std::unique_ptr<Shader>>
 
 Program::~Program() {
     if (_programId == 0 || !_status) return;
-    int32_t success = 0;
     glDeleteProgram(_programId);
-    glGetProgramiv(_programId, GL_DELETE_STATUS, &success);
-    if (!success) {
-        int32_t len = 0;
-        glGetProgramiv(_programId, GL_INFO_LOG_LENGTH, &len);
-        std::string msg(len ? len + 1 : 1, '\0');
-        glGetProgramInfoLog(_programId, len, nullptr, msg.data());
-        // shader compiler delete failed
-        LOGE("%s", msg.data());
-    }
     _programId = 0;
 }
 
-void Program::use() const { glUseProgram(_programId); }
+void Program::setName(const std::string& name) { _name = name; }
+
+void Program::bind() const { glUseProgram(_programId); }
+
+void Program::unBind() const { glUseProgram(0); }
 
 void Program::push_back(std::unique_ptr<Shader>&& shader) {
     if (!shader->_status) return;
@@ -55,7 +48,7 @@ bool Program::linkProgram() {
         std::string msg(len ? len + 1 : 1, '\0');
         glGetProgramInfoLog(_programId, len, nullptr, msg.data());
         // program link error
-        LOGE("%s", msg.data());
+        LOGE("program: %s %s", _name.c_str(), msg.data());
         return _status = false;
     }
     _vertexShaderList.clear();
@@ -63,11 +56,12 @@ bool Program::linkProgram() {
     return _status = true;
 }
 
-Program::UniformId Program::uniform(const std::string& name) {
+Program::UniformId Program::uniform(const std::string& funcName, const std::string& name) {
     if (_uniformMap.find(name) != _uniformMap.end()) return _uniformMap[name];
     UniformId t = glGetUniformLocation(_programId, name.c_str());
     if (t < 0) {
-        LOGE("Program get uniform location fail, name: %s", name.c_str());
+        LOGE("Program: %s, get uniform location fail, funcName: %s, name: %s", _name.c_str(), funcName.c_str(),
+             name.c_str());
         return -1;
     }
     _uniformMap[name] = t;
@@ -75,93 +69,53 @@ Program::UniformId Program::uniform(const std::string& name) {
 }
 
 void Program::setBool(const std::string& name, bool value) {
-    auto id = uniform(name);
-    if (id < 0) {
-        LOGW("[Program] setBool fail, name: %s", name.c_str());
-        return;
-    }
-    glUniform1i(id, (int)value);
+    auto id = uniform("setBool", name);
+    if (id >= 0) glUniform1i(id, (int)value);
 }
 
 void Program::setInt(const std::string& name, int value) {
-    auto id = uniform(name);
-    if (id < 0) {
-        LOGW("[Program] setInt fail, name: %s", name.c_str());
-        return;
-    }
-    glUniform1i(id, value);
+    auto id = uniform("setInt", name);
+    if (id >= 0) glUniform1i(id, value);
 }
 
 void Program::setUInt(const std::string& name, uint32_t value) {
-    auto id = uniform(name);
-    if (id < 0) {
-        LOGW("[Program] setUInt fail, name: %s", name.c_str());
-        return;
-    }
-    glUniform1ui(id, value);
+    auto id = uniform("setUInt", name);
+    if (id >= 0) glUniform1ui(id, value);
 }
 
 void Program::setFloat(const std::string& name, float value) {
-    auto id = uniform(name);
-    if (id < 0) {
-        LOGW("[Program] setFloat fail, name: %s", name.c_str());
-        return;
-    }
-    glUniform1f(id, value);
+    auto id = uniform("setFloat", name);
+    if (id >= 0) glUniform1f(id, value);
 }
 
 void Program::set4Float(const std::string& name, float x, float y, float z, float w) {
-    auto id = uniform(name);
-    if (id < 0) {
-        LOGW("[Program] set4Float fail, name: %s", name.c_str());
-        return;
-    }
-    glUniform4f(id, x, y, z, w);
+    auto id = uniform("set4Float", name);
+    if (id >= 0) glUniform4f(id, x, y, z, w);
 }
 
 void Program::setMatrix4fv(const std::string& name, const float* array) {
-    auto id = uniform(name);
-    if (id < 0) {
-        LOGW("[Program] setMatrix4fv fail, name: %s", name.c_str());
-        return;
-    }
-    glUniformMatrix4fv(id, 1, GL_FALSE, array);
+    auto id = uniform("setMatrix4fv", name);
+    if (id >= 0) glUniformMatrix4fv(id, 1, GL_FALSE, array);
 }
 
 void Program::setVec3fv(const std::string& name, const float* array) {
-    auto id = uniform(name);
-    if (id < 0) {
-        LOGW("[Program] setVec3fv fail, name: %s", name.c_str());
-        return;
-    }
-    glUniform3fv(id, 1, array);
+    auto id = uniform("setVec3fv", name);
+    if (id >= 0) glUniform3fv(id, 1, array);
 }
 
 void Program::setVec2fv(const std::string& name, const float* array) {
-    auto id = uniform(name);
-    if (id < 0) {
-        LOGW("[Program] setVec2fv fail, name: %s", name.c_str());
-        return;
-    }
-    glUniform2fv(id, 1, array);
+    auto id = uniform("setVec2fv", name);
+    if (id >= 0) glUniform2fv(id, 1, array);
 }
 
 void Program::setFloatArray(const std::string& name, int count, const float* array) {
-    auto id = uniform(name);
-    if (id < 0) {
-        LOGW("[Program] setFloatArray fail, name: %s", name.c_str());
-        return;
-    }
-    glUniform1fv(id, count, array);
+    auto id = uniform("setFloatArray", name);
+    if (id >= 0) glUniform1fv(id, count, array);
 }
 
 void Program::setVec4Array(const std::string& name, int count, const float* array) {
-    auto id = uniform(name);
-    if (id < 0) {
-        LOGW("[Program] setVec4Array fail, name: %s", name.c_str());
-        return;
-    }
-    glUniform4fv(id, count, array);
+    auto id = uniform("setVec4Array", name);
+    if (id >= 0) glUniform4fv(id, count, array);
 }
 
 void Program::setColor(const std::string& name, const Color& color) {
@@ -170,12 +124,10 @@ void Program::setColor(const std::string& name, const Color& color) {
     set4Float(name, tmp[0], tmp[1], tmp[2], tmp[3]);
 }
 
-void Program::renderGlyph(const std::u16string& context,
-                          const GlyphConfiguration& config,
-                          const VertexArrayObj& vao) {
-    this->use();
+void Program::renderGlyph(const std::u16string& context, const GlyphConfiguration& config, VertexArrayObj& vao) {
+    this->bind();
     setColor("glyphColor", config.color);
-    vao.use();
+    vao.setGlyphArrayBuffer();
     float x = config.position.x, y = config.position.y;
     auto codePoints = FontManager::UTF16ToCodePoints(context);
     for (auto item : codePoints) {
@@ -188,7 +140,7 @@ void Program::renderGlyph(const std::u16string& context,
         GLfloat w = ch.size.width * config.scale;
         GLfloat h = ch.size.height * config.scale;
         ch.texture->drawTexture(GL_TEXTURE0);
-        vao.updateData({xPos,     yPos + h, 0.0, 0.0,
+        vao.updateGlyphArray({xPos,     yPos + h, 0.0, 0.0,
                         xPos,     yPos,     0.0, 1.0,
                         xPos + w, yPos,     1.0, 1.0,
                         xPos,     yPos + h, 0.0, 0.0,
