@@ -49,49 +49,18 @@ public:
     Spread spread() const { return _spread; }
 
     // position 会被 clamp 到 [0, 1]，stops 始终按 position 升序保存
-    void setColorAt(float position, const RGBA& color) {
-        const float p = std::max(0.0f, std::min(1.0f, position));
-        _stops.emplace_back(p, color);
-        std::sort(_stops.begin(), _stops.end(), [](const auto& lhs, const auto& rhs) { return lhs.first < rhs.first; });
-    }
+    void setColorAt(float position, const RGBA& color);
     void clearStops() { _stops.clear(); }
     const std::vector<std::pair<float, RGBA>>& stops() const { return _stops; }
 
     // 取归一化位置 t 上的颜色（相邻 stop 线性插值，按 spread 处理越界）
-    RGBA colorAt(float t) const {
-        if (_stops.empty()) return {};
-        const float pos = normalize(t, _spread);
-        if (pos <= _stops.front().first) return _stops.front().second;
-        for (size_t i = 1; i < _stops.size(); ++i) {
-            if (pos <= _stops[i].first) {
-                const auto& lo    = _stops[i - 1];
-                const auto& hi    = _stops[i];
-                const float span  = hi.first - lo.first;
-                const float ratio = span <= 0.0f ? 0.0f : (pos - lo.first) / span;
-                return mix(lo.second, hi.second, ratio);
-            }
-        }
-        return _stops.back().second;
-    }
+    RGBA colorAt(float t) const;
+    virtual std::string toString() const;
+
+protected:
+    std::string stopsToString() const;
 
 private:
-    static float normalize(float t, Spread spread) {
-        if (spread == Spread::Repeat) {
-            const float f = std::fmod(t, 1.0f);
-            return f < 0.0f ? f + 1.0f : f;
-        }
-        if (spread == Spread::Reflect) {
-            const float f = std::fmod(std::fabs(t), 2.0f);
-            return f > 1.0f ? 2.0f - f : f;
-        }
-        return std::max(0.0f, std::min(1.0f, t)); // Pad
-    }
-
-    static RGBA mix(const RGBA& from, const RGBA& to, float t) {
-        auto channel = [t](uint8_t a, uint8_t b) { return static_cast<uint8_t>(std::lround(a + (b - a) * t)); };
-        return RGBA(channel(from.red(), to.red()), channel(from.green(), to.green()), channel(from.blue(), to.blue()),
-                    channel(from.alpha(), to.alpha()));
-    }
 
     Spread _spread {Spread::Pad};
     std::vector<std::pair<float, RGBA>> _stops;
@@ -104,13 +73,8 @@ public:
         : _x0(x0), _y0(y0), _x1(x1), _y1(y1) {}
 
     BrushStyle style() const override { return BrushStyle::LinearGradient; }
-    float positionAt(float x, float y) const override {
-        const float dx   = _x1 - _x0;
-        const float dy   = _y1 - _y0;
-        const float len2 = dx * dx + dy * dy;
-        if (len2 <= 0.0f) return 0.0f;
-        return ((x - _x0) * dx + (y - _y0) * dy) / len2;
-    }
+    float positionAt(float x, float y) const override;
+    std::string toString() const override;
 
     void setStart(float x, float y) { _x0 = x, _y0 = y; }
     void setStop(float x, float y) { _x1 = x, _y1 = y; }
@@ -132,12 +96,8 @@ public:
         : _cx(cx), _cy(cy), _radius(radius) {}
 
     BrushStyle style() const override { return BrushStyle::RadialGradient; }
-    float positionAt(float x, float y) const override {
-        if (_radius <= 0.0f) return 0.0f;
-        const float dx = x - _cx;
-        const float dy = y - _cy;
-        return std::sqrt(dx * dx + dy * dy) / _radius;
-    }
+    float positionAt(float x, float y) const override;
+    std::string toString() const override;
 
     void setCenter(float x, float y) { _cx = x, _cy = y; }
     void setRadius(float radius) { _radius = radius; }
@@ -163,24 +123,13 @@ public:
     BrushStyle style() const { return _style; }
     const std::shared_ptr<Gradient>& gradient() const { return _gradient; }
 
-    void setColor(const RGBA& color) {
-        _color = color;
-        _style = BrushStyle::SolidColor;
-        _gradient.reset();
-    }
-    void setGradient(const std::shared_ptr<Gradient>& gradient) {
-        _style    = gradient ? gradient->style() : BrushStyle::SolidColor;
-        _gradient = gradient;
-    }
+    void setColor(const RGBA& color);
+    void setGradient(const std::shared_ptr<Gradient>& gradient);
 
     // 纯色比较颜色；渐变按 gradient 指针同一性比较（渲染批处理据此判断是否需要 flush）
-    bool operator==(const ULBrush& other) const {
-        if (_style != other._style) return false;
-        if (_style == BrushStyle::SolidColor || _style == BrushStyle::NoBrush)
-            return static_cast<uint32_t>(_color) == static_cast<uint32_t>(other._color);
-        return _gradient == other._gradient;
-    }
+    bool operator==(const ULBrush& other) const;
     bool operator!=(const ULBrush& other) const { return !(*this == other); }
+    std::string toString() const;
 
 private:
     RGBA _color;
